@@ -16,16 +16,14 @@ namespace Survive_the_night.Entities
         private const float InvulnerabilityDuration = 1.0f; // 1 секунда неуязвимости
         public bool IsInvulnerable => _invulnerabilityTimer > 0f;
 
-        // === НОВЫЕ ПОЛЯ: СИСТЕМА ОПЫТА И УРОВНЕЙ ===
+        // === СИСТЕМА ОПЫТА И УРОВНЕЙ ===
         public int Level { get; private set; } = 1;
         public int CurrentExperience { get; private set; } = 0;
         public int ExperienceToNextLevel { get; private set; } = 10;
         public bool IsLevelUpPending { get; private set; } = false;
 
-        // === НОВОЕ ПОЛЕ: СКОРОСТЬ ===
+        // === СКОРОСТЬ ===
         public float BaseSpeed { get; private set; } = 250f;
-
-        // Свойство, которое вернет текущую скорость (пока равна BaseSpeed)
         public float MovementSpeed => BaseSpeed;
 
         // Конструктор
@@ -55,7 +53,6 @@ namespace Survive_the_night.Entities
             KeyboardState kState = Keyboard.GetState();
             Vector2 direction = Vector2.Zero;
 
-            // !!! ИСПОЛЬЗУЕМ НОВУЮ СКОРОСТЬ MovementSpeed !!!
             float speed = MovementSpeed;
 
             if (kState.IsKeyDown(Keys.W)) direction.Y -= 1;
@@ -71,7 +68,6 @@ namespace Survive_the_night.Entities
             Position += direction * speed * deltaTime;
         }
 
-        // ... (Метод TakeDamage остается прежним) ...
         public void TakeDamage(int damage)
         {
             if (!IsInvulnerable)
@@ -87,7 +83,16 @@ namespace Survive_the_night.Entities
             }
         }
 
-        // ... (Метод GainExperience остается прежним) ...
+        /// <summary>
+        /// НОВЫЙ МЕТОД: Восстанавливает здоровье игроку, не превышая MaxHealth.
+        /// </summary>
+        public void Heal(float amount)
+        {
+            // Используем MathHelper.Min, чтобы не превысить максимальное здоровье
+            CurrentHealth = (int)MathHelper.Min(CurrentHealth + amount, MaxHealth);
+            System.Diagnostics.Debug.WriteLine($"Лечение: +{amount}. Текущее HP: {CurrentHealth}/{MaxHealth}");
+        }
+
         public void GainExperience(int amount)
         {
             if (IsLevelUpPending) return;
@@ -100,7 +105,6 @@ namespace Survive_the_night.Entities
             }
         }
 
-        // ... (Метод LevelUp остается прежним) ...
         private void LevelUp()
         {
             Level++;
@@ -115,34 +119,30 @@ namespace Survive_the_night.Entities
             }
         }
 
-        // ... (Метод CompleteLevelUp остается прежним) ...
         public void CompleteLevelUp()
         {
             IsLevelUpPending = false;
         }
 
-        // === НОВЫЙ МЕТОД: ПРИМЕНЕНИЕ УЛУЧШЕНИЯ ===
         /// <summary>
         /// Применяет улучшения к игроку, исходя из ID.
         /// </summary>
-        /// <param name="upgradeId">ID улучшения из LevelUpMenu.</param>
-        /// <param name="value">Значение, на которое увеличивается характеристика.</param>
         public void ApplyUpgrade(int upgradeId, float value)
         {
             switch (upgradeId)
             {
-                case 1: // Здоровье (+10)
+                case 1: // Здоровье
                     MaxHealth += (int)value;
                     // Также восстанавливаем здоровье
                     CurrentHealth += (int)value;
                     if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Здоровье +{value}");
                     break;
-                case 2: // Скорость (+50f)
+                case 2: // Скорость
                     BaseSpeed += value;
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Скорость +{value}");
                     break;
-                    // case 3 - Урон, обрабатывается в классе оружия (но мы его пока не обновили)
+                    // case 3 - Урон, обрабатывается в классе оружия
             }
         }
     }

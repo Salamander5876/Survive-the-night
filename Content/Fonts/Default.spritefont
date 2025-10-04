@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<XnaContent xmlns:ns="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
+	<Asset Type="ns:FontDescription">
+		<FontName>Segoe UI</FontName>
+		<Size>22</Size>
+		<Spacing>0</Spacing>
+		<UseKerning>true</UseKerning>
+		<Style>Regular</Style>
+		<CharacterRegions>
+			<CharacterRegion>
+				<Start> </Start>
+				<End>~</End>
+			</CharacterRegion>
+			<CharacterRegion>
+				<Start>А</Start>
+				<End>я</End>
+			</CharacterRegion>
+			<CharacterRegion>
+				<Start>Ё</Start>
+				<End>ё</End>
+			</CharacterRegion>
+		</CharacterRegions>
+	</Asset>
+</XnaContent>

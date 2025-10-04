@@ -1,25 +1,21 @@
 ﻿using Microsoft.Xna.Framework;
 using Survive_the_night.Entities;
-using System.Collections.Generic; // Важно для использования List<Enemy>
+using System.Collections.Generic;
 
 namespace Survive_the_night.Weapons
 {
     // Базовый класс для всего оружия в игре
     public abstract class Weapon
     {
-        // Ссылка на игрока, чтобы оружие знало, откуда стрелять
         protected Player Player { get; private set; }
 
-        // Время между атаками в секундах
         public float CooldownTime { get; protected set; }
 
-        // Текущий урон
         public int Damage { get; protected set; }
 
-        // Таймер, отслеживающий, когда можно будет атаковать снова
         protected float CooldownTimer { get; set; } = 0f;
 
-        // Конструктор
+        // ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Добавлены аргументы damage и cooldownTime
         public Weapon(Player player, float cooldownTime, int damage)
         {
             Player = player;
@@ -27,7 +23,6 @@ namespace Survive_the_night.Weapons
             Damage = damage;
         }
 
-        // Метод обновления логики (перезарядка)
         public virtual void Update(GameTime gameTime)
         {
             CooldownTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -37,8 +32,30 @@ namespace Survive_the_night.Weapons
             }
         }
 
-        // Абстрактный метод: реализует саму атаку (спаун снарядов, эффект)
-        // Принимает список врагов для самонаведения или проверки попадания.
         public abstract void Attack(GameTime gameTime, List<Enemy> enemies);
+
+        // Вспомогательный метод для поиска ближайшего врага (часто нужен оружию)
+        protected Enemy FindClosestEnemy(List<Enemy> enemies)
+        {
+            float minDistanceSquared = float.MaxValue;
+            Enemy closestEnemy = null;
+
+            foreach (var enemy in enemies)
+            {
+                // ПРЕДПОЛОЖЕНИЕ: У класса Enemy есть свойство IsAlive
+                if (!enemy.IsAlive) continue;
+
+                float distanceSquared = Vector2.DistanceSquared(Player.Position, enemy.Position);
+
+                // Радиус поиска (например, 700x700 пикселей)
+                if (distanceSquared < minDistanceSquared && distanceSquared < 490000)
+                {
+                    minDistanceSquared = distanceSquared;
+                    closestEnemy = enemy;
+                }
+            }
+
+            return closestEnemy;
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
 using Survive_the_night.Weapons;
+using System.Diagnostics; // Для System.Diagnostics.Debug.WriteLine
 
 namespace Survive_the_night.Managers
 {
@@ -20,7 +21,7 @@ namespace Survive_the_night.Managers
         private PlayingCards _cardsWeapon;
         private GraphicsDevice _graphicsDevice;
         private Texture2D _debugTexture;
-        // УДАЛЕНО: private SpriteFont _font; 
+        private SpriteFont _font;
 
         private UpgradeOption[] _currentOptions;
         private const int OptionCount = 3;
@@ -33,21 +34,26 @@ namespace Survive_the_night.Managers
         /// <summary>
         /// Конструктор меню улучшений.
         /// </summary>
-        // ИЗМЕНЕНИЕ: Убрали SpriteFont из аргументов
-        public LevelUpMenu(Player player, PlayingCards cardsWeapon, GraphicsDevice graphicsDevice, Texture2D debugTexture)
+        public LevelUpMenu(Player player, PlayingCards cardsWeapon, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
             _player = player;
             _cardsWeapon = cardsWeapon;
             _graphicsDevice = graphicsDevice;
             _debugTexture = debugTexture;
+            _font = font;
             _previousMouseState = Mouse.GetState();
         }
 
-        // ... (GenerateOptions остается прежним) ...
+        // ----------------- ЛОГИКА -----------------
+
+        /// <summary>
+        /// Генерирует три случайных или фиксированных улучшения для выбора.
+        /// </summary>
         public void GenerateOptions()
         {
             _currentOptions = new UpgradeOption[OptionCount];
 
+            // Фиксированные опции для начала разработки
             _currentOptions[0] = new UpgradeOption
             {
                 Name = "Здоровье +10",
@@ -73,7 +79,9 @@ namespace Survive_the_night.Managers
             };
         }
 
-        // ... (Update остается прежним) ...
+        /// <summary>
+        /// **МЕТОД, ВЫЗЫВАЮЩИЙ ОШИБКУ:** Обновляет логику меню и обрабатывает выбор.
+        /// </summary>
         public void Update(GameTime gameTime)
         {
             if (!_player.IsLevelUpPending) return;
@@ -93,6 +101,7 @@ namespace Survive_the_night.Managers
 
                 if (optionRect.Contains(currentMouseState.Position))
                 {
+                    // Обработка клика мыши (кнопка была отпущена)
                     if (currentMouseState.LeftButton == ButtonState.Released &&
                         _previousMouseState.LeftButton == ButtonState.Pressed)
                     {
@@ -100,7 +109,7 @@ namespace Survive_the_night.Managers
                         _player.CompleteLevelUp();
                         _currentOptions = null;
 
-                        break;
+                        break; // Выходим из цикла после выбора
                     }
                 }
             }
@@ -119,18 +128,18 @@ namespace Survive_the_night.Managers
                     _player.ApplyUpgrade(option.Id, 50f);
                     break;
                 case 3: // Урон (Применяется к PlayingCards)
-                    // БУДУЩИЙ КОД: Здесь мы вызовем метод _cardsWeapon.UpgradeDamage()
-                    System.Diagnostics.Debug.WriteLine($"Улучшение: {option.Name} (Урон) применено. (Эффект не реализован)");
+                    _cardsWeapon.UpgradeDamage(1); // Реализованное нами улучшение урона
+                    Debug.WriteLine($"Улучшение: {option.Name} (Урон) применено. Новый урон: {_cardsWeapon.Damage}");
                     break;
             }
         }
 
+        // ----------------- ОТРИСОВКА -----------------
 
         /// <summary>
-        /// Отрисовывает меню улучшений (только прямоугольники).
+        /// Отрисовывает меню улучшений.
         /// </summary>
-        // ИЗМЕНЕНИЕ: Метод Draw больше не принимает SpriteFont
-        public void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
             if (!_player.IsLevelUpPending || _currentOptions == null) return;
 
@@ -144,23 +153,36 @@ namespace Survive_the_night.Managers
                 Color boxColor = option.Color * 0.7f;
                 MouseState currentMouseState = Mouse.GetState();
 
+                // Эффект наведения
                 if (optionRect.Contains(currentMouseState.Position))
                 {
                     boxColor = option.Color * 1.0f;
                 }
 
+                // Отрисовка фона опции
                 spriteBatch.Draw(_debugTexture, optionRect, boxColor);
 
                 // Рисуем рамку
                 spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y, optionRect.Width, 2), Color.White);
                 spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y + OptionHeight - 2, optionRect.Width, 2), Color.White);
 
-                // УДАЛЕНО: Код отрисовки текста
+                // Отрисовка имени улучшения
+                spriteBatch.DrawString(font, option.Name,
+                    new Vector2(optionRect.X + 10, optionRect.Y + 5),
+                    Color.White, 0f, Vector2.Zero, 1.0f, SpriteEffects.None, 0f);
+
+                // Отрисовка описания (меньший размер)
+                spriteBatch.DrawString(font, option.Description,
+                    new Vector2(optionRect.X + 10, optionRect.Y + 30),
+                    Color.LightGray, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
             }
         }
 
-        // ... (Методы GetMenuArea() и GetOptionRectangle() остаются прежними) ...
+        // ----------------- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ -----------------
 
+        /// <summary>
+        /// Рассчитывает общую область, которую занимает меню.
+        /// </summary>
         private Rectangle GetMenuArea()
         {
             int screenWidth = _graphicsDevice.Viewport.Width;
@@ -175,6 +197,9 @@ namespace Survive_the_night.Managers
             return new Rectangle(startX, startY, totalWidth, totalHeight);
         }
 
+        /// <summary>
+        /// Рассчитывает прямоугольник для конкретной опции.
+        /// </summary>
         private Rectangle GetOptionRectangle(int index, Rectangle menuArea)
         {
             int x = menuArea.X;

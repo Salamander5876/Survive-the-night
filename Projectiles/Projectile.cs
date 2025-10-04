@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
-using Survive_the_night.Entities; // Важно: для доступа к GameObject
+using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Entities;
 using System.Collections.Generic;
 
 namespace Survive_the_night.Projectiles
@@ -7,10 +8,12 @@ namespace Survive_the_night.Projectiles
     // Базовый класс для всех снарядов
     public abstract class Projectile : GameObject
     {
-        protected int Damage { get; private set; }
+        // ИСПРАВЛЕНО: Свойство Damage для чтения из PlayingCards.CheckProjectileCollisions
+        public int Damage { get; protected set; }
         public float Speed { get; protected set; }
         public bool IsActive { get; set; } = true;
 
+        // ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Соответствует базовому классу GameObject
         public Projectile(Vector2 initialPosition, int size, Color color, int damage, float speed)
             : base(initialPosition, size, color)
         {
@@ -18,25 +21,25 @@ namespace Survive_the_night.Projectiles
             Speed = speed;
         }
 
-        // ИСПРАВЛЕНИЕ: Реализуем абстрактный метод из GameObject!
-        // Этот метод обязателен для всех GameObject.
+        // ИСПРАВЛЕНО: Реализация абстрактного метода GameObject.Update
         public override void Update(GameTime gameTime)
         {
-            // Поскольку снаряды будут обновляться через специфический метод 
-            // Attack() в Weapon, здесь оставляем его пустым.
+            // Используется PlayingCard.Update(GameTime)
         }
 
-        // Дополнительный метод для сложной логики (с врагами). 
-        // Его будет вызывать класс PlayingCards.
-        public virtual void Update(GameTime gameTime, List<Enemy> enemies)
+        // ДОБАВЛЕНО: Этот метод будет использоваться в PlayingCards для запуска логики полета
+        public virtual void Update(GameTime gameTime, Vector2 direction)
         {
-            // Потомок (CardProjectile) реализует здесь всю логику полета.
+            // Потомок (PlayingCard) реализует здесь всю логику полета.
         }
 
         protected virtual void OnHitEnemy(Enemy enemy)
         {
+            // ПРЕДПОЛОЖЕНИЕ: У класса Enemy есть метод TakeDamage(int)
             enemy.TakeDamage(Damage);
             IsActive = false;
         }
+
+        // ПРИМЕЧАНИЕ: Методы Draw и GetBounds наследуются от GameObject
     }
 }
