@@ -8,24 +8,26 @@ namespace Survive_the_night.Entities
         private Player _target;
         private float speed;
 
-        // Health теперь должен быть protected set, чтобы EliteEnemy мог его изменить.
         public int Health { get; protected set; }
+        // !!! ДОБАВЛЕНО: Свойство Damage (Урон) !!!
+        public int Damage { get; protected set; }
 
         public bool IsAlive => Health > 0;
 
         // !!! НОВЫЙ МАСТЕР-КОНСТРУКТОР !!!
-        public Enemy(Vector2 initialPosition, Player playerTarget, int health, float speed, Color color)
+        public Enemy(Vector2 initialPosition, Player playerTarget, int health, float speed, Color color, int damage)
             : base(initialPosition, 24, color)
         {
             _target = playerTarget;
             Health = health;
             this.speed = speed;
+            this.Damage = damage; // Установка урона
         }
 
         // !!! КОНСТРУКТОР ДЛЯ ОБЫЧНЫХ КРАСНЫХ ВРАГОВ (ДЕФОЛТ) !!!
         public Enemy(Vector2 initialPosition, Player playerTarget)
-            // Красный враг: Здоровье 3, Скорость 100f, Цвет Красный
-            : this(initialPosition, playerTarget, 3, 100f, Color.Red)
+            // Красный враг: Здоровье 3, Скорость 100f, Цвет Красный, Урон 5
+            : this(initialPosition, playerTarget, 3, 100f, Color.Red, 5) // <-- Урон по умолчанию 5
         {
         }
 

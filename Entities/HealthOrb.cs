@@ -8,23 +8,19 @@ namespace Survive_the_night.Entities
         private const float AttractionSpeed = 400f; // Скорость притяжения к игроку
 
         public bool IsActive { get; set; }
-
-        // !!! ИСПРАВЛЕНИЕ ОШИБКИ: Свойство HealAmount !!!
-        public float HealAmount { get; private set; }
+        public float HealAmount { get; private set; } // Процент от MaxHealth
 
         public HealthOrb(Vector2 initialPosition, float healPercentage)
             // Health Orb, размер 12, цвет LimeGreen
             : base(initialPosition, OrbSize, Color.LimeGreen)
         {
-            HealAmount = healPercentage; // Процент от MaxHealth
+            HealAmount = healPercentage;
             IsActive = true;
         }
 
         // Требуется для реализации абстрактного метода из GameObject
         public override void Update(GameTime gameTime) { /* Логика не используется */ }
 
-        // Метод Update, используемый в Game1.cs
-        // Фрагмент из HealthOrb.cs:
         public void Update(GameTime gameTime, Player player)
         {
             if (!IsActive) return;
@@ -35,7 +31,6 @@ namespace Survive_the_night.Entities
             Vector2 direction = player.Position - Position;
             float distance = direction.Length();
 
-            // !!! ИСПРАВЛЕНИЕ: Значительно уменьшаем радиус притяжения !!!
             const float NewAttractionRadius = 50f;
 
             if (distance < NewAttractionRadius)

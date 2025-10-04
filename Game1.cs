@@ -101,7 +101,7 @@ namespace Survive_the_night
             _playingCardsWeapon = new PlayingCards(_player);
 
             _weapons.Add(_playingCardsWeapon);
-            // !!! ДОБАВЛЕНО: MolotovCocktail для тестирования !!!
+            // !!! MolotovCocktail для тестирования добавлен !!!
             
 
             WorldSize = new Vector2(3000, 3000);
@@ -185,8 +185,17 @@ namespace Survive_the_night
                             }
                             else
                             {
-                                // Обычный дроп
+                                // Обычный дроп опыта
                                 _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
+
+                                // !!! ИСПРАВЛЕНИЕ: Откат к исходным значениям: 5% шанс, 10% лечение !!!
+                                if (Game1.Random.NextDouble() < 0.05) // <-- Откат: 5% шанс
+                                {
+                                    // Откат: 0.1f - 10% от MaxHealth игрока
+                                    _healthOrbs.Add(new HealthOrb(enemy.Position, 0.1f));
+                                }
+                                // ------------------------------------------------
+
                             }
 
                             _enemies.RemoveAt(i);
@@ -207,11 +216,11 @@ namespace Survive_the_night
 
                         if (collidingEnemies.Any())
                         {
-                            // Наносим урон игроку, если он не неуязвим (по умолчанию 1 ед. урона)
-                            // Предполагается, что Player.IsInvulnerable и Player.TakeDamage(int) существуют.
                             if (!_player.IsInvulnerable)
                             {
-                                _player.TakeDamage(1);
+                                // !!! ИСПРАВЛЕНИЕ: ИСПОЛЬЗУЕМ DAMAGE ВРАГА !!!
+                                // Наносим урон, равный урону первого столкнувшегося врага
+                                _player.TakeDamage(collidingEnemies.First().Damage);
                             }
                         }
                     }
@@ -231,10 +240,12 @@ namespace Survive_the_night
                         if (!orb.IsActive) { _player.GainExperience(orb.Value); _experienceOrbs.RemoveAt(i); }
                     }
 
+                    // Обновление и сбор хилок
                     for (int i = _healthOrbs.Count - 1; i >= 0; i--)
                     {
                         var orb = _healthOrbs[i];
                         if (orb.IsActive) { orb.Update(gameTime, _player); }
+                        // При сборе исцеляем игрока
                         if (!orb.IsActive) { _player.Heal(orb.HealAmount * _player.MaxHealth); _healthOrbs.RemoveAt(i); }
                     }
 
@@ -355,7 +366,7 @@ namespace Survive_the_night
                     }
                 }
 
-                // !!! ИСПРАВЛЕНИЕ: ОТРИСОВКА МОЛОТОВА !!!
+                // !!! ОТРИСОВКА МОЛОТОВА !!!
                 else if (weapon is MolotovCocktail molotov)
                 {
                     foreach (var area in molotov.ActiveAreas)
