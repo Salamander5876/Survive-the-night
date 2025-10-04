@@ -1,30 +1,26 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Survive_the_night.Entities; // Для доступа к игроку
-using Survive_the_night.Weapons; // Для доступа к PlayingCards
+using Survive_the_night.Entities;
+using Survive_the_night.Weapons;
 
 namespace Survive_the_night.Managers
 {
-    // Класс, описывающий одно доступное улучшение
     public class UpgradeOption
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public int Id { get; set; } // Идентификатор для применения эффекта
+        public int Id { get; set; }
         public Color Color { get; set; }
     }
 
-    // Класс, управляющий меню выбора улучшений при повышении уровня
     public class LevelUpMenu
     {
         private Player _player;
-        // НОВОЕ ПОЛЕ: Ссылка на наше оружие
         private PlayingCards _cardsWeapon;
         private GraphicsDevice _graphicsDevice;
         private Texture2D _debugTexture;
-        // НОВОЕ ПОЛЕ: Ссылка на шрифт
-        private SpriteFont _font;
+        // УДАЛЕНО: private SpriteFont _font; 
 
         private UpgradeOption[] _currentOptions;
         private const int OptionCount = 3;
@@ -37,22 +33,21 @@ namespace Survive_the_night.Managers
         /// <summary>
         /// Конструктор меню улучшений.
         /// </summary>
-        public LevelUpMenu(Player player, PlayingCards cardsWeapon, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
+        // ИЗМЕНЕНИЕ: Убрали SpriteFont из аргументов
+        public LevelUpMenu(Player player, PlayingCards cardsWeapon, GraphicsDevice graphicsDevice, Texture2D debugTexture)
         {
             _player = player;
-            _cardsWeapon = cardsWeapon; // СОХРАНЯЕМ ССЫЛКУ НА ОРУЖИЕ
+            _cardsWeapon = cardsWeapon;
             _graphicsDevice = graphicsDevice;
             _debugTexture = debugTexture;
-            _font = font; // СОХРАНЯЕМ ССЫЛКУ НА ШРИФТ
             _previousMouseState = Mouse.GetState();
         }
 
-        // ... (Метод GenerateOptions остается прежним) ...
+        // ... (GenerateOptions остается прежним) ...
         public void GenerateOptions()
         {
             _currentOptions = new UpgradeOption[OptionCount];
 
-            // Вариант 1: Увеличение HP (Id = 1, Value = 10)
             _currentOptions[0] = new UpgradeOption
             {
                 Name = "Здоровье +10",
@@ -61,7 +56,6 @@ namespace Survive_the_night.Managers
                 Color = Color.Red
             };
 
-            // Вариант 2: Увеличение скорости (Id = 2, Value = 50f)
             _currentOptions[1] = new UpgradeOption
             {
                 Name = "Скорость +50",
@@ -70,7 +64,6 @@ namespace Survive_the_night.Managers
                 Color = Color.LimeGreen
             };
 
-            // Вариант 3: Урон +1 (Id = 3, Value = 1f)
             _currentOptions[2] = new UpgradeOption
             {
                 Name = "Урон Карт +1",
@@ -80,16 +73,13 @@ namespace Survive_the_night.Managers
             };
         }
 
-        /// <summary>
-        /// Обновляет логику меню (обрабатывает ввод от мыши).
-        /// </summary>
+        // ... (Update остается прежним) ...
         public void Update(GameTime gameTime)
         {
             if (!_player.IsLevelUpPending) return;
 
             MouseState currentMouseState = Mouse.GetState();
 
-            // Если меню еще не сгенерировано (первый вызов)
             if (_currentOptions == null)
             {
                 GenerateOptions();
@@ -118,9 +108,6 @@ namespace Survive_the_night.Managers
             _previousMouseState = currentMouseState;
         }
 
-        /// <summary>
-        /// Применяет выбранное улучшение к игроку или оружию.
-        /// </summary>
         private void ApplyUpgrade(UpgradeOption option)
         {
             switch (option.Id)
@@ -132,19 +119,18 @@ namespace Survive_the_night.Managers
                     _player.ApplyUpgrade(option.Id, 50f);
                     break;
                 case 3: // Урон (Применяется к PlayingCards)
-                    // !!! БУДУЩИЙ КОД: Здесь мы вызовем метод _cardsWeapon.UpgradeDamage()
-                    // Пока просто выводим в консоль
-                    System.Diagnostics.Debug.WriteLine($"Улучшение: {option.Name} (Урон) применено.");
+                    // БУДУЩИЙ КОД: Здесь мы вызовем метод _cardsWeapon.UpgradeDamage()
+                    System.Diagnostics.Debug.WriteLine($"Улучшение: {option.Name} (Урон) применено. (Эффект не реализован)");
                     break;
             }
         }
 
 
         /// <summary>
-        /// Отрисовывает меню улучшений.
+        /// Отрисовывает меню улучшений (только прямоугольники).
         /// </summary>
-        // ИЗМЕНЕНИЕ: Метод принимает SpriteFont, но делает его необязательным, если мы не можем его передать (на всякий случай)
-        public void Draw(SpriteBatch spriteBatch, SpriteFont font = null)
+        // ИЗМЕНЕНИЕ: Метод Draw больше не принимает SpriteFont
+        public void Draw(SpriteBatch spriteBatch)
         {
             if (!_player.IsLevelUpPending || _currentOptions == null) return;
 
@@ -155,48 +141,21 @@ namespace Survive_the_night.Managers
                 Rectangle optionRect = GetOptionRectangle(i, menuArea);
                 UpgradeOption option = _currentOptions[i];
 
-                // Рисуем прямоугольник улучшения с проверкой наведения
                 Color boxColor = option.Color * 0.7f;
                 MouseState currentMouseState = Mouse.GetState();
 
                 if (optionRect.Contains(currentMouseState.Position))
                 {
-                    boxColor = option.Color * 1.0f; // Ярче при наведении
+                    boxColor = option.Color * 1.0f;
                 }
 
                 spriteBatch.Draw(_debugTexture, optionRect, boxColor);
 
                 // Рисуем рамку
-                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y, optionRect.Width, 2), Color.White); // Верх
-                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y + OptionHeight - 2, optionRect.Width, 2), Color.White); // Низ
+                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y, optionRect.Width, 2), Color.White);
+                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y + OptionHeight - 2, optionRect.Width, 2), Color.White);
 
-                // === НОВОЕ: Отрисовка текста ===
-                if (font != null)
-                {
-                    // Название улучшения
-                    spriteBatch.DrawString(
-                        font,
-                        option.Name,
-                        new Vector2(optionRect.X + 10, optionRect.Y + 10),
-                        Color.White
-                    );
-
-                    // Описание улучшения
-                    spriteBatch.DrawString(
-                        font,
-                        option.Description,
-                        new Vector2(optionRect.X + 10, optionRect.Y + 35),
-                        Color.LightGray
-                    );
-
-                    // Уровень игрока (для контекста)
-                    spriteBatch.DrawString(
-                        font,
-                        $"Уровень: {_player.Level}",
-                        new Vector2(optionRect.X + 10, optionRect.Y + 55),
-                        Color.Cyan
-                    );
-                }
+                // УДАЛЕНО: Код отрисовки текста
             }
         }
 
