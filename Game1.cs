@@ -3,8 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System; // Для Random
+using System;
+using System.Linq;
 
+// Убедитесь, что все эти пространства имен существуют
 using Survive_the_night.Entities;
 using Survive_the_night.Weapons;
 using Survive_the_night.Projectiles;
@@ -12,13 +14,36 @@ using Survive_the_night.Managers;
 
 namespace Survive_the_night
 {
+    /// <summary>
+    /// Перечисление состояний игры. Определено ТОЛЬКО здесь, в корневом пространстве имен.
+    /// </summary>
+    public enum GameState
+    {
+        MainMenu,
+        Playing,
+        LevelUp,
+        GameOver,
+        Roulette // Состояние для Рулетки-Автомата
+    }
+
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        // --- СТАТИЧЕСКИЕ ПОЛЯ ДЛЯ ГЛОБАЛЬНОГО ДОСТУПА ---
+        public static System.Random Random { get; private set; } = new System.Random();
+        public static Vector2 WorldSize { get; private set; }
+        public static List<Enemy> CurrentEnemies { get; private set; }
+
+        /// <summary>
+        /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
+        /// </summary>
+        public static GameState CurrentState = GameState.MainMenu;
+        // ------------------------------------------------
+
         // Game State Management
-        private GameState _currentGameState;
+        private GameState _currentGameState; // Локальная переменная для использования в switch
         private MainMenu _mainMenu;
 
         // Game World Entities
@@ -27,19 +52,19 @@ namespace Survive_the_night
         private Camera _camera;
         private List<Enemy> _enemies = new List<Enemy>();
         private List<ExperienceOrb> _experienceOrbs = new List<ExperienceOrb>();
-        // НОВОЕ ПОЛЕ: Список для хилок
         private List<HealthOrb> _healthOrbs = new List<HealthOrb>();
-        // Для логики выпадения
-        private System.Random _random = new System.Random();
+        // private System.Random _random = new System.Random(); // Используем статический Game1.Random
 
         // HUD Data
         private float _survivalTime = 0f;
-        private int _killCount = 0; // Счетчик убитых врагов
+        private int _killCount = 0;
 
         // Weapons and Upgrades
         private PlayingCards _playingCardsWeapon;
         private List<Weapon> _weapons = new List<Weapon>();
         private LevelUpMenu _levelUpMenu;
+        private RouletteManager _rouletteManager; // МЕНЕДЖЕР РУЛЕТКИ
+
 
         // Content
         private Texture2D _debugTexture;
@@ -58,19 +83,29 @@ namespace Survive_the_night
 
         protected override void Initialize()
         {
+            // Синхронизация локального и статического состояния
             _currentGameState = GameState.MainMenu;
+            Game1.CurrentState = GameState.MainMenu;
 
             Vector2 initialPlayerPosition = new Vector2(
                 _graphics.PreferredBackBufferWidth / 2,
                 _graphics.PreferredBackBufferHeight / 2
             );
-            _player = new Player(initialPlayerPosition);
 
-            _spawnManager = new SpawnManager(_player, _enemies, GraphicsDevice.Viewport);
+            // Предполагается, что эти классы существуют и корректно инициализируются
+            _player = new Player(initialPlayerPosition);
+            _spawnManager = new SpawnManager(_enemies, _player);
             _camera = new Camera(_player, GraphicsDevice.Viewport);
 
+            // Инициализация оружия
             _playingCardsWeapon = new PlayingCards(_player);
+
             _weapons.Add(_playingCardsWeapon);
+            // !!! ДОБАВЛЕНО: MolotovCocktail для тестирования !!!
+            
+
+            WorldSize = new Vector2(3000, 3000);
+            CurrentEnemies = _enemies; // Инициализация статического списка врагов
 
             base.Initialize();
         }
@@ -81,10 +116,13 @@ namespace Survive_the_night
             _debugTexture = new Texture2D(GraphicsDevice, 1, 1);
             _debugTexture.SetData(new[] { Color.White });
 
+            // Загрузка шрифта
             _font = Content.Load<SpriteFont>("Fonts/Default");
 
+            // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
-            _levelUpMenu = new LevelUpMenu(_player, _playingCardsWeapon, GraphicsDevice, _debugTexture, _font);
+            _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
+            _rouletteManager = new RouletteManager(_levelUpMenu); // ИНИЦИАЛИЗАЦИЯ РУЛЕТКИ
         }
 
         protected override void Update(GameTime gameTime)
@@ -92,10 +130,14 @@ namespace Survive_the_night
             if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            // Обновляем приватное состояние из статического для работы switch'а
+            _currentGameState = Game1.CurrentState;
+
             switch (_currentGameState)
             {
                 case GameState.MainMenu:
-                    _currentGameState = _mainMenu.Update(gameTime);
+                    // MainMenu.Update должен возвращать новое GameState
+                    Game1.CurrentState = (GameState)_mainMenu.Update(gameTime);
                     break;
 
                 case GameState.Playing:
@@ -104,12 +146,14 @@ namespace Survive_the_night
                     // --- ПРОВЕРКИ СОСТОЯНИЯ ---
                     if (!_player.IsAlive)
                     {
-                        _currentGameState = GameState.GameOver;
+                        Game1.CurrentState = GameState.GameOver;
                         return;
                     }
+
+                    // Обычный LevelUp
                     if (_player.IsLevelUpPending)
                     {
-                        _currentGameState = GameState.LevelUp;
+                        Game1.CurrentState = GameState.LevelUp;
                         return;
                     }
 
@@ -118,85 +162,100 @@ namespace Survive_the_night
                     _camera.Follow();
                     _spawnManager.Update(gameTime);
 
-                    // Обновление врагов
                     for (int i = _enemies.Count - 1; i >= 0; i--)
                     {
-                        var enemy = _enemies[i];
-                        if (enemy.IsAlive)
-                        {
-                            enemy.Update(gameTime);
-                            // Проверка столкновения враг-игрок
-                            if (enemy.GetBounds().Intersects(_player.GetBounds()))
-                            {
-                                _player.TakeDamage(10);
-                            }
-                        }
-                        else
+                        Enemy enemy = _enemies[i];
+                        enemy.Update(gameTime);
+
+                        if (!enemy.IsAlive)
                         {
                             _killCount++;
-                            _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
 
-                            // НОВАЯ ЛОГИКА: Выпадение хилки с вероятностью 15%
-                            if (_random.NextDouble() < 0.15)
+                            // !!! ДРОП ЭЛИТНОГО ВРАГА: ЗАПУСК РУЛЕТКИ !!!
+                            if (enemy is EliteEnemy)
                             {
-                                // 0.20f = 20% от максимального здоровья
-                                _healthOrbs.Add(new HealthOrb(enemy.Position, 0.20f));
+                                // Дроп 10 орбов опыта
+                                for (int j = 0; j < 10; j++) // Предполагаем 10, или используем EliteEnemy.ExperienceOrbCount
+                                {
+                                    _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
+                                }
+
+                                // 2. Запуск Рулетки-Автомата (меняет Game1.CurrentState на Roulette)
+                                _rouletteManager.StartRoulette();
+                            }
+                            else
+                            {
+                                // Обычный дроп
+                                _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
                             }
 
                             _enemies.RemoveAt(i);
                         }
                     }
 
-                    // Обновление оружия
+                    // --------------------------------------------------------
+                    // !!! ИСПРАВЛЕНИЕ: ОБРАБОТКА КОЛЛИЗИЙ И УРОНА ОТ ВРАГОВ !!!
+                    if (_player.IsAlive)
+                    {
+                        var playerBounds = GetBounds(_player);
+
+                        // Находим всех живых врагов, которые пересекаются с игроком
+                        var collidingEnemies = _enemies.Where(enemy =>
+                            enemy.IsAlive &&
+                            GetBounds(enemy).Intersects(playerBounds)
+                        ).ToList();
+
+                        if (collidingEnemies.Any())
+                        {
+                            // Наносим урон игроку, если он не неуязвим (по умолчанию 1 ед. урона)
+                            // Предполагается, что Player.IsInvulnerable и Player.TakeDamage(int) существуют.
+                            if (!_player.IsInvulnerable)
+                            {
+                                _player.TakeDamage(1);
+                            }
+                        }
+                    }
+                    // --------------------------------------------------------
+
+                    // Обновление оружия, орбов опыта и хилок
                     foreach (var weapon in _weapons)
                     {
                         weapon.Update(gameTime);
                         weapon.Attack(gameTime, _enemies);
                     }
 
-                    // Обновление орбов опыта
                     for (int i = _experienceOrbs.Count - 1; i >= 0; i--)
                     {
                         var orb = _experienceOrbs[i];
-                        if (orb.IsActive)
-                        {
-                            orb.Update(gameTime, _player);
-                        }
-
-                        if (!orb.IsActive)
-                        {
-                            _player.GainExperience(orb.Value);
-                            _experienceOrbs.RemoveAt(i);
-                        }
+                        if (orb.IsActive) { orb.Update(gameTime, _player); }
+                        if (!orb.IsActive) { _player.GainExperience(orb.Value); _experienceOrbs.RemoveAt(i); }
                     }
 
-                    // НОВАЯ ЛОГИКА: Обновление и сбор хилок
                     for (int i = _healthOrbs.Count - 1; i >= 0; i--)
                     {
                         var orb = _healthOrbs[i];
-                        if (orb.IsActive)
-                        {
-                            orb.Update(gameTime, _player);
-                        }
-
-                        if (!orb.IsActive)
-                        {
-                            _healthOrbs.RemoveAt(i);
-                        }
+                        if (orb.IsActive) { orb.Update(gameTime, _player); }
+                        if (!orb.IsActive) { _player.Heal(orb.HealAmount * _player.MaxHealth); _healthOrbs.RemoveAt(i); }
                     }
 
-                    Debug.WriteLine($"Уровень: {_player.Level}, Опыт: {_player.CurrentExperience}/{_player.ExperienceToNextLevel}");
                     break;
 
                 case GameState.LevelUp:
+                    if (_levelUpMenu.CurrentOptions.Count == 0) { _levelUpMenu.GenerateOptions(); }
                     _levelUpMenu.Update(gameTime);
                     if (!_player.IsLevelUpPending)
                     {
-                        _currentGameState = GameState.Playing;
+                        Game1.CurrentState = GameState.Playing;
+                        _levelUpMenu.CurrentOptions.Clear();
                     }
                     break;
 
+                case GameState.Roulette: // ОБНОВЛЕНИЕ РУЛЕТКИ
+                    _rouletteManager.Update(gameTime);
+                    break;
+
                 case GameState.GameOver:
+                    // Ничего не делаем, ждем, пока пользователь выйдет
                     break;
             }
 
@@ -218,6 +277,7 @@ namespace Survive_the_night
                 case GameState.Playing:
                 case GameState.LevelUp:
                 case GameState.GameOver:
+                case GameState.Roulette:
                     // --- Отрисовка игрового мира (с камерой) ---
                     _spriteBatch.Begin(transformMatrix: _camera.Transform);
                     DrawWorldObjects();
@@ -231,6 +291,18 @@ namespace Survive_the_night
                     {
                         DrawLevelUpPendingScreen(_spriteBatch);
                         _levelUpMenu.Draw(_spriteBatch, _font);
+                    }
+
+                    if (_currentGameState == GameState.Roulette) // ОТРИСОВКА РУЛЕТКИ
+                    {
+                        DrawLevelUpPendingScreen(_spriteBatch); // Затемнение
+                        _rouletteManager.Draw(
+                            _spriteBatch,
+                            _font,
+                            _debugTexture,
+                            GraphicsDevice.Viewport.Width,
+                            GraphicsDevice.Viewport.Height
+                        );
                     }
 
                     if (_currentGameState == GameState.GameOver)
@@ -249,6 +321,7 @@ namespace Survive_the_night
 
         private void DrawWorldObjects()
         {
+            // Отрисовка врагов
             foreach (var enemy in _enemies)
             {
                 if (enemy.IsAlive)
@@ -257,18 +330,21 @@ namespace Survive_the_night
                 }
             }
 
+            // Отрисовка игрока
             Color playerTint = Color.White;
             if (_player.IsInvulnerable)
             {
-                playerTint = Color.White * 0.5f;
+                if ((int)(_survivalTime * 10) % 2 == 0)
+                {
+                    playerTint = Color.Red * 0.5f;
+                }
             }
             _player.Draw(_spriteBatch, _debugTexture, playerTint);
 
+            // --- ОТРИСОВКА ОРУЖИЯ ---
             foreach (var weapon in _weapons)
             {
-                PlayingCards cards = weapon as PlayingCards;
-
-                if (cards != null)
+                if (weapon is PlayingCards cards)
                 {
                     foreach (var card in cards.ActiveProjectiles)
                     {
@@ -278,7 +354,21 @@ namespace Survive_the_night
                         }
                     }
                 }
+
+                // !!! ИСПРАВЛЕНИЕ: ОТРИСОВКА МОЛОТОВА !!!
+                else if (weapon is MolotovCocktail molotov)
+                {
+                    foreach (var area in molotov.ActiveAreas)
+                    {
+                        if (area.IsActive)
+                        {
+                            area.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+                // ---------------------------------
             }
+            // ------------------------
 
             // Отрисовка орбов опыта
             foreach (var orb in _experienceOrbs)
@@ -289,7 +379,7 @@ namespace Survive_the_night
                 }
             }
 
-            // НОВОЕ: Отрисовка хилок
+            // Отрисовка хилок
             foreach (var orb in _healthOrbs)
             {
                 if (orb.IsActive)
@@ -414,10 +504,44 @@ namespace Survive_the_night
 
         private void DrawLevelUpPendingScreen(SpriteBatch spriteBatch)
         {
+            // Затемняет экран, используется для LevelUp и Roulette
             spriteBatch.Draw(
                 _debugTexture,
                 new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
                 Color.Black * 0.6f
+            );
+        }
+
+        // --- НОВЫЙ ВСПОМОГАТЕЛЬНЫЙ МЕТОД: ПОЛУЧЕНИЕ ГРАНИЦ ДЛЯ КОЛЛИЗИИ ---
+        /// <summary>
+        /// Возвращает прямоугольные границы для проверки коллизии. 
+        /// Предполагается, что Player и Enemy имеют свойство Position и размер 48x48 (радиус 24).
+        /// </summary>
+        private Rectangle GetBounds(object obj)
+        {
+            // Размер сущности (радиус)
+            const int Size = 24;
+            Vector2 position = Vector2.Zero;
+
+            if (obj is Player p)
+            {
+                position = p.Position;
+            }
+            else if (obj is Enemy e)
+            {
+                position = e.Position;
+            }
+            else
+            {
+                // Если тип объекта неизвестен, возвращаем пустой прямоугольник
+                return Rectangle.Empty;
+            }
+
+            return new Rectangle(
+                (int)(position.X - Size),
+                (int)(position.Y - Size),
+                Size * 2,
+                Size * 2
             );
         }
     }

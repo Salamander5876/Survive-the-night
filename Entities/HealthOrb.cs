@@ -1,63 +1,54 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Survive_the_night.Entities
 {
-    // Сущность для восстановления здоровья
-    public class HealthOrb
+    public class HealthOrb : GameObject
     {
-        public Vector2 Position { get; private set; }
-        public bool IsActive { get; set; } = true;
-        public float HealingPercentage { get; }
+        private const int OrbSize = 12;
+        private const float AttractionSpeed = 400f; // Скорость притяжения к игроку
 
-        private const float Radius = 10f;
-        private const float AttractionDistance = 150f;
-        private const float PickupDistance = 30f;
-        private const float MovementSpeed = 400f;
+        public bool IsActive { get; set; }
 
-        public Color Color { get; } = Color.LimeGreen;
+        // !!! ИСПРАВЛЕНИЕ ОШИБКИ: Свойство HealAmount !!!
+        public float HealAmount { get; private set; }
 
-        public HealthOrb(Vector2 position, float healingPercentage)
+        public HealthOrb(Vector2 initialPosition, float healPercentage)
+            // Health Orb, размер 12, цвет LimeGreen
+            : base(initialPosition, OrbSize, Color.LimeGreen)
         {
-            Position = position;
-            HealingPercentage = healingPercentage;
+            HealAmount = healPercentage; // Процент от MaxHealth
+            IsActive = true;
         }
 
+        // Требуется для реализации абстрактного метода из GameObject
+        public override void Update(GameTime gameTime) { /* Логика не используется */ }
+
+        // Метод Update, используемый в Game1.cs
+        // Фрагмент из HealthOrb.cs:
         public void Update(GameTime gameTime, Player player)
         {
             if (!IsActive) return;
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            Vector2 directionToPlayer = player.Position - Position;
-            float distance = directionToPlayer.Length();
+            // 1. Притяжение к игроку (если находится в небольшом радиусе)
+            Vector2 direction = player.Position - Position;
+            float distance = direction.Length();
 
-            if (distance < PickupDistance)
+            // !!! ИСПРАВЛЕНИЕ: Значительно уменьшаем радиус притяжения !!!
+            const float NewAttractionRadius = 50f;
+
+            if (distance < NewAttractionRadius)
             {
-                // Игрок подобрал хилку
-                player.Heal(player.MaxHealth * HealingPercentage);
+                direction.Normalize();
+                Position += direction * AttractionSpeed * deltaTime;
+            }
+
+            // 2. Проверка сбора (срабатывает при столкновении)
+            if (GetBounds().Intersects(player.GetBounds()))
+            {
                 IsActive = false;
-                return;
             }
-
-            if (distance < AttractionDistance)
-            {
-                // Притяжение к игроку
-                directionToPlayer.Normalize();
-                Position += directionToPlayer * MovementSpeed * deltaTime;
-            }
-        }
-
-        public void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color color)
-        {
-            if (!IsActive) return;
-
-            // Рисуем хилку (используем квадрат/прямоугольник, как и для других сущностей)
-            spriteBatch.Draw(
-                debugTexture,
-                new Rectangle((int)Position.X - (int)Radius, (int)Position.Y - (int)Radius, (int)Radius * 2, (int)Radius * 2),
-                color
-            );
         }
     }
 }

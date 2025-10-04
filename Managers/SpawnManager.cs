@@ -1,96 +1,123 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics; // НОВОЕ: Для Viewport
 using Survive_the_night.Entities;
-using System;
 using System.Collections.Generic;
-
-// Удаляем 'using SharpDX;'
-// Используем 'using Microsoft.Xna.Framework;'
+using System.Diagnostics;
+using Math = System.Math; // Добавлено для Math.Max, если вы решите его использовать
+using Game1 = Survive_the_night.Game1; // Добавлено для доступа к Game1.Random
 
 namespace Survive_the_night.Managers
 {
-    // Класс, отвечающий за логику спауна врагов
     public class SpawnManager
     {
-        private Player _player;
         private List<Enemy> _enemies;
-        // ИСПРАВЛЕНО: Явно указываем тип Viewport из MonoGame
-        private Viewport _viewport;
+        private Player _player;
 
-        private Random _random = new Random();
-
+        // --- Поля для ОБЫЧНЫХ КРАСНЫХ ВРАГОВ ---
+        private float _initialSpawnCooldown = 1.0f;
+        private float _currentSpawnCooldown;
         private float _spawnTimer = 0f;
-        private const float BaseSpawnInterval = 1.0f;
 
-        // Зона за пределами экрана, где могут появляться враги
-        private const float SpawnDistance = 100f;
+        // Масштабирование сложности
+        private float _gameTimeElapsed = 0f;
+        private float _difficultyMultiplier = 1.0f;
+        private const float DifficultyInterval = 60f; // Увеличение каждые 60 секунд
+        private const float DifficultyIncrease = 1.0f; // +100% частоты в минуту
 
-        // Конструктор: ИСПРАВЛЕНО - явно указываем тип Viewport в аргументах
-        public SpawnManager(Player player, List<Enemy> enemies, Viewport viewport)
+        // --- Поля для ЭЛИТНЫХ СИНИХ ВРАГОВ ---
+        private float _eliteSpawnTimer = 0f;
+        private const float ELITE_SPAWN_COOLDOWN = 60f; // Например, 1 элитный враг в минуту
+
+        // ------------------------------------
+
+        public SpawnManager(List<Enemy> enemies, Player player)
         {
-            _player = player;
             _enemies = enemies;
-            _viewport = viewport;
+            _player = player;
+            _currentSpawnCooldown = _initialSpawnCooldown;
         }
 
-        // Главный метод обновления
         public void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // --- 1. ЛОГИКА МАСШТАБИРОВАНИЯ СЛОЖНОСТИ (КРАСНЫЕ ВРАГИ) ---
+            _gameTimeElapsed += deltaTime;
+            if (_gameTimeElapsed >= DifficultyInterval)
+            {
+                // Увеличиваем множитель
+                _difficultyMultiplier += DifficultyIncrease;
+                _gameTimeElapsed -= DifficultyInterval;
+            }
+
+            // Расчет текущего кулдауна
+            _currentSpawnCooldown = _initialSpawnCooldown / _difficultyMultiplier;
             _spawnTimer -= deltaTime;
 
             if (_spawnTimer <= 0f)
             {
-                SpawnEnemy();
-                _spawnTimer = BaseSpawnInterval;
+                // Создание нового КРАСНОГО врага
+                Vector2 spawnPos = GetSpawnPosition(_player);
+                // Предполагается, что конструктор Enemy(Vector2, Player) существует
+                Enemy newEnemy = new Enemy(spawnPos, _player);
+                _enemies.Add(newEnemy);
+
+                // Сброс таймера
+                _spawnTimer = _currentSpawnCooldown;
+            }
+
+            // --- 2. ИСПРАВЛЕННАЯ ЛОГИКА СПАВНА ЭЛИТНОГО СИНЕГО ВРАГА (РАЗ В МИНУТУ) ---
+
+            // !!! ИСПРАВЛЕНО: Прибавляем время к таймеру !!!
+            _eliteSpawnTimer += deltaTime;
+
+            // !!! ИСПРАВЛЕНО: Сравниваем с кулдауном !!!
+            if (_eliteSpawnTimer >= ELITE_SPAWN_COOLDOWN)
+            {
+                // Используем GetSpawnPosition, так как GetRandomSpawnPosition у вас не определен
+                Vector2 spawnPosition = GetSpawnPosition(_player);
+
+                // 2. Создание EliteEnemy
+                // Предполагается, что конструктор EliteEnemy(Vector2) существует
+                _enemies.Add(new EliteEnemy(spawnPosition, _player));
+
+                Debug.WriteLine("ЭЛИТНЫЙ ВРАГ ПОЯВИЛСЯ!");
+
+                // Сброс таймера на 0 или вычитание кулдауна
+                _eliteSpawnTimer = 0f;
+
+                // Опционально: уменьшить кулдаун для следующего элитника
+                // ELITE_SPAWN_COOLDOWN = Math.Max(30f, ELITE_SPAWN_COOLDOWN - 5f);
             }
         }
 
-        private void SpawnEnemy()
+        // --- МЕТОД: Генерация позиции за пределами зоны игрока ---
+        private Vector2 GetSpawnPosition(Player player)
         {
-            // 1. Определяем случайное место спауна за экраном
-            Vector2 spawnPosition = GetRandomSpawnPosition();
+            const float MinSpawnDistance = 600f;
+            const float MaxSpawnDistance = 900f;
 
-            // 2. Создаем нового врага и добавляем его в список
-            Enemy newEnemy = new Enemy(spawnPosition, _player);
-            _enemies.Add(newEnemy);
+            float spawnDistance = (float)Game1.Random.NextDouble() * (MaxSpawnDistance - MinSpawnDistance) + MinSpawnDistance;
+            float angle = (float)Game1.Random.NextDouble() * MathHelper.TwoPi;
+
+            Vector2 offset = new Vector2(
+                (float)System.Math.Cos(angle) * spawnDistance,
+                (float)System.Math.Sin(angle) * spawnDistance
+            );
+
+            Vector2 spawnPosition = player.Position + offset;
+
+            // Проверка на выход за границы мира 
+            spawnPosition.X = MathHelper.Clamp(spawnPosition.X, 0, Game1.WorldSize.X);
+            spawnPosition.Y = MathHelper.Clamp(spawnPosition.Y, 0, Game1.WorldSize.Y);
+
+            return spawnPosition;
         }
 
+        // !!! ДОБАВЛЕНО: Определение GetRandomSpawnPosition, как было в вашем Debug.WriteLine
+        // Но используем GetSpawnPosition, чтобы не дублировать код
         private Vector2 GetRandomSpawnPosition()
         {
-            float screenWidth = _viewport.Width;
-            float screenHeight = _viewport.Height;
-
-            int side = _random.Next(4);
-
-            float x = 0;
-            float y = 0;
-
-            // Расстояние от края экрана. _player.Size теперь доступен (public get)
-            float offset = _player.Size + SpawnDistance;
-
-            switch (side)
-            {
-                case 0: // Сверху
-                    // ИСПРАВЛЕНО: Теперь NextFloat должен быть доступен
-                    x = _random.NextFloat(-offset, screenWidth + offset);
-                    y = -offset;
-                    break;
-                case 1: // Снизу
-                    x = _random.NextFloat(-offset, screenWidth + offset);
-                    y = screenHeight + offset;
-                    break;
-                case 2: // Слева
-                    x = -offset;
-                    y = _random.NextFloat(-offset, screenHeight + offset);
-                    break;
-                case 3: // Справа
-                    x = screenWidth + offset;
-                    y = _random.NextFloat(-offset, screenHeight + offset);
-                    break;
-            }
-
-            return new Vector2(x, y);
+            return GetSpawnPosition(_player);
         }
     }
 }

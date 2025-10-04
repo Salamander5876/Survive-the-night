@@ -8,36 +8,44 @@ namespace Survive_the_night.Projectiles
     // Базовый класс для всех снарядов
     public abstract class Projectile : GameObject
     {
-        // ИСПРАВЛЕНО: Свойство Damage для чтения из PlayingCards.CheckProjectileCollisions
         public int Damage { get; protected set; }
         public float Speed { get; protected set; }
         public bool IsActive { get; set; } = true;
 
-        // ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Соответствует базовому классу GameObject
-        public Projectile(Vector2 initialPosition, int size, Color color, int damage, float speed)
-            : base(initialPosition, size, color)
+        // Добавлено для пробития (для PlayingCards)
+        public int HitsLeft { get; protected set; }
+
+        // !!! ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Вызывает базовый конструктор GameObject !!!
+        // Добавлен аргумент hitsLeft для MolotovProjectile и PlayingCard
+        public Projectile(Vector2 initialPosition, int size, Color color, int damage, float speed, int hitsLeft)
+            : base(initialPosition, size, color) // Вызов конструктора GameObject
         {
             Damage = damage;
             Speed = speed;
+            HitsLeft = hitsLeft;
         }
 
-        // ИСПРАВЛЕНО: Реализация абстрактного метода GameObject.Update
+        // Реализация абстрактного метода Update
         public override void Update(GameTime gameTime)
         {
-            // Используется PlayingCard.Update(GameTime)
+            // Этот метод будет переопределен в PlayingCard и MolotovProjectile
         }
 
-        // ДОБАВЛЕНО: Этот метод будет использоваться в PlayingCards для запуска логики полета
-        public virtual void Update(GameTime gameTime, Vector2 direction)
+        // Метод для логики пробития
+        public virtual void HitTarget()
         {
-            // Потомок (PlayingCard) реализует здесь всю логику полета.
+            HitsLeft--;
+            if (HitsLeft <= 0)
+            {
+                IsActive = false;
+            }
         }
 
         protected virtual void OnHitEnemy(Enemy enemy)
         {
             // ПРЕДПОЛОЖЕНИЕ: У класса Enemy есть метод TakeDamage(int)
-            enemy.TakeDamage(Damage);
-            IsActive = false;
+            // enemy.TakeDamage(Damage);
+            // HitTarget(); 
         }
 
         // ПРИМЕЧАНИЕ: Методы Draw и GetBounds наследуются от GameObject

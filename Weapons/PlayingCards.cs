@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿// Weapons/PlayingCards.cs
+
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
@@ -8,40 +10,41 @@ namespace Survive_the_night.Weapons
 {
     public class PlayingCards : Weapon
     {
-        // ИСПРАВЛЕНО: Используем 'new' для скрытия Weapon.Damage, 
-        // чтобы LevelUpMenu мог к нему обратиться. 
-        public new int Damage { get; private set; }
-
-        private float _attackTimer = 0f;
-
+        public int NumCards { get; private set; } = 1;
+        public bool IsPiercing { get; private set; } = false;
+        // !!! НОВОЕ СВОЙСТВО: Дальность атаки !!!
+        public float Range { get; private set; } = 0.20f; // Начальная дальность в 300 единиц
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
 
-        // ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Передаем начальные значения в Weapon
-        // ИСХОДНЫЕ ЗНАЧЕНИЯ: 0.5s кулдаун, 1 урон.
         public PlayingCards(Player player) : base(player, 0.5f, 1)
         {
-            // Теперь Damage инициализируется в базовом классе Weapon, но мы хотим, 
-            // чтобы LevelUpMenu использовал нашу публичную версию, 
-            // поэтому вручную устанавливаем нашу публичную версию.
-            this.Damage = base.Damage;
         }
 
-        public void UpgradeDamage(int amount)
+        public override void LevelUp()
         {
-            this.Damage += amount;
+            if (Level >= MAX_LEVEL) return;
+
+            Level++;
+
+            Damage += 100;
+            NumCards += 1;
+
+            if (Level >= 7)
+            {
+                IsPiercing = true;
+            }
         }
 
         public override void Update(GameTime gameTime)
         {
-            base.Update(gameTime); // Обновляем таймер в базовом классе
+            base.Update(gameTime);
 
-            // Обновление всех активных снарядов
             for (int i = ActiveProjectiles.Count - 1; i >= 0; i--)
             {
                 var card = ActiveProjectiles[i];
                 if (card.IsActive)
                 {
-                    card.Update(gameTime); // Обновление Projectile.Update(GameTime)
+                    card.Update(gameTime);
                 }
                 else
                 {
@@ -54,16 +57,32 @@ namespace Survive_the_night.Weapons
         {
             if (CooldownTimer <= 0f)
             {
-                Enemy target = FindClosestEnemy(enemies);
-
-                if (target != null)
+                for (int i = 0; i < NumCards; i++)
                 {
-                    // ПРЕДПОЛОЖЕНИЕ: PlayingCard имеет Size=16 и Color=Color.Red
-                    PlayingCard card = new PlayingCard(Player.Position, 16, Color.Red, this.Damage, 500f, target.Position);
-                    ActiveProjectiles.Add(card);
+                    Enemy target = FindClosestEnemy(enemies);
 
-                    CooldownTimer = CooldownTime; // Сброс таймера из базового класса
+                    if (target != null)
+                    {
+                        Vector2 offset = new Vector2(
+                            (float)Game1.Random.NextDouble() * 10 - 5,
+                            (float)Game1.Random.NextDouble() * 10 - 5
+                        );
+
+                        // PlayingCard должен принимать параметр для пробивания
+                        PlayingCard card = new PlayingCard(
+                            Player.Position + offset,
+                            16,
+                            Color.Red,
+                            this.Damage,
+                            500f,
+                            target.Position,
+                            this.IsPiercing ? int.MaxValue : 1 // 1-цель или бесконечно
+                        );
+                        ActiveProjectiles.Add(card);
+                    }
                 }
+
+                CooldownTimer = CooldownTime;
             }
 
             CheckProjectileCollisions(enemies);
@@ -74,25 +93,55 @@ namespace Survive_the_night.Weapons
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = enemies[i];
-                // ПРЕДПОЛОЖЕНИЕ: У класса Enemy есть свойство IsAlive
                 if (!enemy.IsAlive) continue;
 
                 for (int j = ActiveProjectiles.Count - 1; j >= 0; j--)
                 {
+                    // Предполагаем, что PlayingCard является Projectile
                     Projectile projectile = ActiveProjectiles[j];
+
                     if (!projectile.IsActive) continue;
 
                     if (projectile.GetBounds().Intersects(enemy.GetBounds()))
                     {
-                        // Столкновение!
-                        // Используем доступное свойство Damage из Projectile
                         enemy.TakeDamage(projectile.Damage);
-                        projectile.IsActive = false;
 
-                        break;
+                        // Логика пробивания (projectile.HitsLeft - 1)
+                        if (IsPiercing)
+                        {
+                            // Если пробивает, projectile.HitsLeft остается > 0
+                        }
+                        else
+                        {
+                            projectile.IsActive = false; // Иначе удаляем
+                        }
+
+                        if (!projectile.IsActive) break; // Если карта удалена, переходим к следующему врагу
                     }
                 }
             }
+        }
+        // !!! НОВЫЙ МЕТОД: Поиск ближайшего врага с ограничением дальности !!!
+        protected Enemy FindClosestEnemyInRange(List<Enemy> enemies, float maxRange)
+        {
+            float maxRangeSquared = maxRange * maxRange;
+            float minDistanceSquared = float.MaxValue;
+            Enemy closestEnemy = null;
+
+            foreach (var enemy in enemies)
+            {
+                if (!enemy.IsAlive) continue;
+
+                float distanceSquared = Vector2.DistanceSquared(Player.Position, enemy.Position);
+
+                // Если враг ближе, чем максимальная дальность И ближе, чем предыдущий найденный
+                if (distanceSquared < maxRangeSquared && distanceSquared < minDistanceSquared)
+                {
+                    minDistanceSquared = distanceSquared;
+                    closestEnemy = enemy;
+                }
+            }
+            return closestEnemy;
         }
     }
 }

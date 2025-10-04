@@ -3,209 +3,234 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
 using Survive_the_night.Weapons;
-using System.Diagnostics; // Для System.Diagnostics.Debug.WriteLine
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Survive_the_night.Managers
 {
     public class UpgradeOption
     {
-        public string Name { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
-        public int Id { get; set; }
-        public Color Color { get; set; }
+        public System.Action ApplyUpgrade { get; set; }
     }
 
     public class LevelUpMenu
     {
         private Player _player;
-        private PlayingCards _cardsWeapon;
-        private GraphicsDevice _graphicsDevice;
+        private List<Weapon> _weapons;
         private Texture2D _debugTexture;
         private SpriteFont _font;
+        private GraphicsDevice _graphicsDevice;
 
-        private UpgradeOption[] _currentOptions;
-        private const int OptionCount = 3;
-        private const int OptionHeight = 80;
-        private const int OptionWidth = 300;
-        private const int OptionSpacing = 20;
-
+        // Переменные состояния для надежного ввода с клавиатуры и мыши
+        private KeyboardState _previousKeyboardState;
         private MouseState _previousMouseState;
 
-        /// <summary>
-        /// Конструктор меню улучшений.
-        /// </summary>
-        public LevelUpMenu(Player player, PlayingCards cardsWeapon, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
+        // Используем статический Random из Game1
+        private System.Random _random => Game1.Random;
+
+        public List<UpgradeOption> CurrentOptions { get; private set; } = new List<UpgradeOption>();
+        public bool IsVisible => _player.IsLevelUpPending;
+
+        public LevelUpMenu(Player player, List<Weapon> allWeapons, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
             _player = player;
-            _cardsWeapon = cardsWeapon;
+            _weapons = allWeapons;
             _graphicsDevice = graphicsDevice;
             _debugTexture = debugTexture;
             _font = font;
-            _previousMouseState = Mouse.GetState();
         }
 
-        // ----------------- ЛОГИКА -----------------
-
-        /// <summary>
-        /// Генерирует три случайных или фиксированных улучшения для выбора.
-        /// </summary>
         public void GenerateOptions()
-        {
-            _currentOptions = new UpgradeOption[OptionCount];
-
-            // Фиксированные опции для начала разработки
-            _currentOptions[0] = new UpgradeOption
-            {
-                Name = "Здоровье +10",
-                Description = "Увеличивает максимальное HP на 10 и лечит.",
-                Id = 1,
-                Color = Color.Red
-            };
-
-            _currentOptions[1] = new UpgradeOption
-            {
-                Name = "Скорость +50",
-                Description = "Увеличивает скорость передвижения на 50.",
-                Id = 2,
-                Color = Color.LimeGreen
-            };
-
-            _currentOptions[2] = new UpgradeOption
-            {
-                Name = "Урон Карт +1",
-                Description = "Увеличивает урон метательных карт на 1.",
-                Id = 3,
-                Color = Color.Gold
-            };
-        }
-
-        /// <summary>
-        /// **МЕТОД, ВЫЗЫВАЮЩИЙ ОШИБКУ:** Обновляет логику меню и обрабатывает выбор.
-        /// </summary>
-        public void Update(GameTime gameTime)
         {
             if (!_player.IsLevelUpPending) return;
 
-            MouseState currentMouseState = Mouse.GetState();
+            CurrentOptions.Clear();
+            List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            if (_currentOptions == null)
+            // 1. Улучшение существующего оружия (если уровень < MAX_LEVEL)
+            foreach (var weapon in _weapons.Where(w => w.Level < Weapon.MAX_LEVEL))
             {
-                GenerateOptions();
+                pool.Add(new UpgradeOption
+                {
+                    Title = $"Улучшить {weapon.GetType().Name} (Ур.{weapon.Level + 1})",
+                    Description = GetWeaponUpgradeDescription(weapon),
+                    ApplyUpgrade = () => weapon.LevelUp()
+                });
             }
 
-            Rectangle menuArea = GetMenuArea();
-
-            for (int i = 0; i < OptionCount; i++)
+            // Опция получения Молотова
+            bool hasMolotov = _weapons.Any(w => w is MolotovCocktail);
+            if (!hasMolotov)
             {
-                Rectangle optionRect = GetOptionRectangle(i, menuArea);
-
-                if (optionRect.Contains(currentMouseState.Position))
+                pool.Add(new UpgradeOption
                 {
-                    // Обработка клика мыши (кнопка была отпущена)
-                    if (currentMouseState.LeftButton == ButtonState.Released &&
-                        _previousMouseState.LeftButton == ButtonState.Pressed)
-                    {
-                        ApplyUpgrade(_currentOptions[i]);
-                        _player.CompleteLevelUp();
-                        _currentOptions = null;
+                    Title = "Взять Коктейль Молотова",
+                    Description = "Добавляет новое метательное оружие: бросает бутылки, создающие огненные зоны.",
+                    ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
+                });
+            }
 
-                        break; // Выходим из цикла после выбора
+            // 2. Улучшения игрока
+            pool.Add(new UpgradeOption
+            {
+                Title = "Увеличить Здоровье",
+                Description = $"+{_player.MaxHealth * 0.1f:0} Максимального Здоровья",
+                ApplyUpgrade = () =>
+                {
+                    int healthIncrease = (int)(_player.MaxHealth * 1.1f) - _player.MaxHealth;
+                    _player.MaxHealth += healthIncrease;
+                    _player.Heal(healthIncrease);
+                }
+            });
+            pool.Add(new UpgradeOption
+            {
+                Title = "Увеличить Скорость",
+                Description = "+10% Скорости Передвижения",
+                ApplyUpgrade = () => _player.BaseSpeed *= 1.1f
+            });
+
+            // 3. Выбор 3 случайных уникальных опций
+            int count = Math.Min(3, pool.Count);
+
+            if (pool.Count <= count)
+            {
+                CurrentOptions.AddRange(pool);
+            }
+            else
+            {
+                HashSet<int> indices = new HashSet<int>();
+                while (indices.Count < count)
+                {
+                    indices.Add(_random.Next(0, pool.Count));
+                }
+
+                foreach (int index in indices)
+                {
+                    CurrentOptions.Add(pool[index]);
+                }
+            }
+        }
+
+        private string GetWeaponUpgradeDescription(Weapon weapon)
+        {
+            if (weapon is PlayingCards pc)
+            {
+                string piercing = pc.Level == 6 ? " (Получает пробивание!)" : "";
+                return $"+1 Карта, +1 Урон.{piercing}";
+            }
+            if (weapon is MolotovCocktail mc)
+            {
+                string bottles = (mc.Level % 2 == 1) ? "" : " (+1 Бутылка)";
+                return $"+1 Урон, +15 Площадь.{bottles}";
+            }
+            return "Улучшение характеристик";
+        }
+
+
+        public void Update(GameTime gameTime)
+        {
+            if (!IsVisible) return;
+
+            KeyboardState currentKs = Keyboard.GetState();
+            MouseState currentMs = Mouse.GetState();
+
+            bool choiceMade = false;
+
+            // Определяем размеры и позиции для расчета кликов
+            Vector2 startPosition = new Vector2(50, 50);
+            const int boxHeight = 150;
+            const int boxSpacing = 20;
+            int boxWidth = _graphicsDevice.Viewport.Width - 100;
+
+            // --- 1. Логика выбора с помощью клавиш D1-D3 (только при первом нажатии) ---
+            if (currentKs.IsKeyDown(Keys.D1) && !_previousKeyboardState.IsKeyDown(Keys.D1) && CurrentOptions.Count > 0)
+            {
+                ApplyChoice(0);
+                choiceMade = true;
+            }
+            else if (currentKs.IsKeyDown(Keys.D2) && !_previousKeyboardState.IsKeyDown(Keys.D2) && CurrentOptions.Count > 1)
+            {
+                ApplyChoice(1);
+                choiceMade = true;
+            }
+            else if (currentKs.IsKeyDown(Keys.D3) && !_previousKeyboardState.IsKeyDown(Keys.D3) && CurrentOptions.Count > 2)
+            {
+                ApplyChoice(2);
+                choiceMade = true;
+            }
+
+            // --- 2. Логика выбора с помощью мыши (при клике) ---
+            if (!choiceMade && currentMs.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                Point mousePosition = currentMs.Position;
+
+                for (int i = 0; i < CurrentOptions.Count; i++)
+                {
+                    Rectangle box = new Rectangle(
+                        (int)startPosition.X,
+                        (int)startPosition.Y + i * boxHeight + i * boxSpacing,
+                        boxWidth,
+                        boxHeight
+                    );
+
+                    if (box.Contains(mousePosition))
+                    {
+                        ApplyChoice(i);
+                        choiceMade = true;
+                        break; // Выбираем только одну опцию за клик
                     }
                 }
             }
 
-            _previousMouseState = currentMouseState;
+            // Обновляем состояния для следующего кадра
+            _previousKeyboardState = currentKs;
+            _previousMouseState = currentMs;
         }
 
-        private void ApplyUpgrade(UpgradeOption option)
+        public void ApplyChoice(int index)
         {
-            switch (option.Id)
-            {
-                case 1: // Здоровье
-                    _player.ApplyUpgrade(option.Id, 10f);
-                    break;
-                case 2: // Скорость
-                    _player.ApplyUpgrade(option.Id, 50f);
-                    break;
-                case 3: // Урон (Применяется к PlayingCards)
-                    _cardsWeapon.UpgradeDamage(1); // Реализованное нами улучшение урона
-                    Debug.WriteLine($"Улучшение: {option.Name} (Урон) применено. Новый урон: {_cardsWeapon.Damage}");
-                    break;
-            }
+            CurrentOptions[index].ApplyUpgrade.Invoke();
+            _player.IsLevelUpPending = false;
         }
 
-        // ----------------- ОТРИСОВКА -----------------
-
-        /// <summary>
-        /// Отрисовывает меню улучшений.
-        /// </summary>
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
-            if (!_player.IsLevelUpPending || _currentOptions == null) return;
+            if (!IsVisible) return;
 
-            Rectangle menuArea = GetMenuArea();
+            Vector2 startPosition = new Vector2(50, 50);
+            int boxHeight = 150;
+            int boxWidth = _graphicsDevice.Viewport.Width - 100;
+            const int boxSpacing = 20;
 
-            for (int i = 0; i < OptionCount; i++)
+            spriteBatch.DrawString(font, "ВЫБЕРИТЕ УЛУЧШЕНИЕ", startPosition - new Vector2(0, 40), Color.Yellow);
+
+            // Получаем текущую позицию мыши для выделения
+            Point mousePosition = Mouse.GetState().Position;
+
+            for (int i = 0; i < CurrentOptions.Count; i++)
             {
-                Rectangle optionRect = GetOptionRectangle(i, menuArea);
-                UpgradeOption option = _currentOptions[i];
+                UpgradeOption option = CurrentOptions[i];
+                Rectangle box = new Rectangle((int)startPosition.X, (int)startPosition.Y + i * boxHeight + i * boxSpacing, boxWidth, boxHeight);
 
-                Color boxColor = option.Color * 0.7f;
-                MouseState currentMouseState = Mouse.GetState();
-
-                // Эффект наведения
-                if (optionRect.Contains(currentMouseState.Position))
+                // Фон
+                Color boxColor = Color.DarkBlue;
+                if (box.Contains(mousePosition))
                 {
-                    boxColor = option.Color * 1.0f;
+                    boxColor = Color.DarkSlateGray; // Выделяем при наведении
                 }
 
-                // Отрисовка фона опции
-                spriteBatch.Draw(_debugTexture, optionRect, boxColor);
+                spriteBatch.Draw(_debugTexture, box, boxColor);
 
-                // Рисуем рамку
-                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y, optionRect.Width, 2), Color.White);
-                spriteBatch.Draw(_debugTexture, new Rectangle(optionRect.X, optionRect.Y + OptionHeight - 2, optionRect.Width, 2), Color.White);
+                // Текст
+                Vector2 textPos = new Vector2(box.X + 20, box.Y + 10);
+                spriteBatch.DrawString(font, $"[{i + 1}] {option.Title}", textPos, Color.White);
 
-                // Отрисовка имени улучшения
-                spriteBatch.DrawString(font, option.Name,
-                    new Vector2(optionRect.X + 10, optionRect.Y + 5),
-                    Color.White, 0f, Vector2.Zero, 1.0f, SpriteEffects.None, 0f);
-
-                // Отрисовка описания (меньший размер)
-                spriteBatch.DrawString(font, option.Description,
-                    new Vector2(optionRect.X + 10, optionRect.Y + 30),
-                    Color.LightGray, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                textPos.Y += 40;
+                spriteBatch.DrawString(font, option.Description, textPos, Color.LightGray);
             }
-        }
-
-        // ----------------- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ -----------------
-
-        /// <summary>
-        /// Рассчитывает общую область, которую занимает меню.
-        /// </summary>
-        private Rectangle GetMenuArea()
-        {
-            int screenWidth = _graphicsDevice.Viewport.Width;
-            int screenHeight = _graphicsDevice.Viewport.Height;
-
-            int totalHeight = OptionCount * OptionHeight + (OptionCount - 1) * OptionSpacing;
-            int totalWidth = OptionWidth;
-
-            int startX = (screenWidth - totalWidth) / 2;
-            int startY = (screenHeight - totalHeight) / 2;
-
-            return new Rectangle(startX, startY, totalWidth, totalHeight);
-        }
-
-        /// <summary>
-        /// Рассчитывает прямоугольник для конкретной опции.
-        /// </summary>
-        private Rectangle GetOptionRectangle(int index, Rectangle menuArea)
-        {
-            int x = menuArea.X;
-            int y = menuArea.Y + index * (OptionHeight + OptionSpacing);
-
-            return new Rectangle(x, y, OptionWidth, OptionHeight);
         }
     }
 }
