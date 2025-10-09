@@ -1,53 +1,107 @@
-﻿using Microsoft.Xna.Framework;
+﻿// Projectiles/Projectile.cs
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Survive_the_night.Entities;
-using System.Collections.Generic;
 
 namespace Survive_the_night.Projectiles
 {
-    // Базовый класс для всех снарядов
-    public abstract class Projectile : GameObject
+    public abstract class Projectile
     {
+        public Vector2 Position { get; protected set; }
+        public Vector2 Direction { get; protected set; }
+        public int Size { get; protected set; }
+        public Color Color { get; protected set; }
         public int Damage { get; protected set; }
         public float Speed { get; protected set; }
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
+        public int HitsLeft { get; set; }
+        public float Rotation { get; protected set; }
 
-        // Добавлено для пробития (для PlayingCards)
-        public int HitsLeft { get; protected set; }
+        // Добавляем таймер жизни снаряда
+        private float _lifeTimer = 0f;
+        private const float MaxLifeTime = 3f; // Снаряд живет 3 секунды
 
-        // !!! ИСПРАВЛЕННЫЙ КОНСТРУКТОР: Вызывает базовый конструктор GameObject !!!
-        // Добавлен аргумент hitsLeft для MolotovProjectile и PlayingCard
-        public Projectile(Vector2 initialPosition, int size, Color color, int damage, float speed, int hitsLeft)
-            : base(initialPosition, size, color) // Вызов конструктора GameObject
+        protected Projectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1)
         {
+            Position = position;
+            Size = size;
+            Color = color;
             Damage = damage;
             Speed = speed;
+            IsActive = true;
             HitsLeft = hitsLeft;
+            Rotation = 0f;
+
+            Direction = Vector2.Normalize(target - position);
         }
 
-        // Реализация абстрактного метода Update
-        public override void Update(GameTime gameTime)
+        public virtual void Update(GameTime gameTime)
         {
-            // Этот метод будет переопределен в PlayingCard и MolotovProjectile
-        }
+            if (!IsActive) return;
 
-        // Метод для логики пробития
-        public virtual void HitTarget()
-        {
-            HitsLeft--;
-            if (HitsLeft <= 0)
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Обновляем таймер жизни
+            _lifeTimer += deltaTime;
+            if (_lifeTimer >= MaxLifeTime)
             {
                 IsActive = false;
+                return;
             }
+
+            Position += Direction * Speed * deltaTime;
+            Rotation += 180f * deltaTime;
+
+            // УБИРАЕМ проверку границ мира - снаряды теперь уничтожаются только по таймеру
+            // if (Position.X < 0 || Position.X > Game1.WorldSize.X ||
+            //     Position.Y < 0 || Position.Y > Game1.WorldSize.Y)
+            // {
+            //     IsActive = false;
+            // }
         }
 
-        protected virtual void OnHitEnemy(Enemy enemy)
+        public virtual void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)
         {
-            // ПРЕДПОЛОЖЕНИЕ: У класса Enemy есть метод TakeDamage(int)
-            // enemy.TakeDamage(Damage);
-            // HitTarget(); 
+            if (!IsActive) return;
+
+            Rectangle rect = new Rectangle(
+                (int)Position.X - Size / 2,
+                (int)Position.Y - Size / 2,
+                Size,
+                Size
+            );
+
+            spriteBatch.Draw(debugTexture, rect, Color);
         }
 
-        // ПРИМЕЧАНИЕ: Методы Draw и GetBounds наследуются от GameObject
+        public virtual void DrawWithTexture(SpriteBatch spriteBatch, Texture2D texture)
+        {
+            if (!IsActive || texture == null) return;
+
+            Vector2 origin = new Vector2(texture.Width / 2, texture.Height / 2);
+            float scale = (float)Size / texture.Width;
+
+            spriteBatch.Draw(
+                texture,
+                Position,
+                null,
+                Color,
+                MathHelper.ToRadians(Rotation),
+                origin,
+                scale,
+                SpriteEffects.None,
+                0f
+            );
+        }
+
+        public virtual Rectangle GetBounds()
+        {
+            return new Rectangle(
+                (int)Position.X - Size / 2,
+                (int)Position.Y - Size / 2,
+                Size,
+                Size
+            );
+        }
     }
 }

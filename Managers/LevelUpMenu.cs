@@ -59,8 +59,8 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Количество пуль +1 (Ур. {pc.CountLevel}/10)",
-                            Description = $"Текущие: {pc.NumCards}",
+                            Title = $"Количество карт +1 (Ур. {pc.CountLevel}/10)",
+                            Description = $"Текущее количество: {pc.NumCards}",
                             ApplyUpgrade = () => pc.UpgradeCount()
                         });
                     }
@@ -68,18 +68,18 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Урон пули +1 (Ур. {pc.DamageLevel}/10)",
+                            Title = $"Урон карты +1 (Ур. {pc.DamageLevel}/10)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
                     }
-                    if (pc.SpeedLevel < 10)
+                    if (pc.ReloadSpeedLevel < 10)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Скорость пули +1 (Ур. {pc.SpeedLevel}/10)",
-                            Description = $"Текущая скорость: {pc.ProjectileSpeed:0}",
-                            ApplyUpgrade = () => pc.UpgradeSpeed()
+                            Title = $"Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
+                            Description = $"Текущая перезарядка: {pc.CurrentCooldown:0.0}с\nМинимальная: 0.5с",
+                            ApplyUpgrade = () => pc.UpgradeReloadSpeed()
                         });
                     }
                 }
@@ -149,7 +149,7 @@ namespace Survive_the_night.Managers
         {
             if (weapon is PlayingCards pc)
             {
-                return "Пули: выбирайте отдельные улучшения (кол-во/урон/скорость)";
+                return "Игровые карты: выбирайте отдельные улучшения (кол-во/урон/перезарядка)";
             }
             if (weapon is MolotovCocktail mc)
             {

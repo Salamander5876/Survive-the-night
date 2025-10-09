@@ -1,6 +1,5 @@
-﻿// Weapons/PlayingCards.cs
-
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
@@ -11,29 +10,53 @@ namespace Survive_the_night.Weapons
     public class PlayingCards : Weapon
     {
         public int NumCards { get; private set; } = 1;
-        public bool IsPiercing { get; private set; } = false;
-        // !!! НОВОЕ СВОЙСТВО: Дальность атаки !!!
-        public float Range { get; private set; } = 0.20f; // Начальная дальность в 300 единиц
+        public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
+        public float ProjectileSpeed { get; private set; } = 250f;
 
-        // Базовая скорость полёта пули
-        public float ProjectileSpeed { get; private set; } = 500f;
+        // НОВОЕ: Базовая перезарядка и улучшение перезарядки
+        private float _baseCooldown = 1.5f;
+        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.1f);
 
-        // Отдельные уровни прокачек (только для отображения и ограничений)
+        // Список текстур для случайного выбора
+        private static List<Texture2D> _cardTextures = new List<Texture2D>();
+
+        // Отдельные уровни прокачек
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
-        public int SpeedLevel { get; private set; } = 0;
+        public int ReloadSpeedLevel { get; private set; } = 0; // ИЗМЕНЕНО: Была SpeedLevel, теперь ReloadSpeedLevel
 
-        // Параметры очереди выстрелов (пуль)
-        private const float ShotIntervalSeconds = 0.1f; // задержка между выстрелами в очереди
-        private const float BurstCooldownSeconds = 1.0f; // задержка между очередями
+        // Параметры очереди выстрелов (используем CurrentCooldown вместо константы)
+        private const float ShotIntervalSeconds = 0.1f;
+        private float BurstCooldownSeconds => CurrentCooldown; // ИСПОЛЬЗУЕМ ТЕКУЩУЮ ПЕРЕЗАРЯДКУ
         private bool _isBurstActive = false;
         private int _shotsFiredInBurst = 0;
         private float _nextShotTimer = 0f;
         private float _burstCooldownTimer = 0f;
 
-        public PlayingCards(Player player) : base(player, 0.5f, 1)
+        // Список врагов, которые уже были поражены каждой картой
+        private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
+
+        public PlayingCards(Player player) : base(player, 1.5f, 1) // Начальная перезарядка 1.5 секунды
         {
+        }
+
+        // Метод для добавления текстур карт
+        public static void AddCardTexture(Texture2D texture)
+        {
+            if (texture != null && !_cardTextures.Contains(texture))
+            {
+                _cardTextures.Add(texture);
+            }
+        }
+
+        // Метод для получения случайной текстуры карты
+        public static Texture2D GetRandomCardTexture()
+        {
+            if (_cardTextures.Count == 0)
+                return null;
+
+            return _cardTextures[Game1.Random.Next(0, _cardTextures.Count)];
         }
 
         public override void LevelUp() { }
@@ -53,11 +76,12 @@ namespace Survive_the_night.Weapons
             DamageLevel++;
         }
 
-        public void UpgradeSpeed()
+        // ИЗМЕНЕНО: Улучшение скорости перезарядки вместо скорости полета
+        public void UpgradeReloadSpeed()
         {
-            if (SpeedLevel >= 10) return;
-            ProjectileSpeed += 50f; // шаг ускорения
-            SpeedLevel++;
+            if (ReloadSpeedLevel >= 10) return;
+            ReloadSpeedLevel++;
+            // Перезарядка автоматически уменьшается через свойство CurrentCooldown
         }
 
         public override void Update(GameTime gameTime)
@@ -73,6 +97,11 @@ namespace Survive_the_night.Weapons
                 }
                 else
                 {
+                    // Удаляем карту из словаря попаданий
+                    if (_hitEnemies.ContainsKey(card))
+                    {
+                        _hitEnemies.Remove(card);
+                    }
                     ActiveProjectiles.RemoveAt(i);
                 }
             }
@@ -82,7 +111,7 @@ namespace Survive_the_night.Weapons
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Обновляем таймер перерыва между очередями
+            // Обновляем таймер перерыва между очередями (используем CurrentCooldown)
             if (_burstCooldownTimer > 0f)
             {
                 _burstCooldownTimer -= deltaTime;
@@ -93,23 +122,25 @@ namespace Survive_the_night.Weapons
             {
                 _isBurstActive = true;
                 _shotsFiredInBurst = 0;
-                _nextShotTimer = 0f; // первый выстрел мгновенно
+                _nextShotTimer = 0f;
             }
 
-            // Если очередь активна — выпускаем пули с интервалом 0.2с
+            // Если очередь активна - выпускаем карты с интервалом
             if (_isBurstActive)
             {
                 _nextShotTimer -= deltaTime;
 
                 while (_nextShotTimer <= 0f && _shotsFiredInBurst < NumCards)
                 {
-                    Enemy target = FindClosestEnemy(enemies);
+                    Enemy target = FindClosestEnemyForCards(enemies);
                     if (target != null)
                     {
                         Vector2 offset = new Vector2(
                             (float)Game1.Random.NextDouble() * 10 - 5,
                             (float)Game1.Random.NextDouble() * 10 - 5
                         );
+
+                        // Создаем карту с пробитием (всегда 3 врага) и случайной текстурой
                         var card = new PlayingCard(
                             Player.Position + offset,
                             16,
@@ -117,20 +148,25 @@ namespace Survive_the_night.Weapons
                             this.Damage,
                             this.ProjectileSpeed,
                             target.Position,
-                            this.IsPiercing ? int.MaxValue : 1
+                            3, // Всегда пробивает 3 врагов
+                            GetRandomCardTexture() // Случайная текстура
                         );
                         ActiveProjectiles.Add(card);
+
+                        // Инициализируем список пораженных врагов для этой карты
+                        _hitEnemies[card] = new List<Enemy>();
+
                         Game1.SFXGunShooting?.Play();
                     }
 
                     _shotsFiredInBurst++;
-                    _nextShotTimer += ShotIntervalSeconds; // планируем следующий кадр очереди
+                    _nextShotTimer += ShotIntervalSeconds;
                 }
 
                 if (_shotsFiredInBurst >= NumCards)
                 {
-                    _isBurstActive = false; // очередь завершена
-                    _burstCooldownTimer = BurstCooldownSeconds; // стартуем перерыв между очередями
+                    _isBurstActive = false;
+                    _burstCooldownTimer = BurstCooldownSeconds; // Используем текущую перезарядку
                 }
             }
 
@@ -139,39 +175,65 @@ namespace Survive_the_night.Weapons
 
         private void CheckProjectileCollisions(List<Enemy> enemies)
         {
-            for (int i = enemies.Count - 1; i >= 0; i--)
+            for (int j = ActiveProjectiles.Count - 1; j >= 0; j--)
             {
-                Enemy enemy = enemies[i];
-                if (!enemy.IsAlive) continue;
+                Projectile projectile = ActiveProjectiles[j];
+                if (!projectile.IsActive) continue;
 
-                for (int j = ActiveProjectiles.Count - 1; j >= 0; j--)
+                // Получаем список врагов, которых уже поразила эта карта
+                List<Enemy> alreadyHit = _hitEnemies.ContainsKey(projectile) ? _hitEnemies[projectile] : new List<Enemy>();
+
+                for (int i = enemies.Count - 1; i >= 0; i--)
                 {
-                    // Предполагаем, что PlayingCard является Projectile
-                    Projectile projectile = ActiveProjectiles[j];
+                    Enemy enemy = enemies[i];
+                    if (!enemy.IsAlive) continue;
 
-                    if (!projectile.IsActive) continue;
+                    // Проверяем, не поражали ли уже этого врага
+                    if (alreadyHit.Contains(enemy)) continue;
 
                     if (projectile.GetBounds().Intersects(enemy.GetBounds()))
                     {
                         enemy.TakeDamage(projectile.Damage);
 
-                        // Логика пробивания (projectile.HitsLeft - 1)
-                        if (IsPiercing)
-                        {
-                            // Если пробивает, projectile.HitsLeft остается > 0
-                        }
-                        else
-                        {
-                            projectile.IsActive = false; // Иначе удаляем
-                        }
+                        // Добавляем врага в список пораженных
+                        alreadyHit.Add(enemy);
+                        _hitEnemies[projectile] = alreadyHit;
 
-                        if (!projectile.IsActive) break; // Если карта удалена, переходим к следующему врагу
+                        // Логика пробивания - уменьшаем счетчик попаданий
+                        projectile.HitsLeft--;
+
+                        // Если достигли 0 попаданий - деактивируем
+                        if (projectile.HitsLeft <= 0)
+                        {
+                            projectile.IsActive = false;
+                            break; // Выходим из цикла по врагам для этой карты
+                        }
                     }
                 }
             }
         }
-        // !!! НОВЫЙ МЕТОД: Поиск ближайшего врага с ограничением дальности !!!
-        protected Enemy FindClosestEnemyInRange(List<Enemy> enemies, float maxRange)
+
+        private Enemy FindClosestEnemyForCards(List<Enemy> enemies)
+        {
+            float minDistance = float.MaxValue;
+            Enemy closestEnemy = null;
+
+            foreach (var enemy in enemies)
+            {
+                if (!enemy.IsAlive) continue;
+
+                float distance = Vector2.Distance(Player.Position, enemy.Position);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestEnemy = enemy;
+                }
+            }
+
+            return closestEnemy;
+        }
+
+        protected Enemy FindClosestEnemyInLimitedRange(List<Enemy> enemies, float maxRange)
         {
             float maxRangeSquared = maxRange * maxRange;
             float minDistanceSquared = float.MaxValue;
@@ -183,7 +245,6 @@ namespace Survive_the_night.Weapons
 
                 float distanceSquared = Vector2.DistanceSquared(Player.Position, enemy.Position);
 
-                // Если враг ближе, чем максимальная дальность И ближе, чем предыдущий найденный
                 if (distanceSquared < maxRangeSquared && distanceSquared < minDistanceSquared)
                 {
                     minDistanceSquared = distanceSquared;

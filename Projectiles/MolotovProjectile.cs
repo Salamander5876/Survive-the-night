@@ -15,8 +15,7 @@ namespace Survive_the_night.Projectiles
         private float _radius;
 
         public MolotovProjectile(Vector2 position, float radius, Color color, int damage)
-            // ИСПРАВЛЕНО: Устанавливаем Size, который будет использоваться для Rectangle
-            : base(position, (int)radius * 2, color, damage, 0f, 0)
+            : base(position, (int)radius * 2, color, damage, 0f, position, 1) // Исправлен конструктор
         {
             _radius = radius;
         }
@@ -34,7 +33,7 @@ namespace Survive_the_night.Projectiles
                 return;
             }
 
-            // !!! ИСПРАВЛЕНО: Теперь наносим периодический урон !!!
+            // Наносим периодический урон
             if (_damageTimer >= _damageCooldown)
             {
                 ApplyDamageToEnemies(Game1.CurrentEnemies);
@@ -42,27 +41,23 @@ namespace Survive_the_night.Projectiles
             }
         }
 
-        // !!! НОВЫЙ МЕТОД: Нанесение урона по области !!!
+        // Нанесение урона по области
         private void ApplyDamageToEnemies(List<Enemy> enemies)
         {
-            // Проверяем всех живых врагов
             foreach (var enemy in enemies)
             {
                 if (!enemy.IsAlive) continue;
 
-                // Используем проверку дистанции, так как это круглый AOE
                 if (Vector2.Distance(Position, enemy.Position) <= _radius)
                 {
-                    // Враг получает урон
                     enemy.TakeDamage(Damage);
                 }
             }
         }
 
-        // !!! ПЕРЕОПРЕДЕЛЕННЫЙ МЕТОД: Возвращаем границы области поражения !!!
+        // Границы области поражения
         public override Rectangle GetBounds()
         {
-            // Границы равны полному диаметру (_radius * 2)
             return new Rectangle(
                (int)(Position.X - _radius),
                (int)(Position.Y - _radius),
@@ -71,8 +66,8 @@ namespace Survive_the_night.Projectiles
            );
         }
 
-        // !!! НОВЫЙ МЕТОД: Отрисовка области поражения !!!
-        public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
+        // ИСПРАВЛЕННЫЙ МЕТОД: Убрали необязательный параметр color
+        public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)
         {
             // Рассчитываем альфа-канал для визуального затухания
             float alpha = 1f - (_burnTimer / _timeToLive);
@@ -80,7 +75,7 @@ namespace Survive_the_night.Projectiles
             // Используем полупрозрачный оранжево-красный цвет
             Color drawColor = Color.OrangeRed * alpha * 0.5f;
 
-            // Вызываем базовую отрисовку, используя правильные границы (круг будет выглядеть как квадрат)
+            // Отрисовываем область
             spriteBatch.Draw(
                 debugTexture,
                 GetBounds(),

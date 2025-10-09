@@ -6,9 +6,12 @@ namespace Survive_the_night.Entities
     public class GoldenHealthOrb : BaseHealthOrb
     {
         private static Texture2D _texture;
+
         public GoldenHealthOrb(Vector2 initialPosition, float healPercentage = 0.5f)
             : base(initialPosition, OrbHeight, Color.Gold, healPercentage) { }
+
         public static void SetTexture(Texture2D texture) { _texture = texture; }
+
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
         {
             if (_texture != null)
@@ -33,6 +36,7 @@ namespace Survive_the_night.Entities
                 base.Draw(spriteBatch, debugTexture, color ?? this.Color);
             }
         }
+
         public override Rectangle GetBounds()
         {
             return new Rectangle(

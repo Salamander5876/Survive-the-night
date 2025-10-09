@@ -12,13 +12,13 @@ namespace Survive_the_night.Entities
         public bool IsAlive => CurrentHealth > 0;
 
         // Прокачка: отдельные уровни для здоровья и бонуса хила сердец
-        public int HealthLevel { get; private set; } = 0; // 0..10
-        public int HeartHealBonusLevel { get; private set; } = 0; // 0..10
-        public float HeartHealBonusPercent => HeartHealBonusLevel * 0.01f; // +1% за уровень
-        public int GoldenHeartBonusLevel { get; private set; } = 0; // 0..10
-        public float GoldenHeartBonusPercent => GoldenHeartBonusLevel * 0.02f; // +2% за уровень
+        public int HealthLevel { get; private set; } = 0;
+        public int HeartHealBonusLevel { get; private set; } = 0;
+        public float HeartHealBonusPercent => HeartHealBonusLevel * 0.01f;
+        public int GoldenHeartBonusLevel { get; private set; } = 0;
+        public float GoldenHeartBonusPercent => GoldenHeartBonusLevel * 0.02f;
 
-        // Таймер, пока игрок неуязвим после получения урона
+        // Таймер неуязвимости
         private float _invulnerabilityTimer = 0f;
         private const float InvulnerabilityDuration = 0.5f;
         public bool IsInvulnerable => _invulnerabilityTimer > 0f;
@@ -34,7 +34,7 @@ namespace Survive_the_night.Entities
         public float MovementSpeed => BaseSpeed;
 
         public Player(Vector2 initialPosition)
-            : base(initialPosition, 24, Color.Blue) // Вызов конструктора GameObject
+            : base(initialPosition, 24, Color.Blue)
         {
             CurrentHealth = MaxHealth;
         }
@@ -71,7 +71,8 @@ namespace Survive_the_night.Entities
                 direction.Normalize();
             }
 
-            Position += direction * speed * deltaTime;
+            // Используем метод Move из GameObject
+            Move(direction * speed * deltaTime);
         }
 
         public void TakeDamage(int damage)
@@ -138,7 +139,7 @@ namespace Survive_the_night.Entities
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Здоровье +{value}");
                     break;
                 case 2: // Скорость
-                    BaseSpeed += value; // Используем BaseSpeed
+                    BaseSpeed += value;
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Скорость +{value}");
                     break;
             }
@@ -158,6 +159,11 @@ namespace Survive_the_night.Entities
         {
             if (HeartHealBonusLevel >= 10) return;
             HeartHealBonusLevel++;
+        }
+
+        public void UpgradeGoldenHeartBonus()
+        {
+            if (GoldenHeartBonusLevel >= 10) return;
             GoldenHeartBonusLevel++;
         }
 

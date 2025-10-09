@@ -98,17 +98,17 @@ namespace Survive_the_night
                 _graphics.PreferredBackBufferHeight / 2
             );
 
-            // Предполагается, что эти классы существуют и корректно инициализируются
             _player = new Player(initialPlayerPosition);
             _spawnManager = new SpawnManager(_enemies, _player);
             _camera = new Camera(_player, GraphicsDevice.Viewport);
+
+            // ВАЖНО: Этот вызов должен быть после создания SpawnManager
+            _spawnManager.SetViewport(GraphicsDevice.Viewport);
 
             // Инициализация оружия
             _playingCardsWeapon = new PlayingCards(_player);
 
             _weapons.Add(_playingCardsWeapon);
-            // !!! MolotovCocktail для тестирования добавлен !!!
-            
 
             WorldSize = new Vector2(3000, 3000);
             CurrentEnemies = _enemies; // Инициализация статического списка врагов
@@ -125,18 +125,30 @@ namespace Survive_the_night
             // Загрузка шрифта
             _font = Content.Load<SpriteFont>("Fonts/Default");
 
-            // Загрузка спрайтов
-            _bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
-            PlayingCard.SetTexture(_bulletTexture);
+            // Загрузка спрайтов карт
+            var cardTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Card1");
+            var cardTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/Card2");
+            var cardTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/Card3");
+            var cardTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Card4");
+
+            // Добавляем текстуры в PlayingCards
+            PlayingCards.AddCardTexture(cardTexture1);
+            PlayingCards.AddCardTexture(cardTexture2);
+            PlayingCards.AddCardTexture(cardTexture3);
+            PlayingCards.AddCardTexture(cardTexture4);
+
+            // Устанавливаем текстуру по умолчанию
+            PlayingCard.SetDefaultTexture(cardTexture1);
+
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
 
             // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
-            _rouletteManager = new RouletteManager(_levelUpMenu); // ИНИЦИАЛИЗАЦИЯ РУЛЕТКИ
+            _rouletteManager = new RouletteManager(_levelUpMenu);
 
-            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
+            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
         }
 
         protected override void Update(GameTime gameTime)
@@ -355,7 +367,21 @@ namespace Survive_the_night
 
         private void DrawWorldObjects()
         {
-            // Отрисовка врагов
+            // Визуализация зоны спавна (для отладки)
+            Vector2 screenCenter = _player.Position;
+            float screenLeft = screenCenter.X - GraphicsDevice.Viewport.Width / 2;
+            float screenRight = screenCenter.X + GraphicsDevice.Viewport.Width / 2;
+            float screenTop = screenCenter.Y - GraphicsDevice.Viewport.Height / 2;
+            float screenBottom = screenCenter.Y + GraphicsDevice.Viewport.Height / 2;
+
+            // Рисуем границы экрана
+            Rectangle screenBounds = new Rectangle(
+                (int)screenLeft, (int)screenTop,
+                GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height
+            );
+            _spriteBatch.Draw(_debugTexture, screenBounds, Color.Green * 0.1f);
+
+            // Остальная отрисовка...
             foreach (var enemy in _enemies)
             {
                 if (enemy.IsAlive)
