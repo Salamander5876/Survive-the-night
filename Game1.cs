@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System;
 using System.Linq;
+using Microsoft.Xna.Framework.Audio;
 
 // Убедитесь, что все эти пространства имен существуют
 using Survive_the_night.Entities;
@@ -35,6 +36,7 @@ namespace Survive_the_night
         public static System.Random Random { get; private set; } = new System.Random();
         public static Vector2 WorldSize { get; private set; }
         public static List<Enemy> CurrentEnemies { get; private set; }
+        public static SoundEffect SFXGunShooting;
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -52,7 +54,7 @@ namespace Survive_the_night
         private Camera _camera;
         private List<Enemy> _enemies = new List<Enemy>();
         private List<ExperienceOrb> _experienceOrbs = new List<ExperienceOrb>();
-        private List<HealthOrb> _healthOrbs = new List<HealthOrb>();
+        private List<BaseHealthOrb> _healthOrbs = new List<BaseHealthOrb>();
         // private System.Random _random = new System.Random(); // Используем статический Game1.Random
 
         // HUD Data
@@ -69,6 +71,10 @@ namespace Survive_the_night
         // Content
         private Texture2D _debugTexture;
         private SpriteFont _font;
+        // Textures
+        private Texture2D _bulletTexture;
+        private Texture2D _heartTexture;
+        private Texture2D _goldenHeartTexture;
 
         public Game1()
         {
@@ -119,10 +125,18 @@ namespace Survive_the_night
             // Загрузка шрифта
             _font = Content.Load<SpriteFont>("Fonts/Default");
 
+            // Загрузка спрайтов
+            _bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
+            PlayingCard.SetTexture(_bulletTexture);
+            _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
+            _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
+
             // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _rouletteManager = new RouletteManager(_levelUpMenu); // ИНИЦИАЛИЗАЦИЯ РУЛЕТКИ
+
+            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
         }
 
         protected override void Update(GameTime gameTime)
@@ -183,20 +197,22 @@ namespace Survive_the_night
                                 // 2. Запуск Рулетки-Автомата (меняет Game1.CurrentState на Roulette)
                                 _rouletteManager.StartRoulette();
                             }
-                            else
-                            {
-                                // Обычный дроп опыта
-                                _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
+                    else
+                    {
+                        // Обычный дроп опыта
+                        _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
 
-                                // !!! ИСПРАВЛЕНИЕ: Откат к исходным значениям: 5% шанс, 10% лечение !!!
-                                if (Game1.Random.NextDouble() < 0.05) // <-- Откат: 5% шанс
-                                {
-                                    // Откат: 0.1f - 10% от MaxHealth игрока
-                                    _healthOrbs.Add(new HealthOrb(enemy.Position, 0.1f));
-                                }
-                                // ------------------------------------------------
-
-                            }
+                        // Шанс дропа сердца 2% (1 из 50), лечит 25% от MaxHealth (+ бонус игрока)
+                        if (Game1.Random.NextDouble() < 0.02)
+                        {
+                            _healthOrbs.Add(new HealthOrb(enemy.Position, 0.25f));
+                        }
+                        // Шанс дропа золотого сердца 2% (1 из 100), лечит 50% от MaxHealth (+ бонус игрока)
+                        if (Game1.Random.NextDouble() < 0.01)
+                        {
+                            _healthOrbs.Add(new GoldenHealthOrb(enemy.Position, 0.5f));
+                        }
+                    }
 
                             _enemies.RemoveAt(i);
                         }
@@ -244,9 +260,16 @@ namespace Survive_the_night
                     for (int i = _healthOrbs.Count - 1; i >= 0; i--)
                     {
                         var orb = _healthOrbs[i];
-                        if (orb.IsActive) { orb.Update(gameTime, _player); }
-                        // При сборе исцеляем игрока
-                        if (!orb.IsActive) { _player.Heal(orb.HealAmount * _player.MaxHealth); _healthOrbs.RemoveAt(i); }
+                        if (orb is GoldenHealthOrb golden)
+                        {
+                            if (golden.IsActive) { golden.Update(gameTime, _player); }
+                            if (!golden.IsActive) { _player.Heal(_player.GetGoldenHeartHealAmount(golden.HealAmount)); _healthOrbs.RemoveAt(i); }
+                        }
+                        else if (orb is HealthOrb health)
+                        {
+                            if (health.IsActive) { health.Update(gameTime, _player); }
+                            if (!health.IsActive) { _player.Heal((health.HealAmount + _player.HeartHealBonusPercent) * _player.MaxHealth); _healthOrbs.RemoveAt(i); }
+                        }
                     }
 
                     break;
@@ -395,6 +418,10 @@ namespace Survive_the_night
             {
                 if (orb.IsActive)
                 {
+                    if (orb is HealthOrb)
+                        HealthOrb.SetTexture(_heartTexture);
+                    else if (orb is GoldenHealthOrb)
+                        GoldenHealthOrb.SetTexture(_goldenHeartTexture);
                     orb.Draw(_spriteBatch, _debugTexture, orb.Color);
                 }
             }

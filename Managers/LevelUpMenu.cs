@@ -50,15 +50,51 @@ namespace Survive_the_night.Managers
             CurrentOptions.Clear();
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            // 1. Улучшение существующего оружия (если уровень < MAX_LEVEL)
-            foreach (var weapon in _weapons.Where(w => w.Level < Weapon.MAX_LEVEL))
+            // 1. Улучшения оружия
+            foreach (var weapon in _weapons)
             {
-                pool.Add(new UpgradeOption
+                if (weapon is PlayingCards pc)
                 {
-                    Title = $"Улучшить {weapon.GetType().Name} (Ур.{weapon.Level + 1})",
-                    Description = GetWeaponUpgradeDescription(weapon),
-                    ApplyUpgrade = () => weapon.LevelUp()
-                });
+                    if (pc.CountLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"Количество пуль +1 (Ур. {pc.CountLevel}/10)",
+                            Description = $"Текущие: {pc.NumCards}",
+                            ApplyUpgrade = () => pc.UpgradeCount()
+                        });
+                    }
+                    if (pc.DamageLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"Урон пули +1 (Ур. {pc.DamageLevel}/10)",
+                            Description = $"Текущий урон: {pc.Damage}",
+                            ApplyUpgrade = () => pc.UpgradeDamage()
+                        });
+                    }
+                    if (pc.SpeedLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"Скорость пули +1 (Ур. {pc.SpeedLevel}/10)",
+                            Description = $"Текущая скорость: {pc.ProjectileSpeed:0}",
+                            ApplyUpgrade = () => pc.UpgradeSpeed()
+                        });
+                    }
+                }
+                else
+                {
+                    if (weapon.Level < Weapon.MAX_LEVEL)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"Улучшить {weapon.GetType().Name} (Ур.{weapon.Level + 1})",
+                            Description = GetWeaponUpgradeDescription(weapon),
+                            ApplyUpgrade = () => weapon.LevelUp()
+                        });
+                    }
+                }
             }
 
             // Опция получения Молотова
@@ -76,20 +112,15 @@ namespace Survive_the_night.Managers
             // 2. Улучшения игрока
             pool.Add(new UpgradeOption
             {
-                Title = "Увеличить Здоровье",
-                Description = $"+{_player.MaxHealth * 0.1f:0} Максимального Здоровья",
-                ApplyUpgrade = () =>
-                {
-                    int healthIncrease = (int)(_player.MaxHealth * 1.1f) - _player.MaxHealth;
-                    _player.MaxHealth += healthIncrease;
-                    _player.Heal(healthIncrease);
-                }
+                Title = $"Макс. здоровье +10 (Ур. {_player.HealthLevel}/10)",
+                Description = $"Макс. здоровье: {_player.MaxHealth}",
+                ApplyUpgrade = () => _player.UpgradeMaxHealth()
             });
             pool.Add(new UpgradeOption
             {
-                Title = "Увеличить Скорость",
-                Description = "+10% Скорости Передвижения",
-                ApplyUpgrade = () => _player.BaseSpeed *= 1.1f
+                Title = $"Бонус получение хп от сердца +1% и золотого сердца +2%(Ур. {_player.HeartHealBonusLevel}/10)",
+                Description = $"Бонус к обычному сердцу: +{_player.HeartHealBonusPercent * 100:0}%\nБонус к золотому сердцу: +{_player.GoldenHeartBonusPercent * 100:0}%",
+                ApplyUpgrade = () => _player.UpgradeHeartHealBonus()
             });
 
             // 3. Выбор 3 случайных уникальных опций
@@ -118,8 +149,7 @@ namespace Survive_the_night.Managers
         {
             if (weapon is PlayingCards pc)
             {
-                string piercing = pc.Level == 6 ? " (Получает пробивание!)" : "";
-                return $"+1 Карта, +1 Урон.{piercing}";
+                return "Пули: выбирайте отдельные улучшения (кол-во/урон/скорость)";
             }
             if (weapon is MolotovCocktail mc)
             {

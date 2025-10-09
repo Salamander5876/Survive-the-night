@@ -16,23 +16,48 @@ namespace Survive_the_night.Weapons
         public float Range { get; private set; } = 0.20f; // Начальная дальность в 300 единиц
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
 
+        // Базовая скорость полёта пули
+        public float ProjectileSpeed { get; private set; } = 500f;
+
+        // Отдельные уровни прокачек (только для отображения и ограничений)
+        public int CountLevel { get; private set; } = 0;
+        public int DamageLevel { get; private set; } = 0;
+        public int SpeedLevel { get; private set; } = 0;
+
+        // Параметры очереди выстрелов (пуль)
+        private const float ShotIntervalSeconds = 0.1f; // задержка между выстрелами в очереди
+        private const float BurstCooldownSeconds = 1.0f; // задержка между очередями
+        private bool _isBurstActive = false;
+        private int _shotsFiredInBurst = 0;
+        private float _nextShotTimer = 0f;
+        private float _burstCooldownTimer = 0f;
+
         public PlayingCards(Player player) : base(player, 0.5f, 1)
         {
         }
 
-        public override void LevelUp()
+        public override void LevelUp() { }
+
+        // --- ТРИ ЯВНЫЕ ПРОКАЧКИ ---
+        public void UpgradeCount()
         {
-            if (Level >= MAX_LEVEL) return;
-
-            Level++;
-
-            Damage += 100;
+            if (CountLevel >= 10) return;
             NumCards += 1;
+            CountLevel++;
+        }
 
-            if (Level >= 7)
-            {
-                IsPiercing = true;
-            }
+        public void UpgradeDamage()
+        {
+            if (DamageLevel >= 10) return;
+            Damage += 1;
+            DamageLevel++;
+        }
+
+        public void UpgradeSpeed()
+        {
+            if (SpeedLevel >= 10) return;
+            ProjectileSpeed += 50f; // шаг ускорения
+            SpeedLevel++;
         }
 
         public override void Update(GameTime gameTime)
@@ -55,34 +80,58 @@ namespace Survive_the_night.Weapons
 
         public override void Attack(GameTime gameTime, List<Enemy> enemies)
         {
-            if (CooldownTimer <= 0f)
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Обновляем таймер перерыва между очередями
+            if (_burstCooldownTimer > 0f)
             {
-                for (int i = 0; i < NumCards; i++)
+                _burstCooldownTimer -= deltaTime;
+            }
+
+            // Запуск новой очереди выстрелов, когда перерыв завершён
+            if (_burstCooldownTimer <= 0f && !_isBurstActive)
+            {
+                _isBurstActive = true;
+                _shotsFiredInBurst = 0;
+                _nextShotTimer = 0f; // первый выстрел мгновенно
+            }
+
+            // Если очередь активна — выпускаем пули с интервалом 0.2с
+            if (_isBurstActive)
+            {
+                _nextShotTimer -= deltaTime;
+
+                while (_nextShotTimer <= 0f && _shotsFiredInBurst < NumCards)
                 {
                     Enemy target = FindClosestEnemy(enemies);
-
                     if (target != null)
                     {
                         Vector2 offset = new Vector2(
                             (float)Game1.Random.NextDouble() * 10 - 5,
                             (float)Game1.Random.NextDouble() * 10 - 5
                         );
-
-                        // PlayingCard должен принимать параметр для пробивания
-                        PlayingCard card = new PlayingCard(
+                        var card = new PlayingCard(
                             Player.Position + offset,
                             16,
-                            Color.Red,
+                            Color.White,
                             this.Damage,
-                            500f,
+                            this.ProjectileSpeed,
                             target.Position,
-                            this.IsPiercing ? int.MaxValue : 1 // 1-цель или бесконечно
+                            this.IsPiercing ? int.MaxValue : 1
                         );
                         ActiveProjectiles.Add(card);
+                        Game1.SFXGunShooting?.Play();
                     }
+
+                    _shotsFiredInBurst++;
+                    _nextShotTimer += ShotIntervalSeconds; // планируем следующий кадр очереди
                 }
 
-                CooldownTimer = CooldownTime;
+                if (_shotsFiredInBurst >= NumCards)
+                {
+                    _isBurstActive = false; // очередь завершена
+                    _burstCooldownTimer = BurstCooldownSeconds; // стартуем перерыв между очередями
+                }
             }
 
             CheckProjectileCollisions(enemies);

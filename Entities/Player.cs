@@ -11,6 +11,13 @@ namespace Survive_the_night.Entities
         public int CurrentHealth { get; private set; }
         public bool IsAlive => CurrentHealth > 0;
 
+        // Прокачка: отдельные уровни для здоровья и бонуса хила сердец
+        public int HealthLevel { get; private set; } = 0; // 0..10
+        public int HeartHealBonusLevel { get; private set; } = 0; // 0..10
+        public float HeartHealBonusPercent => HeartHealBonusLevel * 0.01f; // +1% за уровень
+        public int GoldenHeartBonusLevel { get; private set; } = 0; // 0..10
+        public float GoldenHeartBonusPercent => GoldenHeartBonusLevel * 0.02f; // +2% за уровень
+
         // Таймер, пока игрок неуязвим после получения урона
         private float _invulnerabilityTimer = 0f;
         private const float InvulnerabilityDuration = 0.5f;
@@ -135,6 +142,28 @@ namespace Survive_the_night.Entities
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Скорость +{value}");
                     break;
             }
+        }
+
+        // Явные улучшения для меню
+        public void UpgradeMaxHealth()
+        {
+            if (HealthLevel >= 10) return;
+            MaxHealth += 10;
+            CurrentHealth += 10;
+            if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
+            HealthLevel++;
+        }
+
+        public void UpgradeHeartHealBonus()
+        {
+            if (HeartHealBonusLevel >= 10) return;
+            HeartHealBonusLevel++;
+            GoldenHeartBonusLevel++;
+        }
+
+        public float GetGoldenHeartHealAmount(float basePercent)
+        {
+            return (basePercent + GoldenHeartBonusPercent) * MaxHealth;
         }
     }
 }
