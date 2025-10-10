@@ -9,6 +9,7 @@ namespace Survive_the_night.Weapons
 {
     public class PlayingCards : Weapon
     {
+        public const string WeaponName = "Игровые карты";
         public int NumCards { get; private set; } = 1;
         public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
@@ -156,7 +157,7 @@ namespace Survive_the_night.Weapons
                         // Инициализируем список пораженных врагов для этой карты
                         _hitEnemies[card] = new List<Enemy>();
 
-                        Game1.SFXGunShooting?.Play();
+                        Game1.SFXCardDeal?.Play();
                     }
 
                     _shotsFiredInBurst++;

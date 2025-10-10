@@ -36,7 +36,9 @@ namespace Survive_the_night
         public static System.Random Random { get; private set; } = new System.Random();
         public static Vector2 WorldSize { get; private set; }
         public static List<Enemy> CurrentEnemies { get; private set; }
-        public static SoundEffect SFXGunShooting;
+
+        public static SoundEffect SFXGunShooting; // Для золотых пуль
+        public static SoundEffect SFXCardDeal;    // Для игральных карт
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -140,6 +142,16 @@ namespace Survive_the_night
             // Устанавливаем текстуру по умолчанию
             PlayingCard.SetDefaultTexture(cardTexture1);
 
+            SFXCardDeal = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
+
+
+
+            var bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
+            GoldenBullet.AddBulletTexture(bulletTexture);
+            GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
+            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
+
+
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
 
@@ -147,8 +159,6 @@ namespace Survive_the_night
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _rouletteManager = new RouletteManager(_levelUpMenu);
-
-            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
         }
 
         protected override void Update(GameTime gameTime)
@@ -411,6 +421,17 @@ namespace Survive_the_night
                         if (card.IsActive)
                         {
                             card.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                if (weapon is GoldenBullet goldenBullet)
+                {
+                    foreach (var bullet in goldenBullet.ActiveProjectiles)
+                    {
+                        if (bullet.IsActive)
+                        {
+                            bullet.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }

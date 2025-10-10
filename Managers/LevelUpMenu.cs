@@ -59,7 +59,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Количество карт +1 (Ур. {pc.CountLevel}/10)",
+                            Title = $"{PlayingCards.WeaponName}: Количество карт +1 (Ур. {pc.CountLevel}/10)",
                             Description = $"Текущее количество: {pc.NumCards}",
                             ApplyUpgrade = () => pc.UpgradeCount()
                         });
@@ -68,7 +68,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Урон карты +1 (Ур. {pc.DamageLevel}/10)",
+                            Title = $"{PlayingCards.WeaponName}: Урон карты +1 (Ур. {pc.DamageLevel}/10)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
@@ -77,9 +77,41 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
-                            Description = $"Текущая перезарядка: {pc.CurrentCooldown:0.0}с\nМинимальная: 0.5с",
+                            Title = $"{PlayingCards.WeaponName}: Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
+                            Description = $"Текущая перезарядка: {pc.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => pc.UpgradeReloadSpeed()
+                        });
+                    }
+                }
+                else
+
+                if (weapon is GoldenBullet gb)
+                {
+                    if (gb.CountLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenBullet.WeaponName}: Количество пуль +1 (Ур. {gb.CountLevel}/10)",
+                            Description = $"Текущее количество: {gb.NumBullets}",
+                            ApplyUpgrade = () => gb.UpgradeCount()
+                        });
+                    }
+                    if (gb.DamageLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenBullet.WeaponName}: Урон +1 (Ур. {gb.DamageLevel}/10)",
+                            Description = $"Текущий урон: {gb.Damage}",
+                            ApplyUpgrade = () => gb.UpgradeDamage()
+                        });
+                    }
+                    if (gb.SpeedLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenBullet.WeaponName}: Скорость полета +50 (Ур. {gb.SpeedLevel}/10)",
+                            Description = $"Текущая скорость: {gb.ProjectileSpeed:0}",
+                            ApplyUpgrade = () => gb.UpgradeSpeed()
                         });
                     }
                 }
@@ -97,6 +129,18 @@ namespace Survive_the_night.Managers
                 }
             }
 
+            // Опция получения Золотой пули
+            bool hasGoldenBullet = _weapons.Any(w => w is GoldenBullet);
+            if (!hasGoldenBullet)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Взять Золотую пулю",
+                    Description = "Добавляет новое оружие: точные золотые пули без пробития.",
+                    ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
+                });
+            }
+
             // Опция получения Молотова
             bool hasMolotov = _weapons.Any(w => w is MolotovCocktail);
             if (!hasMolotov)
@@ -108,6 +152,9 @@ namespace Survive_the_night.Managers
                     ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
                 });
             }
+
+
+
 
             // 2. Улучшения игрока
             pool.Add(new UpgradeOption
