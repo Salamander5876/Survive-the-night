@@ -53,6 +53,38 @@ namespace Survive_the_night.Managers
             // 1. Улучшения оружия
             foreach (var weapon in _weapons)
             {
+                if (weapon is GoldenSword gs)
+                {
+                    if (gs.CountLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenSword.WeaponName}: Количество мечей +1 (Ур. {gs.CountLevel}/5)",
+                            Description = $"Текущее количество: {gs.NumSwords}",
+                            ApplyUpgrade = () => gs.UpgradeCount()
+                        });
+                    }
+                    if (gs.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenSword.WeaponName}: Урон +2 (Ур. {gs.DamageLevel}/5)",
+                            Description = $"Текущий урон: {gs.Damage}",
+                            ApplyUpgrade = () => gs.UpgradeDamage()
+                        });
+                    }
+                    if (gs.SpeedLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{GoldenSword.WeaponName}: Скорость полета +20 (Ур. {gs.SpeedLevel}/5)",
+                            Description = $"Текущая скорость: {gs.ProjectileSpeed:0}",
+                            ApplyUpgrade = () => gs.UpgradeSpeed()
+                        });
+                    }
+                }
+                else
+
                 if (weapon is PlayingCards pc)
                 {
                     if (pc.CountLevel < 10)
@@ -127,6 +159,18 @@ namespace Survive_the_night.Managers
                         });
                     }
                 }
+            }
+
+            // Опция получения Золотого меча
+            bool hasGoldenSword = _weapons.Any(w => w is GoldenSword);
+            if (!hasGoldenSword)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Взять Золотой меч",
+                    Description = "Добавляет новое оружие: золотые мечи, летящие по траектории бумеранга с автонаводкой.",
+                    ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
+                });
             }
 
             // Опция получения Золотой пули

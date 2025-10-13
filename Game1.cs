@@ -155,6 +155,14 @@ namespace Survive_the_night
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
 
+            // Загрузка текстур и звуков для Золотого меча
+            var swordTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenSword");
+            GoldenSword.AddSwordTexture(swordTexture);
+            GoldenSwordProjectile.SetDefaultTexture(swordTexture);
+
+            var swordSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenSword");
+            GoldenSword.SetSound(swordSound);
+
             // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
@@ -219,22 +227,22 @@ namespace Survive_the_night
                                 // 2. Запуск Рулетки-Автомата (меняет Game1.CurrentState на Roulette)
                                 _rouletteManager.StartRoulette();
                             }
-                    else
-                    {
-                        // Обычный дроп опыта
-                        _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
+                            else
+                            {
+                                // Обычный дроп опыта
+                                _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
 
-                        // Шанс дропа сердца 2% (1 из 50), лечит 25% от MaxHealth (+ бонус игрока)
-                        if (Game1.Random.NextDouble() < 0.02)
-                        {
-                            _healthOrbs.Add(new HealthOrb(enemy.Position, 0.25f));
-                        }
-                        // Шанс дропа золотого сердца 2% (1 из 100), лечит 50% от MaxHealth (+ бонус игрока)
-                        if (Game1.Random.NextDouble() < 0.01)
-                        {
-                            _healthOrbs.Add(new GoldenHealthOrb(enemy.Position, 0.5f));
-                        }
-                    }
+                                // Шанс дропа сердца 2% (1 из 50), лечит 25% от MaxHealth (+ бонус игрока)
+                                if (Game1.Random.NextDouble() < 0.02)
+                                {
+                                    _healthOrbs.Add(new HealthOrb(enemy.Position, 0.25f));
+                                }
+                                // Шанс дропа золотого сердца 2% (1 из 100), лечит 50% от MaxHealth (+ бонус игрока)
+                                if (Game1.Random.NextDouble() < 0.01)
+                                {
+                                    _healthOrbs.Add(new GoldenHealthOrb(enemy.Position, 0.5f));
+                                }
+                            }
 
                             _enemies.RemoveAt(i);
                         }
@@ -268,6 +276,13 @@ namespace Survive_the_night
                     foreach (var weapon in _weapons)
                     {
                         weapon.Update(gameTime);
+
+                        // Для GoldenSword нужно обновлять снаряды отдельно
+                        if (weapon is GoldenSword goldenSword)
+                        {
+                            // Снаряды уже обновляются в weapon.Update, но оставим для ясности
+                        }
+
                         weapon.Attack(gameTime, _enemies);
                     }
 
@@ -432,6 +447,17 @@ namespace Survive_the_night
                         if (bullet.IsActive)
                         {
                             bullet.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                if (weapon is GoldenSword sword)
+                {
+                    foreach (var projectile in sword.ActiveProjectiles)
+                    {
+                        if (projectile.IsActive)
+                        {
+                            projectile.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }

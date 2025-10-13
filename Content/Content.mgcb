@@ -104,6 +104,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/Card4.png
 
+#begin Sprites/Projectiles/GoldenSword.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/GoldenSword.png
+
 
 
 #begin Sounds/Weapons/SFXGunShooting.mp3
@@ -112,11 +124,15 @@
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXGunShooting.mp3
 
-
-
 #begin Sounds/Weapons/SFXCardDeal.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXCardDeal.mp3
+
+#begin Sounds/Weapons/SFXGoldenSword.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXGoldenSword.mp3
 
