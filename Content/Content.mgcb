@@ -116,6 +116,30 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/GoldenSword.png
 
+#begin Sprites/Projectiles/Molotov.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/Molotov.png
+
+#begin Sprites/Projectiles/MolotovFire.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/MolotovFire.png
+
 
 
 #begin Sounds/Weapons/SFXGunShooting.mp3
@@ -135,4 +159,16 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXGoldenSword.mp3
+
+#begin Sounds/Weapons/SFXThrowMolotov.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXThrowMolotov.mp3
+
+#begin Sounds/Weapons/SFXFireBurn.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXFireBurn.mp3
 

@@ -39,6 +39,10 @@ namespace Survive_the_night
 
         public static SoundEffect SFXGunShooting; // Для золотых пуль
         public static SoundEffect SFXCardDeal;    // Для игральных карт
+        public static SoundEffect SFXGoldenSword;      // Для игральных карт
+        public static SoundEffect SFXThrowMolotov; // Для броска молотова
+        public static SoundEffect SFXFireBurn;     // Для горения огня
+
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -57,7 +61,6 @@ namespace Survive_the_night
         private List<Enemy> _enemies = new List<Enemy>();
         private List<ExperienceOrb> _experienceOrbs = new List<ExperienceOrb>();
         private List<BaseHealthOrb> _healthOrbs = new List<BaseHealthOrb>();
-        // private System.Random _random = new System.Random(); // Используем статический Game1.Random
 
         // HUD Data
         private float _survivalTime = 0f;
@@ -68,7 +71,6 @@ namespace Survive_the_night
         private List<Weapon> _weapons = new List<Weapon>();
         private LevelUpMenu _levelUpMenu;
         private RouletteManager _rouletteManager; // МЕНЕДЖЕР РУЛЕТКИ
-
 
         // Content
         private Texture2D _debugTexture;
@@ -107,10 +109,10 @@ namespace Survive_the_night
             // ВАЖНО: Этот вызов должен быть после создания SpawnManager
             _spawnManager.SetViewport(GraphicsDevice.Viewport);
 
-            // Инициализация оружия
+            // Инициализация оружия - ТОЛЬКО ИГРАЛЬНЫЕ КАРТЫ
             _playingCardsWeapon = new PlayingCards(_player);
-
             _weapons.Add(_playingCardsWeapon);
+            // Молотов НЕ добавляем - его получим позже через LevelUp
 
             WorldSize = new Vector2(3000, 3000);
             CurrentEnemies = _enemies; // Инициализация статического списка врагов
@@ -144,13 +146,10 @@ namespace Survive_the_night
 
             SFXCardDeal = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
 
-
-
             var bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
             GoldenBullet.AddBulletTexture(bulletTexture);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
             SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
-
 
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
@@ -162,6 +161,16 @@ namespace Survive_the_night
 
             var swordSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenSword");
             GoldenSword.SetSound(swordSound);
+
+            // Загрузка текстур и звуков для Молотова
+            var molotovTexture = Content.Load<Texture2D>("Sprites/Projectiles/Molotov");
+            var molotovFireTexture = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire");
+
+            // Звуки загружаются в статические поля (как для карт)
+            SFXThrowMolotov = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowMolotov");
+            SFXFireBurn = Content.Load<SoundEffect>("Sounds/Weapons/SFXFireBurn");
+
+            MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
 
             // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
@@ -219,7 +228,7 @@ namespace Survive_the_night
                             if (enemy is EliteEnemy)
                             {
                                 // Дроп 10 орбов опыта
-                                for (int j = 0; j < 10; j++) // Предполагаем 10, или используем EliteEnemy.ExperienceOrbCount
+                                for (int j = 0; j < 10; j++)
                                 {
                                     _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
                                 }
@@ -276,13 +285,6 @@ namespace Survive_the_night
                     foreach (var weapon in _weapons)
                     {
                         weapon.Update(gameTime);
-
-                        // Для GoldenSword нужно обновлять снаряды отдельно
-                        if (weapon is GoldenSword goldenSword)
-                        {
-                            // Снаряды уже обновляются в weapon.Update, но оставим для ясности
-                        }
-
                         weapon.Attack(gameTime, _enemies);
                     }
 
@@ -462,18 +464,11 @@ namespace Survive_the_night
                     }
                 }
 
-                // !!! ОТРИСОВКА МОЛОТОВА !!!
+                // Отрисовка Молотова
                 else if (weapon is MolotovCocktail molotov)
                 {
-                    foreach (var area in molotov.ActiveAreas)
-                    {
-                        if (area.IsActive)
-                        {
-                            area.Draw(_spriteBatch, _debugTexture);
-                        }
-                    }
+                    molotov.DrawProjectiles(_spriteBatch);
                 }
-                // ---------------------------------
             }
             // ------------------------
 

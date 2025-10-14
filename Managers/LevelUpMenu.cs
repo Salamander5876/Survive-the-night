@@ -148,6 +148,32 @@ namespace Survive_the_night.Managers
                     }
                 }
                 else
+
+                if (weapon is MolotovCocktail mc)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = $"Молотов: Количество бутылок +1 (Ур. {mc.CountLevel}/5)",
+                        Description = $"Текущее количество: {mc.NumBottles}",
+                        ApplyUpgrade = () => mc.UpgradeBottleCount()
+                    });
+
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = $"Молотов: Время горения +5 сек (Ур. {mc.DurationLevel}/5)",
+                        Description = $"Текущее время: {mc.BurnDuration:0} сек",
+                        ApplyUpgrade = () => mc.UpgradeBurnDuration()
+                    });
+
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = $"Молотов: Частота урона (Ур. {mc.RateLevel}/5)",
+                        Description = $"Текущий интервал: {mc.DamageInterval:0.0} сек",
+                        ApplyUpgrade = () => mc.UpgradeDamageRate()
+                    });
+                }
+                else
+
                 {
                     if (weapon.Level < Weapon.MAX_LEVEL)
                     {
