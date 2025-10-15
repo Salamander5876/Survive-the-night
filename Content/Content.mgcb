@@ -140,6 +140,42 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/MolotovFire.png
 
+#begin Sprites/Projectiles/CasinoChipsBlue.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/CasinoChipsBlue.png
+
+#begin Sprites/Projectiles/CasinoChipsGreen.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/CasinoChipsGreen.png
+
+#begin Sprites/Projectiles/CasinoChipsRed.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/CasinoChipsRed.png
+
 
 
 #begin Sounds/Weapons/SFXGunShooting.mp3
@@ -171,4 +207,10 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXFireBurn.mp3
+
+#begin Sounds/Weapons/SFCCasinoChips.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFCCasinoChips.mp3
 

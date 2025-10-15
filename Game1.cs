@@ -42,6 +42,7 @@ namespace Survive_the_night
         public static SoundEffect SFXGoldenSword;      // Для игральных карт
         public static SoundEffect SFXThrowMolotov; // Для броска молотова
         public static SoundEffect SFXFireBurn;     // Для горения огня
+        public static SoundEffect SFXCasinoChips; // Для фишек казино
 
 
         /// <summary>
@@ -171,6 +172,25 @@ namespace Survive_the_night
             SFXFireBurn = Content.Load<SoundEffect>("Sounds/Weapons/SFXFireBurn");
 
             MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
+
+            // Загрузка спрайтов фишек казино
+            var chipTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsBlue");
+            var chipTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsGreen");
+            var chipTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsRed");
+
+            // Добавляем текстуры в CasinoChips
+            CasinoChips.AddChipTexture(chipTexture1);
+            CasinoChips.AddChipTexture(chipTexture2);
+            CasinoChips.AddChipTexture(chipTexture3);
+
+            // Устанавливаем текстуру по умолчанию
+            CasinoChip.SetDefaultTexture(chipTexture1);
+
+            // Загрузка звука фишек казино
+            SFXCasinoChips = Content.Load<SoundEffect>("Sounds/Weapons/SFCCasinoChips");
+
+
+
 
             // Инициализация менеджеров и меню
             _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
@@ -408,7 +428,38 @@ namespace Survive_the_night
             );
             _spriteBatch.Draw(_debugTexture, screenBounds, Color.Green * 0.1f);
 
-            // Остальная отрисовка...
+            // --- ОТРИСОВКА ОГНЕННЫХ ОБЛАСТЕЙ ПЕРВЫМИ (ПОД ВСЕМИ) ---
+            foreach (var weapon in _weapons)
+            {
+                if (weapon is MolotovCocktail molotov)
+                {
+                    molotov.DrawProjectiles(_spriteBatch);
+                }
+            }
+
+            // Отрисовка орбов опыта (над огнем, но под персонажем и врагами)
+            foreach (var orb in _experienceOrbs)
+            {
+                if (orb.IsActive)
+                {
+                    orb.Draw(_spriteBatch, _debugTexture, orb.Color);
+                }
+            }
+
+            // Отрисовка хилок (над огнем, но под персонажем и врагами)
+            foreach (var orb in _healthOrbs)
+            {
+                if (orb.IsActive)
+                {
+                    if (orb is HealthOrb)
+                        HealthOrb.SetTexture(_heartTexture);
+                    else if (orb is GoldenHealthOrb)
+                        GoldenHealthOrb.SetTexture(_goldenHeartTexture);
+                    orb.Draw(_spriteBatch, _debugTexture, orb.Color);
+                }
+            }
+
+            // Отрисовка врагов (над огнем и орбами)
             foreach (var enemy in _enemies)
             {
                 if (enemy.IsAlive)
@@ -417,7 +468,7 @@ namespace Survive_the_night
                 }
             }
 
-            // Отрисовка игрока
+            // Отрисовка игрока (САМЫЙ ВЕРХНИЙ СЛОЙ)
             Color playerTint = Color.White;
             if (_player.IsInvulnerable)
             {
@@ -428,7 +479,7 @@ namespace Survive_the_night
             }
             _player.Draw(_spriteBatch, _debugTexture, playerTint);
 
-            // --- ОТРИСОВКА ОРУЖИЯ ---
+            // --- ОТРИСОВКА ОСТАЛЬНОГО ОРУЖИЯ (НАД ВСЕМИ) ---
             foreach (var weapon in _weapons)
             {
                 if (weapon is PlayingCards cards)
@@ -464,33 +515,16 @@ namespace Survive_the_night
                     }
                 }
 
-                // Отрисовка Молотова
-                else if (weapon is MolotovCocktail molotov)
+                // Отрисовка фишек казино
+                if (weapon is CasinoChips casinoChips)
                 {
-                    molotov.DrawProjectiles(_spriteBatch);
-                }
-            }
-            // ------------------------
-
-            // Отрисовка орбов опыта
-            foreach (var orb in _experienceOrbs)
-            {
-                if (orb.IsActive)
-                {
-                    orb.Draw(_spriteBatch, _debugTexture, orb.Color);
-                }
-            }
-
-            // Отрисовка хилок
-            foreach (var orb in _healthOrbs)
-            {
-                if (orb.IsActive)
-                {
-                    if (orb is HealthOrb)
-                        HealthOrb.SetTexture(_heartTexture);
-                    else if (orb is GoldenHealthOrb)
-                        GoldenHealthOrb.SetTexture(_goldenHeartTexture);
-                    orb.Draw(_spriteBatch, _debugTexture, orb.Color);
+                    foreach (var chip in casinoChips.ActiveProjectiles)
+                    {
+                        if (chip.IsActive)
+                        {
+                            chip.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
                 }
             }
         }

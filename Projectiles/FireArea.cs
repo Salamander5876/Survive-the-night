@@ -13,7 +13,8 @@ namespace Survive_the_night.Projectiles
         private float _damageCooldown;
         private float _damageTimer = 0f;
         private SoundEffectInstance _fireSoundInstance;
-        private bool _isSoundStopped = false;
+        private bool _soundPlayed = false;
+        private float _fadeOutDuration = 1.5f; // Длительность плавного исчезновения
 
         public FireArea(Vector2 position, int size, Color color, int damage, float duration, float damageInterval)
             : base(position, size, color, damage, 0f, position, 1)
@@ -21,7 +22,7 @@ namespace Survive_the_night.Projectiles
             _timeToLive = duration;
             _damageCooldown = damageInterval;
 
-            // Создаем экземпляр звука для этой огненной области
+            // Создаем экземпляр звука для плавного управления
             if (Game1.SFXFireBurn != null)
             {
                 _fireSoundInstance = Game1.SFXFireBurn.CreateInstance();
@@ -40,34 +41,40 @@ namespace Survive_the_night.Projectiles
             _damageTimer += delta;
 
             // Запускаем звук при первом обновлении
-            if (_fireSoundInstance != null && _fireSoundInstance.State != SoundState.Playing && !_isSoundStopped)
+            if (!_soundPlayed && _fireSoundInstance != null)
             {
                 _fireSoundInstance.Play();
+                _soundPlayed = true;
             }
 
-            // Проверяем истечение времени жизни
+            // Плавное уменьшение громкости в конце жизни
+            if (_burnTimer >= _timeToLive - _fadeOutDuration)
+            {
+                float fadeProgress = (_burnTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
+                float volume = MathHelper.Clamp(0.4f * (1f - fadeProgress), 0f, 0.4f); // Ограничиваем громкость
+
+                if (_fireSoundInstance != null)
+                {
+                    _fireSoundInstance.Volume = volume;
+                }
+            }
+
+            // Полное исчезновение
             if (_burnTimer >= _timeToLive)
             {
                 IsActive = false;
-                // Останавливаем звук при исчезновении области
-                StopSound();
+                // Плавно останавливаем звук
+                if (_fireSoundInstance != null)
+                {
+                    _fireSoundInstance.Stop();
+                }
                 return;
             }
 
-            // Наносим периодический урон
             if (_damageTimer >= _damageCooldown)
             {
                 ApplyDamageToEnemies(Game1.CurrentEnemies);
                 _damageTimer = 0f;
-            }
-        }
-
-        private void StopSound()
-        {
-            if (_fireSoundInstance != null && _fireSoundInstance.State == SoundState.Playing)
-            {
-                _fireSoundInstance.Stop();
-                _isSoundStopped = true;
             }
         }
 
@@ -90,9 +97,21 @@ namespace Survive_the_night.Projectiles
 
             Vector2 origin = new Vector2(texture.Width / 2, texture.Height / 2);
 
-            // Мерцание огня для эффекта
+            // Мерцание огня
             float pulse = (float)((System.Math.Sin(_burnTimer * 10f) + 1f) * 0.2f + 0.6f);
-            Color drawColor = Color * pulse;
+
+            // Плавное исчезновение (альфа-канал)
+            float alpha = 1f;
+            if (_burnTimer >= _timeToLive - _fadeOutDuration)
+            {
+                float fadeProgress = (_burnTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
+                alpha = MathHelper.Clamp(1f - fadeProgress, 0f, 1f); // Ограничиваем альфа-канал
+            }
+
+            Color drawColor = Color * pulse * alpha;
+
+            // Используем безопасное значение layerDepth (0.0 - 1.0)
+            float layerDepth = 0.1f; // НИЗКИЙ LAYER DEPTH - отрисовывается ПОД другими объектами
 
             spriteBatch.Draw(
                 texture,
@@ -103,7 +122,7 @@ namespace Survive_the_night.Projectiles
                 origin,
                 1.0f,
                 SpriteEffects.None,
-                0f
+                layerDepth
             );
         }
     }

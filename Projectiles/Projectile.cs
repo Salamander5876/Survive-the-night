@@ -8,7 +8,7 @@ namespace Survive_the_night.Projectiles
     public abstract class Projectile
     {
         public Vector2 Position { get; protected set; }
-        public Vector2 Direction { get; protected set; }
+        public Vector2 Direction { get; set; } // ИЗМЕНЕНО: убрали protected из set
         public int Size { get; protected set; }
         public Color Color { get; protected set; }
         public int Damage { get; protected set; }
@@ -19,7 +19,7 @@ namespace Survive_the_night.Projectiles
 
         // Добавляем таймер жизни снаряда
         private float _lifeTimer = 0f;
-        private const float MaxLifeTime = 3f; // Снаряд живет 3 секунды
+        protected float MaxLifeTime = 3f; // ИЗМЕНЕНО: сделали protected вместо const
 
         protected Projectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1)
         {
@@ -33,6 +33,13 @@ namespace Survive_the_night.Projectiles
             Rotation = 0f;
 
             Direction = Vector2.Normalize(target - position);
+        }
+
+        // ДОБАВЛЕНО: Метод для установки времени жизни
+        public void SetLifeTime(float seconds)
+        {
+            _lifeTimer = 0f;
+            MaxLifeTime = seconds;
         }
 
         public virtual void Update(GameTime gameTime)
@@ -51,13 +58,6 @@ namespace Survive_the_night.Projectiles
 
             Position += Direction * Speed * deltaTime;
             Rotation += 180f * deltaTime;
-
-            // УБИРАЕМ проверку границ мира - снаряды теперь уничтожаются только по таймеру
-            // if (Position.X < 0 || Position.X > Game1.WorldSize.X ||
-            //     Position.Y < 0 || Position.Y > Game1.WorldSize.Y)
-            // {
-            //     IsActive = false;
-            // }
         }
 
         public virtual void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)

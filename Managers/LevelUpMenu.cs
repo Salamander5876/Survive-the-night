@@ -149,6 +149,39 @@ namespace Survive_the_night.Managers
                 }
                 else
 
+                // В цикле улучшений оружия добавьте:
+                if (weapon is CasinoChips cc)
+                {
+                    if (cc.DamageLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{CasinoChips.WeaponName}: Урон +1 (Ур. {cc.DamageLevel}/10)",
+                            Description = $"Текущий урон: {cc.Damage}",
+                            ApplyUpgrade = () => cc.UpgradeDamage()
+                        });
+                    }
+                    if (cc.ReloadSpeedLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{CasinoChips.WeaponName}: Скорость перезарядки -0.2с (Ур. {cc.ReloadSpeedLevel}/10)",
+                            Description = $"Текущая перезарядка: {cc.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => cc.UpgradeReloadSpeed()
+                        });
+                    }
+                    if (cc.BounceLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{CasinoChips.WeaponName}: Отскоки +1 (Ур. {cc.BounceLevel}/10)",
+                            Description = $"Текущее количество отскоков: {cc.BounceLevel + 1}",
+                            ApplyUpgrade = () => cc.UpgradeBounceCount()
+                        });
+                    }
+                }
+                else
+
                 if (weapon is MolotovCocktail mc)
                 {
                     pool.Add(new UpgradeOption
@@ -196,6 +229,18 @@ namespace Survive_the_night.Managers
                     Title = "Взять Золотой меч",
                     Description = "Добавляет новое оружие: золотые мечи, летящие по траектории бумеранга с автонаводкой.",
                     ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
+                });
+            }
+
+            // Опция получения Фишек казино
+            bool hasCasinoChips = _weapons.Any(w => w is CasinoChips);
+            if (!hasCasinoChips)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Взять Фишки казино",
+                    Description = "Добавляет новое оружие: фишки, которые отскакивают между врагами.",
+                    ApplyUpgrade = () => _weapons.Add(new CasinoChips(_player))
                 });
             }
 
