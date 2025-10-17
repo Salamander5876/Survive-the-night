@@ -1,10 +1,8 @@
-// Weapons/GoldenBullet.cs
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
-using Survive_the_night.Managers;
 
 namespace Survive_the_night.Weapons
 {
@@ -14,15 +12,10 @@ namespace Survive_the_night.Weapons
         public float ProjectileSpeed { get; private set; } = 500f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
 
-        // Список текстур для пуль
-        private static List<Texture2D> _bulletTextures = new List<Texture2D>();
-
-        // Отдельные уровни прокачек
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
         public int SpeedLevel { get; private set; } = 0;
 
-        // Параметры очереди выстрелов
         private const float ShotIntervalSeconds = 0.2f;
         private const float BurstCooldownSeconds = 1.0f;
         private bool _isBurstActive = false;
@@ -30,34 +23,12 @@ namespace Survive_the_night.Weapons
         private float _nextShotTimer = 0f;
         private float _burstCooldownTimer = 0f;
 
-        // Название оружия для UI
-        public const string WeaponName = "Золотая пуля";
-
-        public GoldenBullet(Player player) : base(player, 1.5f, 1) // Начальный урон 2
+        public GoldenBullet(Player player) : base(player, WeaponType.Regular, WeaponName.GoldenBullet, 1.5f, 1)
         {
-        }
-
-        // Метод для добавления текстур пуль
-        public static void AddBulletTexture(Texture2D texture)
-        {
-            if (texture != null && !_bulletTextures.Contains(texture))
-            {
-                _bulletTextures.Add(texture);
-            }
-        }
-
-        // Метод для получения случайной текстуры пули
-        public static Texture2D GetRandomBulletTexture()
-        {
-            if (_bulletTextures.Count == 0)
-                return null;
-
-            return _bulletTextures[Game1.Random.Next(0, _bulletTextures.Count)];
         }
 
         public override void LevelUp() { }
 
-        // --- ТРИ ЯВНЫЕ ПРОКАЧКИ ---
         public void UpgradeCount()
         {
             if (CountLevel >= 10) return;
@@ -101,13 +72,11 @@ namespace Survive_the_night.Weapons
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Обновляем таймер перерыва между очередями
             if (_burstCooldownTimer > 0f)
             {
                 _burstCooldownTimer -= deltaTime;
             }
 
-            // Запуск новой очереди выстрелов, когда перерыв завершён
             if (_burstCooldownTimer <= 0f && !_isBurstActive)
             {
                 _isBurstActive = true;
@@ -115,7 +84,6 @@ namespace Survive_the_night.Weapons
                 _nextShotTimer = 0f;
             }
 
-            // Если очередь активна - выпускаем пули с интервалом
             if (_isBurstActive)
             {
                 _nextShotTimer -= deltaTime;
@@ -130,19 +98,18 @@ namespace Survive_the_night.Weapons
                             (float)Game1.Random.NextDouble() * 10 - 5
                         );
 
-                        // Создаем пулю БЕЗ пробития (hitsLeft = 1)
                         var bullet = new GoldenBulletProjectile(
                             Player.Position + offset,
-                            12, // Размер меньше чем у карт
+                            12,
                             Color.Gold,
                             this.Damage,
                             this.ProjectileSpeed,
                             target.Position,
-                            GetRandomBulletTexture() // Текстура пули
+                            WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenBullet)
                         );
                         ActiveProjectiles.Add(bullet);
 
-                        Game1.SFXGunShooting?.Play(); // Используем SFXGunShooting
+                        WeaponManager.GetWeaponSound(WeaponName.GoldenBullet)?.Play();
                     }
 
                     _shotsFiredInBurst++;
@@ -174,10 +141,8 @@ namespace Survive_the_night.Weapons
                     if (bullet.GetBounds().Intersects(enemy.GetBounds()))
                     {
                         enemy.TakeDamage(bullet.Damage);
-
-                        // Золотая пуля уничтожается после первого попадания
                         bullet.IsActive = false;
-                        break; // Выходим из цикла по врагам для этой пули
+                        break;
                     }
                 }
             }

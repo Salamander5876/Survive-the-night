@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Game1 = Survive_the_night.Game1;
 
 namespace Survive_the_night.Managers
@@ -11,35 +12,43 @@ namespace Survive_the_night.Managers
     {
         private List<Enemy> _enemies;
         private Player _player;
-        private Viewport _viewport;
+        private GameBoundaries _boundaries;
+        private Camera _camera; // ДОБАВЛЕНО: поле для камеры
 
-        // --- Поля для ОБЫЧНЫХ ВРАГОВ ---
-        private float _initialSpawnCooldown = 2.0f;
-        private float _currentSpawnCooldown;
-        private float _spawnTimer = 0f;
+        // --- ЛИМИТЫ ВРАГОВ ---
+        private const int MAX_REGULAR_ENEMIES = 100;
+        private const int MAX_ELITE_ENEMIES = 1;
+        private const int MAX_TOTAL_ENEMIES_ON_SCREEN = 150;
 
-        // Масштабирование сложности
-        private float _gameTimeElapsed = 0f;
-        private float _difficultyMultiplier = 1.0f;
-        private const float DifficultyInterval = 60f;
-        private const float DifficultyIncrease = 0.5f;
+        // --- ТАЙМЕРЫ И КУЛДАУНЫ ---
+        private float _gameTimeTotal = 0f;
 
-        // --- Поля для ЭЛИТНЫХ ВРАГОВ ---
+        // Обычные враги
+        private float _regularSpawnTimer = 0f;
+        private float _currentRegularSpawnCooldown = 2.0f;
+        private float _minSpawnCooldown = 0.3f;
+
+        // Элитные враги
         private float _eliteSpawnTimer = 0f;
-        private const float ELITE_SPAWN_COOLDOWN = 45f;
+        private const float ELITE_SPAWN_INTERVAL = 300f; // 5 минут
 
-        public SpawnManager(List<Enemy> enemies, Player player)
+        // Прогрессия сложности
+        private int _difficultyWave = 0;
+        private const float DIFFICULTY_INTERVAL = 30f; // Увеличиваем сложность каждые 30 секунд
+        private float _difficultyTimer = 0f;
+
+        // Статистика
+        private int _totalEnemiesSpawned = 0;
+        private int _totalElitesSpawned = 0;
+
+        public SpawnManager(List<Enemy> enemies, Player player, Camera camera, Viewport viewport)
         {
             _enemies = enemies;
             _player = player;
-            _currentSpawnCooldown = _initialSpawnCooldown;
-            _viewport = new Viewport(0, 0, 1280, 720); // Значения по умолчанию
-        }
+            _camera = camera; // ДОБАВЛЕНО: сохраняем камеру
+            _boundaries = new GameBoundaries(camera, viewport);
 
-        public void SetViewport(Viewport viewport)
-        {
-            _viewport = viewport;
-            Debug.WriteLine($"✅ Viewport установлен: {_viewport.Width}x{_viewport.Height}");
+            Debug.WriteLine("✅ SpawnManager инициализирован с системой границ");
         }
 
         public void Update(GameTime gameTime)
@@ -47,117 +56,176 @@ namespace Survive_the_night.Managers
             if (_player == null) return;
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _gameTimeTotal += deltaTime;
+            _difficultyTimer += deltaTime;
 
-            // --- ЛОГИКА МАСШТАБИРОВАНИЯ СЛОЖНОСТИ ---
-            _gameTimeElapsed += deltaTime;
-            if (_gameTimeElapsed >= DifficultyInterval)
+            // Обновляем границы каждый кадр
+            _boundaries.UpdateBounds();
+
+            // --- ПРОГРЕССИЯ СЛОЖНОСТИ ---
+            if (_difficultyTimer >= DIFFICULTY_INTERVAL)
             {
-                _difficultyMultiplier += DifficultyIncrease;
-                _gameTimeElapsed = 0f;
-                Debug.WriteLine($"📈 Сложность увеличена: множитель {_difficultyMultiplier:F1}");
+                IncreaseDifficulty();
+                _difficultyTimer = 0f;
             }
 
-            // Расчет текущего кулдауна
-            _currentSpawnCooldown = MathHelper.Clamp(_initialSpawnCooldown / _difficultyMultiplier, 0.3f, 5f);
-            _spawnTimer -= deltaTime;
-
-            if (_spawnTimer <= 0f)
+            // --- СПАВН ОБЫЧНЫХ ВРАГОВ ---
+            _regularSpawnTimer += deltaTime;
+            if (_regularSpawnTimer >= _currentRegularSpawnCooldown)
             {
-                SpawnEnemy();
-                _spawnTimer = _currentSpawnCooldown;
+                if (CanSpawnRegularEnemy())
+                {
+                    SpawnRegularEnemy();
+                }
+                _regularSpawnTimer = 0f;
             }
 
-            // --- ЛОГИКА СПАВНА ЭЛИТНОГО ВРАГА ---
+            // --- СПАВН ЭЛИТНЫХ ВРАГОВ ---
             _eliteSpawnTimer += deltaTime;
-            if (_eliteSpawnTimer >= ELITE_SPAWN_COOLDOWN)
+            if (_eliteSpawnTimer >= ELITE_SPAWN_INTERVAL)
             {
-                SpawnEliteEnemy();
+                if (CanSpawnEliteEnemy())
+                {
+                    SpawnEliteEnemy();
+                }
                 _eliteSpawnTimer = 0f;
             }
+
+            // Очистка мертвых врагов (опционально, для производительности)
+            CleanDeadEnemies();
         }
 
-        private void SpawnEnemy()
+        private void IncreaseDifficulty()
+        {
+            _difficultyWave++;
+
+            // Уменьшаем кулдаун спавна (но не ниже минимума)
+            float newCooldown = _currentRegularSpawnCooldown * 0.9f;
+            _currentRegularSpawnCooldown = MathHelper.Max(newCooldown, _minSpawnCooldown);
+
+            Debug.WriteLine($"📈 Волна сложности {_difficultyWave}. Кулдаун спавна: {_currentRegularSpawnCooldown:F2}с");
+        }
+
+        private bool CanSpawnRegularEnemy()
+        {
+            // Проверяем лимиты
+            int regularCount = _enemies.Count(e => e.IsAlive && !(e is EliteEnemy));
+            int totalCount = _enemies.Count(e => e.IsAlive);
+
+            return regularCount < MAX_REGULAR_ENEMIES && totalCount < MAX_TOTAL_ENEMIES_ON_SCREEN;
+        }
+
+        private bool CanSpawnEliteEnemy()
+        {
+            // Проверяем лимиты и время появления (только каждые 5 минут)
+            int eliteCount = _enemies.Count(e => e.IsAlive && e is EliteEnemy);
+            int totalCount = _enemies.Count(e => e.IsAlive);
+
+            return eliteCount < MAX_ELITE_ENEMIES &&
+                   totalCount < MAX_TOTAL_ENEMIES_ON_SCREEN &&
+                   _gameTimeTotal >= (_totalElitesSpawned + 1) * ELITE_SPAWN_INTERVAL;
+        }
+
+        private void SpawnRegularEnemy()
         {
             Vector2 spawnPos = CalculateSpawnPosition();
             Enemy newEnemy = new Enemy(spawnPos, _player);
             _enemies.Add(newEnemy);
+            _totalEnemiesSpawned++;
 
-            Debug.WriteLine($"🎯 Обычный враг создан на позиции: {spawnPos}");
-            Debug.WriteLine($"   Игрок: {_player.Position}, Расстояние: {Vector2.Distance(_player.Position, spawnPos):F0}");
+            Debug.WriteLine($"🎯 Обычный враг #{_totalEnemiesSpawned} создан. Всего живых: {_enemies.Count(e => e.IsAlive)}");
         }
 
         private void SpawnEliteEnemy()
         {
             Vector2 spawnPos = CalculateSpawnPosition();
             _enemies.Add(new EliteEnemy(spawnPos, _player));
-            Debug.WriteLine($"👑 ЭЛИТНЫЙ ВРАГ создан на позиции: {spawnPos}");
+            _totalElitesSpawned++;
+
+            int minutes = (int)(_gameTimeTotal / 60);
+            int seconds = (int)(_gameTimeTotal % 60);
+            Debug.WriteLine($"👑 ЭЛИТНЫЙ ВРАГ #{_totalElitesSpawned} создан в {minutes:00}:{seconds:00}");
         }
 
         private Vector2 CalculateSpawnPosition()
         {
-            // Получаем текущие границы экрана относительно игрока
-            Vector2 screenCenter = _player.Position;
-            float screenLeft = screenCenter.X - _viewport.Width / 2;
-            float screenRight = screenCenter.X + _viewport.Width / 2;
-            float screenTop = screenCenter.Y - _viewport.Height / 2;
-            float screenBottom = screenCenter.Y + _viewport.Height / 2;
+            // Спавним ЗА ПРЕДЕЛАМИ видимой области, но в зоне спавна
+            Vector2 spawnPosition;
+            int attempts = 0;
+            const int maxAttempts = 10;
 
-            // Отступ от края экрана для спавна
-            float spawnMargin = 150f;
+            do
+            {
+                // Выбираем случайную сторону для спавна
+                int side = Game1.Random.Next(0, 4);
+                spawnPosition = GetPositionOnSide(side);
+                attempts++;
 
-            // Выбираем случайную сторону для спавна
-            int side = Game1.Random.Next(0, 4);
-            Vector2 spawnPosition = Vector2.Zero;
+            } while (_boundaries.IsInsideScreen(spawnPosition) && attempts < maxAttempts);
+
+            // Если не удалось найти позицию вне экрана, используем последнюю найденную
+            return spawnPosition;
+        }
+
+        private Vector2 GetPositionOnSide(int side)
+        {
+            float margin = 50f; // Отступ от границы спавна
+            Vector2 position = Vector2.Zero;
 
             switch (side)
             {
                 case 0: // Сверху
-                    spawnPosition = new Vector2(
-                        Game1.Random.Next((int)(screenLeft + 50), (int)(screenRight - 50)),
-                        screenTop - spawnMargin
+                    position = new Vector2(
+                        Game1.Random.Next((int)(_boundaries.SpawnLeft + margin), (int)(_boundaries.SpawnRight - margin)),
+                        _boundaries.SpawnTop + margin
                     );
                     break;
                 case 1: // Справа
-                    spawnPosition = new Vector2(
-                        screenRight + spawnMargin,
-                        Game1.Random.Next((int)(screenTop + 50), (int)(screenBottom - 50))
+                    position = new Vector2(
+                        _boundaries.SpawnRight - margin,
+                        Game1.Random.Next((int)(_boundaries.SpawnTop + margin), (int)(_boundaries.SpawnBottom - margin))
                     );
                     break;
                 case 2: // Снизу
-                    spawnPosition = new Vector2(
-                        Game1.Random.Next((int)(screenLeft + 50), (int)(screenRight - 50)),
-                        screenBottom + spawnMargin
+                    position = new Vector2(
+                        Game1.Random.Next((int)(_boundaries.SpawnLeft + margin), (int)(_boundaries.SpawnRight - margin)),
+                        _boundaries.SpawnBottom - margin
                     );
                     break;
                 case 3: // Слева
-                    spawnPosition = new Vector2(
-                        screenLeft - spawnMargin,
-                        Game1.Random.Next((int)(screenTop + 50), (int)(screenBottom - 50))
+                    position = new Vector2(
+                        _boundaries.SpawnLeft + margin,
+                        Game1.Random.Next((int)(_boundaries.SpawnTop + margin), (int)(_boundaries.SpawnBottom - margin))
                     );
                     break;
             }
 
-            // Ограничиваем спавн в пределах мира
-            spawnPosition.X = MathHelper.Clamp(spawnPosition.X, 100, Game1.WorldSize.X - 100);
-            spawnPosition.Y = MathHelper.Clamp(spawnPosition.Y, 100, Game1.WorldSize.Y - 100);
-
-            return spawnPosition;
+            return position;
         }
 
-        // Старые методы для обратной совместимости
-        private Vector2 GetSpawnPositionAroundScreen()
+        private void CleanDeadEnemies()
         {
-            return CalculateSpawnPosition();
+            // Удаляем мертвых врагов для оптимизации (раз в секунду)
+            if (_gameTimeTotal % 1f < 0.016f) // Примерно раз в секунду
+            {
+                int removed = _enemies.RemoveAll(e => !e.IsAlive);
+                if (removed > 0)
+                {
+                    Debug.WriteLine($"🧹 Удалено {removed} мертвых врагов. Осталось: {_enemies.Count(e => e.IsAlive)}");
+                }
+            }
         }
 
-        private Vector2 GetSpawnPosition(Player player)
+        public void UpdateViewport(Viewport viewport)
         {
-            return CalculateSpawnPosition();
+            // ИСПРАВЛЕНО: используем сохраненную камеру
+            _boundaries = new GameBoundaries(_camera, viewport);
         }
 
-        private Vector2 GetRandomSpawnPosition()
-        {
-            return CalculateSpawnPosition();
-        }
+        // Методы для получения статистики (можно использовать в HUD)
+        public int GetAliveRegularCount() => _enemies.Count(e => e.IsAlive && !(e is EliteEnemy));
+        public int GetAliveEliteCount() => _enemies.Count(e => e.IsAlive && e is EliteEnemy);
+        public int GetTotalAliveCount() => _enemies.Count(e => e.IsAlive);
+        public float GetNextEliteSpawnTime() => MathHelper.Max(0, (_totalElitesSpawned + 1) * ELITE_SPAWN_INTERVAL - _gameTimeTotal);
     }
 }

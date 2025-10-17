@@ -22,9 +22,7 @@ namespace Survive_the_night.Projectiles
         private bool _returning = false;
         private Vector2 _currentTargetPosition;
 
-        // Таймер жизни
-        private float _lifeTimer = 0f;
-        private const float MaxLifeTime = 30f; // 2 минуты
+        // УБРАНО: дублирование полей _lifeTimer и MaxLifeTime (они уже в базовом классе)
 
         // Для предотвращения многократного попадания по одному врагу
         private List<Enemy> _hitEnemies = new List<Enemy>();
@@ -40,6 +38,9 @@ namespace Survive_the_night.Projectiles
             _potentialTargets = potentialTargets;
             _currentTargetPosition = target?.Position ?? position + new Vector2(300, 0);
             _curveSpeed = (speed * 1.5f) / 400f;
+
+            // УСТАНОВКА времени жизни через базовый класс
+            SetLifeTime(30f); // 30 секунд вместо 2 минут (было слишком долго)
 
             CalculateCurvePoints();
         }
@@ -107,15 +108,10 @@ namespace Survive_the_night.Projectiles
         {
             if (!IsActive) return;
 
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            // Обновляем таймер жизни
-            _lifeTimer += deltaTime;
-            if (_lifeTimer >= MaxLifeTime)
-            {
-                IsActive = false;
-                return;
-            }
+            // УБРАНО: дублирование логики таймера жизни (она в базовом классе)
+            // Просто вызываем базовый метод
+            base.Update(gameTime);
+            if (!IsActive) return; // Проверяем после вызова base.Update
 
             // Обновляем позицию цели, если она жива
             if (_target != null && _target.IsAlive)
@@ -145,6 +141,8 @@ namespace Survive_the_night.Projectiles
                     CalculateReturnCurvePoints();
                 }
             }
+
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // Двигаемся по кривой Безье
             _curveProgress += _curveSpeed * deltaTime;

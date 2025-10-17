@@ -12,6 +12,7 @@ using Survive_the_night.Entities;
 using Survive_the_night.Weapons;
 using Survive_the_night.Projectiles;
 using Survive_the_night.Managers;
+using Survive_the_night.Interfaces;
 
 namespace Survive_the_night
 {
@@ -21,10 +22,11 @@ namespace Survive_the_night
     public enum GameState
     {
         MainMenu,
+        StartMenu,
         Playing,
         LevelUp,
         GameOver,
-        Roulette // Состояние для Рулетки-Автомата
+        Roulette
     }
 
     public class Game1 : Game
@@ -37,13 +39,11 @@ namespace Survive_the_night
         public static Vector2 WorldSize { get; private set; }
         public static List<Enemy> CurrentEnemies { get; private set; }
 
-        public static SoundEffect SFXGunShooting; // Для золотых пуль
-        public static SoundEffect SFXCardDeal;    // Для игральных карт
-        public static SoundEffect SFXGoldenSword;      // Для игральных карт
-        public static SoundEffect SFXThrowMolotov; // Для броска молотова
-        public static SoundEffect SFXFireBurn;     // Для горения огня
-        public static SoundEffect SFXCasinoChips; // Для фишек казино
-
+        // Звуки (только общие, не связанные с оружиями)
+        public static SoundEffect SFXGoldenSword;
+        public static SoundEffect SFXThrowMolotov;
+        public static SoundEffect SFXFireBurn;
+        public static SoundEffect SFXCasinoChips;
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -52,8 +52,9 @@ namespace Survive_the_night
         // ------------------------------------------------
 
         // Game State Management
-        private GameState _currentGameState; // Локальная переменная для использования в switch
-        private MainMenu _mainMenu;
+        private GameState _currentGameState;
+        private MainMenuRenderer _mainMenu;
+        private StartMenu _startMenu;
 
         // Game World Entities
         private Player _player;
@@ -63,23 +64,28 @@ namespace Survive_the_night
         private List<ExperienceOrb> _experienceOrbs = new List<ExperienceOrb>();
         private List<BaseHealthOrb> _healthOrbs = new List<BaseHealthOrb>();
 
+        // World Generation
+        private WorldGeneration _worldGeneration;
+
         // HUD Data
         private float _survivalTime = 0f;
         private int _killCount = 0;
 
         // Weapons and Upgrades
-        private PlayingCards _playingCardsWeapon;
         private List<Weapon> _weapons = new List<Weapon>();
         private LevelUpMenu _levelUpMenu;
-        private RouletteManager _rouletteManager; // МЕНЕДЖЕР РУЛЕТКИ
+        private LevelUpMenuRenderer _levelUpMenuRenderer;
+        private RouletteManager _rouletteManager;
 
         // Content
         private Texture2D _debugTexture;
         private SpriteFont _font;
         // Textures
-        private Texture2D _bulletTexture;
         private Texture2D _heartTexture;
         private Texture2D _goldenHeartTexture;
+
+        // Стартовое оружие
+        private WeaponName _selectedStartingWeapon = WeaponName.PlayingCards;
 
         public Game1()
         {
@@ -104,25 +110,20 @@ namespace Survive_the_night
             );
 
             _player = new Player(initialPlayerPosition);
-            _spawnManager = new SpawnManager(_enemies, _player);
             _camera = new Camera(_player, GraphicsDevice.Viewport);
 
-            // ВАЖНО: Этот вызов должен быть после создания SpawnManager
-            _spawnManager.SetViewport(GraphicsDevice.Viewport);
+            // Спавн менеджер с границами
+            _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport);
 
-            // Инициализация оружия - ТОЛЬКО ИГРАЛЬНЫЕ КАРТЫ
-            _playingCardsWeapon = new PlayingCards(_player);
-            _weapons.Add(_playingCardsWeapon);
-            // Молотов НЕ добавляем - его получим позже через LevelUp
-
-            WorldSize = new Vector2(3000, 3000);
-            CurrentEnemies = _enemies; // Инициализация статического списка врагов
+            // Оружие будет инициализировано после выбора в StartMenu
+            CurrentEnemies = _enemies;
 
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
+
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _debugTexture = new Texture2D(GraphicsDevice, 1, 1);
             _debugTexture.SetData(new[] { Color.White });
@@ -130,72 +131,80 @@ namespace Survive_the_night
             // Загрузка шрифта
             _font = Content.Load<SpriteFont>("Fonts/Default");
 
-            // Загрузка спрайтов карт
+            // Загрузка текстуры пола казино и инициализация генерации мира
+            Texture2D casinoFloorTexture = Content.Load<Texture2D>("Sprites/CasinoFloor");
+            _worldGeneration = new WorldGeneration(casinoFloorTexture, _camera, GraphicsDevice.Viewport);
+
+            // --- ЗАГРУЗКА ТЕКСТУР И ЗВУКОВ ДЛЯ ОРУЖИЙ ЧЕРЕЗ WEAPON MANAGER ---
+
+            // Игральные карты
             var cardTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Card1");
             var cardTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/Card2");
             var cardTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/Card3");
             var cardTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Card4");
+            var cardSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
+            WeaponManager.LoadWeaponTextures(WeaponName.PlayingCards, cardTexture1, cardTexture2, cardTexture3, cardTexture4);
+            WeaponManager.LoadWeaponSound(WeaponName.PlayingCards, cardSound);
 
-            // Добавляем текстуры в PlayingCards
-            PlayingCards.AddCardTexture(cardTexture1);
-            PlayingCards.AddCardTexture(cardTexture2);
-            PlayingCards.AddCardTexture(cardTexture3);
-            PlayingCards.AddCardTexture(cardTexture4);
-
-            // Устанавливаем текстуру по умолчанию
-            PlayingCard.SetDefaultTexture(cardTexture1);
-
-            SFXCardDeal = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
-
+            // Золотые пули
             var bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
-            GoldenBullet.AddBulletTexture(bulletTexture);
+            var gunSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
+            WeaponManager.LoadWeaponTextures(WeaponName.GoldenBullet, bulletTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.GoldenBullet, gunSound);
+
+            // Фишки казино
+            var chipTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsBlue");
+            var chipTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsGreen");
+            var chipTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsRed");
+            var chipsSound = Content.Load<SoundEffect>("Sounds/Weapons/SFCCasinoChips");
+            WeaponManager.LoadWeaponTextures(WeaponName.CasinoChips, chipTexture1, chipTexture2, chipTexture3);
+            WeaponManager.LoadWeaponSound(WeaponName.CasinoChips, chipsSound);
+
+            // Золотой меч
+            var swordTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenSword");
+            SFXGoldenSword = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenSword");
+            WeaponManager.LoadWeaponTextures(WeaponName.GoldenSword, swordTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.GoldenSword, SFXGoldenSword);
+
+            // Молотов
+            var molotovTexture = Content.Load<Texture2D>("Sprites/Projectiles/Molotov");
+            var molotovFireTexture = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire");
+            SFXThrowMolotov = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowMolotov");
+            SFXFireBurn = Content.Load<SoundEffect>("Sounds/Weapons/SFXFireBurn");
+            MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
+            WeaponManager.LoadWeaponTextures(WeaponName.MolotovCocktail, molotovTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.MolotovCocktail, SFXThrowMolotov);
+
+            // Установка текстур по умолчанию для проектов
+            PlayingCard.SetDefaultTexture(cardTexture1);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
-            SFXGunShooting = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
+            GoldenSwordProjectile.SetDefaultTexture(swordTexture);
+            CasinoChip.SetDefaultTexture(chipTexture1);
 
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
 
-            // Загрузка текстур и звуков для Золотого меча
-            var swordTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenSword");
-            GoldenSword.AddSwordTexture(swordTexture);
-            GoldenSwordProjectile.SetDefaultTexture(swordTexture);
-
-            var swordSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenSword");
-            GoldenSword.SetSound(swordSound);
-
-            // Загрузка текстур и звуков для Молотова
-            var molotovTexture = Content.Load<Texture2D>("Sprites/Projectiles/Molotov");
-            var molotovFireTexture = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire");
-
-            // Звуки загружаются в статические поля (как для карт)
-            SFXThrowMolotov = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowMolotov");
-            SFXFireBurn = Content.Load<SoundEffect>("Sounds/Weapons/SFXFireBurn");
-
-            MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
-
-            // Загрузка спрайтов фишек казино
-            var chipTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsBlue");
-            var chipTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsGreen");
-            var chipTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsRed");
-
-            // Добавляем текстуры в CasinoChips
-            CasinoChips.AddChipTexture(chipTexture1);
-            CasinoChips.AddChipTexture(chipTexture2);
-            CasinoChips.AddChipTexture(chipTexture3);
-
-            // Устанавливаем текстуру по умолчанию
-            CasinoChip.SetDefaultTexture(chipTexture1);
-
-            // Загрузка звука фишек казино
-            SFXCasinoChips = Content.Load<SoundEffect>("Sounds/Weapons/SFCCasinoChips");
-
-
-
+            // Загрузка текстур для StartMenu
+            var weaponCellTexture = Content.Load<Texture2D>("Sprites/GUI/CellWeapon");
+            var upButtonTexture = Content.Load<Texture2D>("Sprites/GUI/UpButton");
+            var downButtonTexture = Content.Load<Texture2D>("Sprites/GUI/DownButton");
 
             // Инициализация менеджеров и меню
-            _mainMenu = new MainMenu(GraphicsDevice, _debugTexture, _font);
+            _mainMenu = new MainMenuRenderer(GraphicsDevice, _debugTexture, _font);
+            _startMenu = new StartMenu(GraphicsDevice, _debugTexture, _font);
+            _startMenu.LoadContent(weaponCellTexture, upButtonTexture, downButtonTexture);
+
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
+            _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
             _rouletteManager = new RouletteManager(_levelUpMenu);
+        }
+
+        // Метод для инициализации выбранного оружия
+        private void InitializePlayerWeapon()
+        {
+            _weapons.Clear();
+            var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
+            _weapons.Add(selectedWeapon);
         }
 
         protected override void Update(GameTime gameTime)
@@ -209,14 +218,24 @@ namespace Survive_the_night
             switch (_currentGameState)
             {
                 case GameState.MainMenu:
-                    // MainMenu.Update должен возвращать новое GameState
-                    Game1.CurrentState = (GameState)_mainMenu.Update(gameTime);
+                    Game1.CurrentState = _mainMenu.Update(gameTime);
+                    break;
+
+                case GameState.StartMenu:
+                    var newState = _startMenu.Update(gameTime);
+                    if (newState == GameState.Playing)
+                    {
+                        // Сохраняем выбранное оружие и инициализируем игрока
+                        _selectedStartingWeapon = _startMenu.SelectedWeapon;
+                        InitializePlayerWeapon();
+                    }
+                    Game1.CurrentState = newState;
                     break;
 
                 case GameState.Playing:
                     _survivalTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                    // --- ПРОВЕРКИ СОСТОЯНИЯ ---
+                    // Проверки состояния
                     if (!_player.IsAlive)
                     {
                         Game1.CurrentState = GameState.GameOver;
@@ -230,7 +249,7 @@ namespace Survive_the_night
                         return;
                     }
 
-                    // --- ИГРОВАЯ ЛОГИКА ---
+                    // Игровая логика
                     _player.Update(gameTime);
                     _camera.Follow();
                     _spawnManager.Update(gameTime);
@@ -244,16 +263,14 @@ namespace Survive_the_night
                         {
                             _killCount++;
 
-                            // !!! ДРОП ЭЛИТНОГО ВРАГА: ЗАПУСК РУЛЕТКИ !!!
+                            // Дроп элитного врага: запуск рулетки
                             if (enemy is EliteEnemy)
                             {
-                                // Дроп 10 орбов опыта
                                 for (int j = 0; j < 10; j++)
                                 {
                                     _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
                                 }
 
-                                // 2. Запуск Рулетки-Автомата (меняет Game1.CurrentState на Roulette)
                                 _rouletteManager.StartRoulette();
                             }
                             else
@@ -261,12 +278,12 @@ namespace Survive_the_night
                                 // Обычный дроп опыта
                                 _experienceOrbs.Add(new ExperienceOrb(enemy.Position, 1));
 
-                                // Шанс дропа сердца 2% (1 из 50), лечит 25% от MaxHealth (+ бонус игрока)
+                                // Шанс дропа сердца 2%
                                 if (Game1.Random.NextDouble() < 0.02)
                                 {
                                     _healthOrbs.Add(new HealthOrb(enemy.Position, 0.25f));
                                 }
-                                // Шанс дропа золотого сердца 2% (1 из 100), лечит 50% от MaxHealth (+ бонус игрока)
+                                // Шанс дропа золотого сердца 1%
                                 if (Game1.Random.NextDouble() < 0.01)
                                 {
                                     _healthOrbs.Add(new GoldenHealthOrb(enemy.Position, 0.5f));
@@ -277,13 +294,10 @@ namespace Survive_the_night
                         }
                     }
 
-                    // --------------------------------------------------------
-                    // !!! ИСПРАВЛЕНИЕ: ОБРАБОТКА КОЛЛИЗИЙ И УРОНА ОТ ВРАГОВ !!!
+                    // Обработка коллизий с врагами
                     if (_player.IsAlive)
                     {
                         var playerBounds = GetBounds(_player);
-
-                        // Находим всех живых врагов, которые пересекаются с игроком
                         var collidingEnemies = _enemies.Where(enemy =>
                             enemy.IsAlive &&
                             GetBounds(enemy).Intersects(playerBounds)
@@ -293,13 +307,10 @@ namespace Survive_the_night
                         {
                             if (!_player.IsInvulnerable)
                             {
-                                // !!! ИСПРАВЛЕНИЕ: ИСПОЛЬЗУЕМ DAMAGE ВРАГА !!!
-                                // Наносим урон, равный урону первого столкнувшегося врага
                                 _player.TakeDamage(collidingEnemies.First().Damage);
                             }
                         }
                     }
-                    // --------------------------------------------------------
 
                     // Обновление оружия, орбов опыта и хилок
                     foreach (var weapon in _weapons)
@@ -343,7 +354,7 @@ namespace Survive_the_night
                     }
                     break;
 
-                case GameState.Roulette: // ОБНОВЛЕНИЕ РУЛЕТКИ
+                case GameState.Roulette:
                     _rouletteManager.Update(gameTime);
                     break;
 
@@ -367,28 +378,34 @@ namespace Survive_the_night
                     _spriteBatch.End();
                     break;
 
+                case GameState.StartMenu:
+                    _spriteBatch.Begin();
+                    _startMenu.Draw(_spriteBatch);
+                    _spriteBatch.End();
+                    break;
+
                 case GameState.Playing:
                 case GameState.LevelUp:
                 case GameState.GameOver:
                 case GameState.Roulette:
-                    // --- Отрисовка игрового мира (с камерой) ---
+                    // Отрисовка игрового мира (с камерой)
                     _spriteBatch.Begin(transformMatrix: _camera.Transform);
                     DrawWorldObjects();
                     _spriteBatch.End();
 
-                    // --- Отрисовка HUD и UI (без камеры) ---
+                    // Отрисовка HUD и UI (без камеры)
                     _spriteBatch.Begin();
                     DrawHUD();
 
                     if (_currentGameState == GameState.LevelUp)
                     {
                         DrawLevelUpPendingScreen(_spriteBatch);
-                        _levelUpMenu.Draw(_spriteBatch, _font);
+                        _levelUpMenuRenderer.Draw(_spriteBatch);
                     }
 
-                    if (_currentGameState == GameState.Roulette) // ОТРИСОВКА РУЛЕТКИ
+                    if (_currentGameState == GameState.Roulette)
                     {
-                        DrawLevelUpPendingScreen(_spriteBatch); // Затемнение
+                        DrawLevelUpPendingScreen(_spriteBatch);
                         _rouletteManager.Draw(
                             _spriteBatch,
                             _font,
@@ -414,6 +431,9 @@ namespace Survive_the_night
 
         private void DrawWorldObjects()
         {
+            // Отрисовка фона мира
+            _worldGeneration.Draw(_spriteBatch);
+
             // Визуализация зоны спавна (для отладки)
             Vector2 screenCenter = _player.Position;
             float screenLeft = screenCenter.X - GraphicsDevice.Viewport.Width / 2;
@@ -428,7 +448,7 @@ namespace Survive_the_night
             );
             _spriteBatch.Draw(_debugTexture, screenBounds, Color.Green * 0.1f);
 
-            // --- ОТРИСОВКА ОГНЕННЫХ ОБЛАСТЕЙ ПЕРВЫМИ (ПОД ВСЕМИ) ---
+            // Отрисовка огненных областей первыми (под всеми)
             foreach (var weapon in _weapons)
             {
                 if (weapon is MolotovCocktail molotov)
@@ -437,7 +457,7 @@ namespace Survive_the_night
                 }
             }
 
-            // Отрисовка орбов опыта (над огнем, но под персонажем и врагами)
+            // Отрисовка орбов опыта
             foreach (var orb in _experienceOrbs)
             {
                 if (orb.IsActive)
@@ -446,7 +466,7 @@ namespace Survive_the_night
                 }
             }
 
-            // Отрисовка хилок (над огнем, но под персонажем и врагами)
+            // Отрисовка хилок
             foreach (var orb in _healthOrbs)
             {
                 if (orb.IsActive)
@@ -459,7 +479,7 @@ namespace Survive_the_night
                 }
             }
 
-            // Отрисовка врагов (над огнем и орбами)
+            // Отрисовка врагов
             foreach (var enemy in _enemies)
             {
                 if (enemy.IsAlive)
@@ -479,7 +499,7 @@ namespace Survive_the_night
             }
             _player.Draw(_spriteBatch, _debugTexture, playerTint);
 
-            // --- ОТРИСОВКА ОСТАЛЬНОГО ОРУЖИЯ (НАД ВСЕМИ) ---
+            // Отрисовка остального оружия (НАД ВСЕМИ)
             foreach (var weapon in _weapons)
             {
                 if (weapon is PlayingCards cards)
@@ -515,7 +535,6 @@ namespace Survive_the_night
                     }
                 }
 
-                // Отрисовка фишек казино
                 if (weapon is CasinoChips casinoChips)
                 {
                     foreach (var chip in casinoChips.ActiveProjectiles)
@@ -536,10 +555,10 @@ namespace Survive_the_night
 
             int screenWidth = GraphicsDevice.Viewport.Width;
 
-            // 1. Отрисовка УРОВНЯ (слева вверху)
+            // Отрисовка УРОВНЯ (слева вверху)
             _spriteBatch.DrawString(_font, $"УРОВЕНЬ: {_player.Level}", new Vector2(10, 35), Color.White);
 
-            // 2. Отрисовка ТАЙМЕРА (по центру вверху)
+            // Отрисовка ТАЙМЕРА (по центру вверху)
             int minutes = (int)(_survivalTime / 60);
             int seconds = (int)(_survivalTime % 60);
             string timeString = $"{minutes:00}:{seconds:00}";
@@ -552,7 +571,7 @@ namespace Survive_the_night
 
             _spriteBatch.DrawString(_font, timeString, timePosition, Color.Yellow);
 
-            // 3. Отрисовка СЧЕТЧИКА КИЛЛОВ (справа вверху)
+            // Отрисовка СЧЕТЧИКА КИЛЛОВ (справа вверху)
             string killString = $"КИЛЛЫ: {_killCount}";
             Vector2 killSize = _font.MeasureString(killString);
             Vector2 killPosition = new Vector2(
@@ -644,7 +663,6 @@ namespace Survive_the_night
 
         private void DrawLevelUpPendingScreen(SpriteBatch spriteBatch)
         {
-            // Затемняет экран, используется для LevelUp и Roulette
             spriteBatch.Draw(
                 _debugTexture,
                 new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
@@ -652,14 +670,8 @@ namespace Survive_the_night
             );
         }
 
-        // --- НОВЫЙ ВСПОМОГАТЕЛЬНЫЙ МЕТОД: ПОЛУЧЕНИЕ ГРАНИЦ ДЛЯ КОЛЛИЗИИ ---
-        /// <summary>
-        /// Возвращает прямоугольные границы для проверки коллизии. 
-        /// Предполагается, что Player и Enemy имеют свойство Position и размер 48x48 (радиус 24).
-        /// </summary>
         private Rectangle GetBounds(object obj)
         {
-            // Размер сущности (радиус)
             const int Size = 24;
             Vector2 position = Vector2.Zero;
 
@@ -673,7 +685,6 @@ namespace Survive_the_night
             }
             else
             {
-                // Если тип объекта неизвестен, возвращаем пустой прямоугольник
                 return Rectangle.Empty;
             }
 

@@ -3,32 +3,24 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
-using Survive_the_night.Managers;
 
 namespace Survive_the_night.Weapons
 {
     public class CasinoChips : Weapon
     {
-        public const string WeaponName = "Фишки казино";
         public int NumChips { get; private set; } = 1;
         public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
         public float ProjectileSpeed { get; private set; } = 500f;
 
-        // Базовая перезарядка и улучшение перезарядки
         private float _baseCooldown = 2.5f;
         public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.2f);
 
-        // Список текстур для случайного выбора
-        private static List<Texture2D> _chipTextures = new List<Texture2D>();
-
-        // Отдельные уровни прокачек
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
         public int ReloadSpeedLevel { get; private set; } = 0;
         public int BounceLevel { get; private set; } = 0;
 
-        // Параметры очереди выстрелов
         private const float ShotIntervalSeconds = 0.15f;
         private float BurstCooldownSeconds => CurrentCooldown;
         private bool _isBurstActive = false;
@@ -36,34 +28,14 @@ namespace Survive_the_night.Weapons
         private float _nextShotTimer = 0f;
         private float _burstCooldownTimer = 0f;
 
-        // ДОБАВЛЕНО: Список врагов, которые уже были поражены каждой фишкой
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public CasinoChips(Player player) : base(player, 2.0f, 1)
+        public CasinoChips(Player player) : base(player, WeaponType.Regular, WeaponName.CasinoChips, 2.0f, 1)
         {
-        }
-
-        // Метод для добавления текстур фишек
-        public static void AddChipTexture(Texture2D texture)
-        {
-            if (texture != null && !_chipTextures.Contains(texture))
-            {
-                _chipTextures.Add(texture);
-            }
-        }
-
-        // Метод для получения случайной текстуры фишки
-        public static Texture2D GetRandomChipTexture()
-        {
-            if (_chipTextures.Count == 0)
-                return null;
-
-            return _chipTextures[Game1.Random.Next(0, _chipTextures.Count)];
         }
 
         public override void LevelUp() { }
 
-        // --- ТРИ ВЕТКИ ПРОКАЧКИ ---
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
@@ -96,7 +68,6 @@ namespace Survive_the_night.Weapons
                 }
                 else
                 {
-                    // Удаляем фишку из словаря попаданий
                     if (_hitEnemies.ContainsKey(chip))
                     {
                         _hitEnemies.Remove(chip);
@@ -110,13 +81,11 @@ namespace Survive_the_night.Weapons
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Обновляем таймер перерыва между очередями
             if (_burstCooldownTimer > 0f)
             {
                 _burstCooldownTimer -= deltaTime;
             }
 
-            // Запуск новой очереди выстрелов, когда перерыв завершён
             if (_burstCooldownTimer <= 0f && !_isBurstActive)
             {
                 _isBurstActive = true;
@@ -124,7 +93,6 @@ namespace Survive_the_night.Weapons
                 _nextShotTimer = 0f;
             }
 
-            // Если очередь активна - выпускаем фишки с интервалом
             if (_isBurstActive)
             {
                 _nextShotTimer -= deltaTime;
@@ -139,7 +107,6 @@ namespace Survive_the_night.Weapons
                             (float)Game1.Random.NextDouble() * 10 - 5
                         );
 
-                        // Создаем фишку с возможностью отскоков и случайной текстурой
                         var chip = new CasinoChip(
                             Player.Position + offset,
                             16,
@@ -147,16 +114,14 @@ namespace Survive_the_night.Weapons
                             this.Damage,
                             this.ProjectileSpeed,
                             target.Position,
-                            BounceLevel + 1, // +1 потому что начальное значение 1 отскок
-                            GetRandomChipTexture()
+                            BounceLevel + 1,
+                            WeaponManager.GetRandomWeaponTexture(WeaponName.CasinoChips)
                         );
                         ActiveProjectiles.Add(chip);
 
-                        // Инициализируем список пораженных врагов для этой фишки
                         _hitEnemies[chip] = new List<Enemy>();
 
-                        // Воспроизведение звука
-                        Game1.SFXCasinoChips?.Play();
+                        WeaponManager.GetWeaponSound(WeaponName.CasinoChips)?.Play();
                     }
 
                     _shotsFiredInBurst++;
@@ -180,10 +145,8 @@ namespace Survive_the_night.Weapons
                 Projectile projectile = ActiveProjectiles[j];
                 if (!projectile.IsActive) continue;
 
-                // Если это фишка казино, обрабатываем логику отскоков
                 if (projectile is CasinoChip chip)
                 {
-                    // Получаем список врагов, которых уже поразила эта фишка
                     List<Enemy> alreadyHit = _hitEnemies.ContainsKey(chip) ? _hitEnemies[chip] : new List<Enemy>();
 
                     for (int i = enemies.Count - 1; i >= 0; i--)
@@ -191,31 +154,26 @@ namespace Survive_the_night.Weapons
                         Enemy enemy = enemies[i];
                         if (!enemy.IsAlive) continue;
 
-                        // Проверяем, не поражали ли уже этого врага
                         if (alreadyHit.Contains(enemy)) continue;
 
                         if (projectile.GetBounds().Intersects(enemy.GetBounds()))
                         {
                             enemy.TakeDamage(projectile.Damage);
 
-                            // Добавляем врага в список пораженных
                             alreadyHit.Add(enemy);
                             _hitEnemies[chip] = alreadyHit;
 
-                            // Логика отскока - находим следующего врага
                             Enemy nextTarget = FindNextTargetForChip(chip, enemies, alreadyHit);
                             if (nextTarget != null && chip.HitsLeft > 0)
                             {
-                                // Обновляем направление для отскока к следующему врагу
                                 chip.UpdateDirection(nextTarget.Position);
                                 chip.HitsLeft--;
                             }
                             else
                             {
-                                // Если нет следующей цели или закончились отскоки - деактивируем
                                 projectile.IsActive = false;
                             }
-                            break; // Выходим из цикла по врагам для этой фишки
+                            break;
                         }
                     }
                 }
@@ -232,12 +190,10 @@ namespace Survive_the_night.Weapons
             {
                 if (!enemy.IsAlive) continue;
 
-                // Пропускаем врагов, которые уже были поражены этой фишкой
                 if (alreadyHit.Contains(enemy)) continue;
 
                 float distance = Vector2.Distance(chipPosition, enemy.Position);
 
-                // Ищем ближайшего врага
                 if (distance < minDistance)
                 {
                     minDistance = distance;

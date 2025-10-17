@@ -20,9 +20,6 @@ namespace Survive_the_night.Managers
     {
         private Player _player;
         private List<Weapon> _weapons;
-        private Texture2D _debugTexture;
-        private SpriteFont _font;
-        private GraphicsDevice _graphicsDevice;
 
         // Переменные состояния для надежного ввода с клавиатуры и мыши
         private KeyboardState _previousKeyboardState;
@@ -33,6 +30,10 @@ namespace Survive_the_night.Managers
 
         public List<UpgradeOption> CurrentOptions { get; private set; } = new List<UpgradeOption>();
         public bool IsVisible => _player.IsLevelUpPending;
+
+        private Texture2D _debugTexture; // ВОССТАНОВИТЬ
+        private SpriteFont _font; // ВОССТАНОВИТЬ
+        private GraphicsDevice _graphicsDevice; // ВОССТАНОВИТЬ
 
         public LevelUpMenu(Player player, List<Weapon> allWeapons, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
@@ -59,7 +60,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenSword.WeaponName}: Количество мечей +1 (Ур. {gs.CountLevel}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel}/5)",
                             Description = $"Текущее количество: {gs.NumSwords}",
                             ApplyUpgrade = () => gs.UpgradeCount()
                         });
@@ -68,7 +69,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenSword.WeaponName}: Урон +2 (Ур. {gs.DamageLevel}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +2 (Ур. {gs.DamageLevel}/5)",
                             Description = $"Текущий урон: {gs.Damage}",
                             ApplyUpgrade = () => gs.UpgradeDamage()
                         });
@@ -77,7 +78,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenSword.WeaponName}: Скорость полета +20 (Ур. {gs.SpeedLevel}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Скорость полета +20 (Ур. {gs.SpeedLevel}/5)",
                             Description = $"Текущая скорость: {gs.ProjectileSpeed:0}",
                             ApplyUpgrade = () => gs.UpgradeSpeed()
                         });
@@ -91,7 +92,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{PlayingCards.WeaponName}: Количество карт +1 (Ур. {pc.CountLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Количество карт +1 (Ур. {pc.CountLevel}/10)",
                             Description = $"Текущее количество: {pc.NumCards}",
                             ApplyUpgrade = () => pc.UpgradeCount()
                         });
@@ -100,7 +101,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{PlayingCards.WeaponName}: Урон карты +1 (Ур. {pc.DamageLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +1 (Ур. {pc.DamageLevel}/10)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
@@ -109,7 +110,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{PlayingCards.WeaponName}: Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
                             Description = $"Текущая перезарядка: {pc.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => pc.UpgradeReloadSpeed()
                         });
@@ -123,7 +124,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenBullet.WeaponName}: Количество пуль +1 (Ур. {gb.CountLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Количество пуль +1 (Ур. {gb.CountLevel}/10)",
                             Description = $"Текущее количество: {gb.NumBullets}",
                             ApplyUpgrade = () => gb.UpgradeCount()
                         });
@@ -132,7 +133,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenBullet.WeaponName}: Урон +1 (Ур. {gb.DamageLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Урон +1 (Ур. {gb.DamageLevel}/10)",
                             Description = $"Текущий урон: {gb.Damage}",
                             ApplyUpgrade = () => gb.UpgradeDamage()
                         });
@@ -141,7 +142,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{GoldenBullet.WeaponName}: Скорость полета +50 (Ур. {gb.SpeedLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Скорость полета +50 (Ур. {gb.SpeedLevel}/10)",
                             Description = $"Текущая скорость: {gb.ProjectileSpeed:0}",
                             ApplyUpgrade = () => gb.UpgradeSpeed()
                         });
@@ -156,7 +157,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{CasinoChips.WeaponName}: Урон +1 (Ур. {cc.DamageLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Урон +1 (Ур. {cc.DamageLevel}/10)",
                             Description = $"Текущий урон: {cc.Damage}",
                             ApplyUpgrade = () => cc.UpgradeDamage()
                         });
@@ -165,7 +166,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{CasinoChips.WeaponName}: Скорость перезарядки -0.2с (Ур. {cc.ReloadSpeedLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Скорость перезарядки -0.2с (Ур. {cc.ReloadSpeedLevel}/10)",
                             Description = $"Текущая перезарядка: {cc.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => cc.UpgradeReloadSpeed()
                         });
@@ -174,7 +175,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{CasinoChips.WeaponName}: Отскоки +1 (Ур. {cc.BounceLevel}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Отскоки +1 (Ур. {cc.BounceLevel}/10)",
                             Description = $"Текущее количество отскоков: {cc.BounceLevel + 1}",
                             ApplyUpgrade = () => cc.UpgradeBounceCount()
                         });
@@ -186,21 +187,21 @@ namespace Survive_the_night.Managers
                 {
                     pool.Add(new UpgradeOption
                     {
-                        Title = $"Молотов: Количество бутылок +1 (Ур. {mc.CountLevel}/5)",
+                        Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel}/5)",
                         Description = $"Текущее количество: {mc.NumBottles}",
                         ApplyUpgrade = () => mc.UpgradeBottleCount()
                     });
 
                     pool.Add(new UpgradeOption
                     {
-                        Title = $"Молотов: Время горения +5 сек (Ур. {mc.DurationLevel}/5)",
+                        Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel}/5)",
                         Description = $"Текущее время: {mc.BurnDuration:0} сек",
                         ApplyUpgrade = () => mc.UpgradeBurnDuration()
                     });
 
                     pool.Add(new UpgradeOption
                     {
-                        Title = $"Молотов: Частота урона (Ур. {mc.RateLevel}/5)",
+                        Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Частота урона (Ур. {mc.RateLevel}/5)",
                         Description = $"Текущий интервал: {mc.DamageInterval:0.0} сек",
                         ApplyUpgrade = () => mc.UpgradeDamageRate()
                     });
@@ -220,6 +221,18 @@ namespace Survive_the_night.Managers
                 }
             }
 
+            // Опция получения Игральных карт
+            bool hasPlayingCard = _weapons.Any(w => w is PlayingCards);
+            if (!hasPlayingCard)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Взять Игральные карты",
+                    Description = "Добавляет новое оружие: игральные карты, которые пробивают врагов.",
+                    ApplyUpgrade = () => _weapons.Add(new PlayingCards(_player))
+                });
+            }
+
             // Опция получения Золотого меча
             bool hasGoldenSword = _weapons.Any(w => w is GoldenSword);
             if (!hasGoldenSword)
@@ -227,7 +240,7 @@ namespace Survive_the_night.Managers
                 pool.Add(new UpgradeOption
                 {
                     Title = "Взять Золотой меч",
-                    Description = "Добавляет новое оружие: золотые мечи, летящие по траектории бумеранга с автонаводкой.",
+                    Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
                     ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
                 });
             }
@@ -263,7 +276,7 @@ namespace Survive_the_night.Managers
                 pool.Add(new UpgradeOption
                 {
                     Title = "Взять Коктейль Молотова",
-                    Description = "Добавляет новое метательное оружие: бросает бутылки, создающие огненные зоны.",
+                    Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
                     ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
                 });
             }
@@ -386,43 +399,6 @@ namespace Survive_the_night.Managers
         {
             CurrentOptions[index].ApplyUpgrade.Invoke();
             _player.IsLevelUpPending = false;
-        }
-
-        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
-        {
-            if (!IsVisible) return;
-
-            Vector2 startPosition = new Vector2(50, 50);
-            int boxHeight = 150;
-            int boxWidth = _graphicsDevice.Viewport.Width - 100;
-            const int boxSpacing = 20;
-
-            spriteBatch.DrawString(font, "ВЫБЕРИТЕ УЛУЧШЕНИЕ", startPosition - new Vector2(0, 40), Color.Yellow);
-
-            // Получаем текущую позицию мыши для выделения
-            Point mousePosition = Mouse.GetState().Position;
-
-            for (int i = 0; i < CurrentOptions.Count; i++)
-            {
-                UpgradeOption option = CurrentOptions[i];
-                Rectangle box = new Rectangle((int)startPosition.X, (int)startPosition.Y + i * boxHeight + i * boxSpacing, boxWidth, boxHeight);
-
-                // Фон
-                Color boxColor = Color.DarkBlue;
-                if (box.Contains(mousePosition))
-                {
-                    boxColor = Color.DarkSlateGray; // Выделяем при наведении
-                }
-
-                spriteBatch.Draw(_debugTexture, box, boxColor);
-
-                // Текст
-                Vector2 textPos = new Vector2(box.X + 20, box.Y + 10);
-                spriteBatch.DrawString(font, $"[{i + 1}] {option.Title}", textPos, Color.White);
-
-                textPos.Y += 40;
-                spriteBatch.DrawString(font, option.Description, textPos, Color.LightGray);
-            }
         }
     }
 }

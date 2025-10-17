@@ -24,7 +24,7 @@ namespace Survive_the_night.Weapons
         public int DurationLevel { get; private set; } = 0;
         public int RateLevel { get; private set; } = 0;
 
-        public MolotovCocktail(Player player) : base(player, 5.0f, 2)
+        public MolotovCocktail(Player player) : base(player, WeaponType.Legendary, WeaponName.MolotovCocktail, 5.0f, 2)
         {
         }
 
@@ -33,8 +33,6 @@ namespace Survive_the_night.Weapons
             _bottleTexture = bottleTexture;
             _fireTexture = fireTexture;
         }
-
-        // УДАЛИТЬ метод SetSoundsInstance - больше не нужен!
 
         public override void LevelUp()
         {
@@ -67,7 +65,6 @@ namespace Survive_the_night.Weapons
         {
             base.Update(gameTime);
 
-            // Обновление летящих бутылок
             for (int i = ActiveBottles.Count - 1; i >= 0; i--)
             {
                 var bottle = ActiveBottles[i];
@@ -77,7 +74,6 @@ namespace Survive_the_night.Weapons
                 }
                 else
                 {
-                    // Создаем огненную область
                     var fireArea = new FireArea(
                         bottle.Position,
                         (int)(_fireTexture.Width * 1.5f),
@@ -92,7 +88,6 @@ namespace Survive_the_night.Weapons
                 }
             }
 
-            // Обновление активных огненных областей
             bool anyFireActive = false;
             for (int i = ActiveFires.Count - 1; i >= 0; i--)
             {
@@ -108,7 +103,6 @@ namespace Survive_the_night.Weapons
                 }
             }
 
-            // Перезарядка происходит только когда нет активных огней
             if (anyFireActive)
             {
                 CooldownTimer = CooldownTime;
@@ -123,7 +117,6 @@ namespace Survive_the_night.Weapons
 
                 for (int i = 0; i < NumBottles; i++)
                 {
-                    // Бросаем Молотов в радиусе 300-500 вокруг игрока
                     float spawnRadius = 300f + (float)Game1.Random.NextDouble() * 200f;
                     float angle = (float)Game1.Random.NextDouble() * MathHelper.TwoPi;
 
@@ -134,7 +127,6 @@ namespace Survive_the_night.Weapons
 
                     Vector2 randomPositionNearPlayer = Player.Position + offset;
 
-                    // Создаем Молотов
                     MolotovProjectile bottle = new MolotovProjectile(
                         Player.Position,
                         randomPositionNearPlayer,
