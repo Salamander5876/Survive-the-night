@@ -1,6 +1,4 @@
-﻿// Projectiles/Projectile.cs
-
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Survive_the_night.Projectiles
@@ -8,18 +6,17 @@ namespace Survive_the_night.Projectiles
     public abstract class Projectile
     {
         public Vector2 Position { get; protected set; }
-        public Vector2 Direction { get; set; } // ИЗМЕНЕНО: убрали protected из set
+        public Vector2 Direction { get; set; }
         public int Size { get; protected set; }
         public Color Color { get; protected set; }
-        public int Damage { get; protected set; }
+        public int Damage { get; set; } // ИСПРАВЛЕНО: убрал protected
         public float Speed { get; protected set; }
         public bool IsActive { get; set; }
         public int HitsLeft { get; set; }
         public float Rotation { get; protected set; }
 
-        // Добавляем таймер жизни снаряда
         private float _lifeTimer = 0f;
-        protected float MaxLifeTime = 3f; // ИЗМЕНЕНО: сделали protected вместо const
+        protected float MaxLifeTime = 3f;
 
         protected Projectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1)
         {
@@ -35,7 +32,6 @@ namespace Survive_the_night.Projectiles
             Direction = Vector2.Normalize(target - position);
         }
 
-        // ДОБАВЛЕНО: Метод для установки времени жизни
         public void SetLifeTime(float seconds)
         {
             _lifeTimer = 0f;
@@ -53,6 +49,7 @@ namespace Survive_the_night.Projectiles
             if (_lifeTimer >= MaxLifeTime)
             {
                 IsActive = false;
+                OnDeactivate(); // Вызываем метод при деактивации
                 return;
             }
 
@@ -102,6 +99,12 @@ namespace Survive_the_night.Projectiles
                 Size,
                 Size
             );
+        }
+
+        // В класс Projectile добавь:
+        protected virtual void OnDeactivate()
+        {
+            // Базовый метод ничего не делает, но может быть переопределен в наследниках
         }
     }
 }

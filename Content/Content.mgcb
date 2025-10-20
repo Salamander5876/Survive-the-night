@@ -72,6 +72,9 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/CasinoFloor.png
 
+
+
+
 #begin Sprites/Projectiles/Bullet.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -228,6 +231,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/CasinoChipsRed.png
 
+#begin Sprites/Projectiles/BigLaser.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/BigLaser.png
+
 
 
 #begin Sounds/Weapons/SFXGunShooting.mp3
@@ -265,4 +280,10 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFCCasinoChips.mp3
+
+#begin Sounds/Weapons/SFXBigLaser.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXBigLaser.mp3
 

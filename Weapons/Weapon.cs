@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
+using Survive_the_night.Projectiles;
 using System.Collections.Generic;
 
 namespace Survive_the_night.Weapons
@@ -20,7 +21,8 @@ namespace Survive_the_night.Weapons
         CasinoChips,
         GoldenBullet,
         GoldenSword,
-        MolotovCocktail
+        MolotovCocktail,
+        BigLaser // ДОБАВЛЕНО
     }
 
     public abstract class Weapon
@@ -94,7 +96,8 @@ namespace Survive_the_night.Weapons
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
         {
             WeaponName.GoldenSword,
-            WeaponName.MolotovCocktail
+            WeaponName.MolotovCocktail,
+            WeaponName.BigLaser // ДОБАВЛЕНО
         };
 
         // Текстуры для оружий
@@ -153,6 +156,8 @@ namespace Survive_the_night.Weapons
                     return new GoldenSword(player);
                 case WeaponName.MolotovCocktail:
                     return new MolotovCocktail(player);
+                case WeaponName.BigLaser: // ДОБАВЛЕНО
+                    return new BigLaser(player);
                 default:
                     return new PlayingCards(player); // По умолчанию
             }
@@ -168,6 +173,7 @@ namespace Survive_the_night.Weapons
                 case WeaponName.GoldenBullet: return "Золотые пули";
                 case WeaponName.GoldenSword: return "Золотой меч";
                 case WeaponName.MolotovCocktail: return "Коктейль Молотова";
+                case WeaponName.BigLaser: return "Большой лазер"; // ДОБАВЛЕНО
                 default: return "Неизвестное оружие";
             }
         }

@@ -44,6 +44,7 @@ namespace Survive_the_night
         public static SoundEffect SFXThrowMolotov;
         public static SoundEffect SFXFireBurn;
         public static SoundEffect SFXCasinoChips;
+        public static SoundEffect SFXBigLaser; // ДОБАВЛЕНО
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -174,6 +175,13 @@ namespace Survive_the_night
             MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
             WeaponManager.LoadWeaponTextures(WeaponName.MolotovCocktail, molotovTexture);
             WeaponManager.LoadWeaponSound(WeaponName.MolotovCocktail, SFXThrowMolotov);
+
+            // ДОБАВЛЕНО: Большой лазер
+            var bigLaserTexture = Content.Load<Texture2D>("Sprites/Projectiles/BigLaser");
+            SFXBigLaser = Content.Load<SoundEffect>("Sounds/Weapons/SFXBigLaser");
+            WeaponManager.LoadWeaponTextures(WeaponName.BigLaser, bigLaserTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.BigLaser, SFXBigLaser);
+            BigLaserProjectile.SetDefaultTexture(bigLaserTexture);
 
             // Установка текстур по умолчанию для проектов
             PlayingCard.SetDefaultTexture(cardTexture1);
@@ -544,6 +552,12 @@ namespace Survive_the_night
                             chip.Draw(_spriteBatch, _debugTexture);
                         }
                     }
+                }
+
+                // ДОБАВЛЕНО: Отрисовка Большого лазера
+                if (weapon is BigLaser bigLaser)
+                {
+                    bigLaser.DrawLaser(_spriteBatch, _debugTexture);
                 }
             }
         }

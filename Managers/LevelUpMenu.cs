@@ -208,6 +208,38 @@ namespace Survive_the_night.Managers
                 }
                 else
 
+                if (weapon is BigLaser bl)
+                {
+                    if (bl.DamageIntervalLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Скорость атаки -0.2с (Ур. {bl.DamageIntervalLevel}/5)",
+                            Description = $"Текущий интервал: {0.11f - (bl.DamageIntervalLevel * 0.02f):0.00}с",
+                            ApplyUpgrade = () => bl.UpgradeDamageInterval()
+                        });
+                    }
+                    if (bl.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel}/5)",
+                            Description = $"Текущий урон: {bl.Damage}",
+                            ApplyUpgrade = () => bl.UpgradeDamage()
+                        });
+                    }
+                    if (bl.CooldownLevel < 5) // ЗАМЕНИЛИ скорость поворота на перезарядку
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -10с (Ур. {bl.CooldownLevel}/5)",
+                            Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
+                            ApplyUpgrade = () => bl.UpgradeCooldown()
+                        });
+                    }
+                }
+                else
+
                 {
                     if (weapon.Level < Weapon.MAX_LEVEL)
                     {
@@ -278,6 +310,18 @@ namespace Survive_the_night.Managers
                     Title = "Взять Коктейль Молотова",
                     Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
                     ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
+                });
+            }
+
+            // Опция получения Большого лазера
+            bool hasBigLaser = _weapons.Any(w => w is BigLaser);
+            if (!hasBigLaser)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Взять Большой лазер",
+                    Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
+                    ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
                 });
             }
 

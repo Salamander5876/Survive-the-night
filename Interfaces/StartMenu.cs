@@ -46,32 +46,35 @@ namespace Survive_the_night.Interfaces
         private const int WeaponCellSize = 120;
         private const int ArrowButtonSize = 40;
         private const int DescriptionWidth = 400;
-        private const int DescriptionHeight = 200;
+        private const int DescriptionHeight = 300; // Увеличил высоту
         private const int ScrollBarWidth = 15;
         private const int ScrollThumbMinHeight = 30;
 
         public WeaponName SelectedWeapon => _availableWeapons[_selectedWeaponIndex];
         public string PlayerName => _playerName;
 
-        // Описания оружий
+        // Описания оружий с использованием \n для переносов
         private Dictionary<WeaponName, string> _weaponDescriptions = new Dictionary<WeaponName, string>
         {
             {
                 WeaponName.PlayingCards,
-                "ИГРАЛЬНЫЕ КАРТЫ\n\nМощное оружие, которое пробивает до 3 врагов за один выстрел. " +
-                "Карты летят по прямой траектории и наносят урон всем врагам на своем пути. " +
+                "ИГРАЛЬНЫЕ КАРТЫ\n\n" +
+                "Мощное оружие, которое пробивает до 3 врагов за один выстрел.\n\n" +
+                "Карты летят по прямой траектории и наносят урон всем врагам на своем пути.\n\n" +
                 "Отлично подходит для борьбы с толпами противников."
             },
             {
                 WeaponName.GoldenBullet,
-                "ЗОЛОТЫЕ ПУЛИ\n\nТочное оружие с высоким уроном по одной цели. " +
-                "Пули летят с большой скоростью и гарантированно поражают ближайшего врага. " +
+                "ЗОЛОТЫЕ ПУЛИ\n\n" +
+                "Точное оружие с высоким уроном по одной цели.\n\n" +
+                "Пули летят с большой скоростью и гарантированно поражают ближайшего врага.\n\n" +
                 "Идеально для точечного уничтожения сильных противников."
             },
             {
                 WeaponName.CasinoChips,
-                "ФИШКИ КАЗИНО\n\nФишки, которые отскакивают между врагами. " +
-                "Каждая фишка может поразить нескольких врагов, перескакивая между ними. " +
+                "ФИШКИ КАЗИНО\n\n" +
+                "Фишки, которые отскакивают между врагами.\n\n" +
+                "Каждая фишка может поразить нескольких врагов, перескакивая между ними.\n\n" +
                 "Эффективны против групп, расположенных близко друг к другу."
             }
         };
@@ -134,10 +137,10 @@ namespace Survive_the_night.Interfaces
                 ArrowButtonSize
             );
 
-            // Область описания (правая часть)
+            // Область описания (правая часть) - увеличил высоту
             _descriptionRect = new Rectangle(
                 screenWidth - DescriptionWidth - 50,
-                200,
+                180, // Поднял немного выше
                 DescriptionWidth,
                 DescriptionHeight
             );
@@ -205,38 +208,56 @@ namespace Survive_the_night.Interfaces
                 ? _weaponDescriptions[currentWeapon]
                 : "Описание отсутствует.";
 
-            return MeasureWrappedTextHeight(description, _descriptionRect.Width - ScrollBarWidth - 20);
+            return MeasureTextHeight(description, _descriptionRect.Width - ScrollBarWidth - 20);
         }
 
-        private float MeasureWrappedTextHeight(string text, float maxWidth)
+        private float MeasureTextHeight(string text, float maxWidth)
         {
-            string[] words = text.Split(' ');
-            string line = "";
+            string[] lines = text.Split('\n');
             float lineHeight = _font.MeasureString("A").Y;
             float totalHeight = 0f;
-            int lineCount = 0;
 
-            foreach (string word in words)
+            foreach (string line in lines)
             {
-                string testLine = line + (line == "" ? "" : " ") + word;
-                Vector2 size = _font.MeasureString(testLine);
-
-                if (size.X > maxWidth && line != "")
+                if (string.IsNullOrEmpty(line))
                 {
-                    totalHeight += lineHeight;
-                    lineCount++;
-                    line = word;
+                    totalHeight += lineHeight * 0.5f; // Пустая строка - половина высоты
+                    continue;
+                }
+
+                Vector2 size = _font.MeasureString(line);
+
+                // Если строка слишком длинная, разбиваем ее
+                if (size.X > maxWidth)
+                {
+                    string[] words = line.Split(' ');
+                    string currentLine = "";
+
+                    foreach (string word in words)
+                    {
+                        string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
+                        Vector2 testSize = _font.MeasureString(testLine);
+
+                        if (testSize.X > maxWidth && currentLine != "")
+                        {
+                            totalHeight += lineHeight;
+                            currentLine = word;
+                        }
+                        else
+                        {
+                            currentLine = testLine;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(currentLine))
+                    {
+                        totalHeight += lineHeight;
+                    }
                 }
                 else
                 {
-                    line = testLine;
+                    totalHeight += lineHeight;
                 }
-            }
-
-            if (line != "")
-            {
-                totalHeight += lineHeight;
-                lineCount++;
             }
 
             return totalHeight;
@@ -249,7 +270,7 @@ namespace Survive_the_night.Interfaces
             // Обработка прокрутки колесиком мыши
             if (_descriptionRect.Contains(_currentMouseState.Position))
             {
-                _scrollPosition -= _currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
+                _scrollPosition -= (_currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue) / 10f;
                 _scrollPosition = MathHelper.Clamp(_scrollPosition, 0, _maxScroll);
                 UpdateScrollThumb();
             }
@@ -270,9 +291,8 @@ namespace Survive_the_night.Interfaces
             if (_isScrolling)
             {
                 float relativeY = _currentMouseState.Y - _scrollBarRect.Y;
-                float scrollRatio = relativeY / (_scrollBarRect.Height - _scrollThumbRect.Height);
+                float scrollRatio = MathHelper.Clamp(relativeY / (_scrollBarRect.Height - _scrollThumbRect.Height), 0, 1);
                 _scrollPosition = scrollRatio * _maxScroll;
-                _scrollPosition = MathHelper.Clamp(_scrollPosition, 0, _maxScroll);
                 UpdateScrollThumb();
             }
 
@@ -405,42 +425,72 @@ namespace Survive_the_night.Interfaces
                 _descriptionRect.Height - 20
             );
 
-            DrawWrappedText(spriteBatch, description, textArea, _scrollPosition);
+            DrawTextWithNewlines(spriteBatch, description, textArea, _scrollPosition);
         }
 
-        private void DrawWrappedText(SpriteBatch spriteBatch, string text, Rectangle textArea, float scrollOffset)
+        private void DrawTextWithNewlines(SpriteBatch spriteBatch, string text, Rectangle textArea, float scrollOffset)
         {
-            string[] words = text.Split(' ');
-            string line = "";
+            string[] lines = text.Split('\n');
             float lineHeight = _font.MeasureString("A").Y;
             Vector2 currentPos = new Vector2(textArea.X, textArea.Y - scrollOffset);
 
-            foreach (string word in words)
+            foreach (string line in lines)
             {
-                string testLine = line + (line == "" ? "" : " ") + word;
-                Vector2 size = _font.MeasureString(testLine);
-
-                if (size.X > textArea.Width && line != "")
+                if (string.IsNullOrEmpty(line))
                 {
-                    // Рисуем линию, если она видима
+                    currentPos.Y += lineHeight * 0.5f; // Пустая строка - отступ
+                    continue;
+                }
+
+                Vector2 size = _font.MeasureString(line);
+
+                // Если строка слишком длинная, разбиваем ее
+                if (size.X > textArea.Width)
+                {
+                    string[] words = line.Split(' ');
+                    string currentLine = "";
+
+                    foreach (string word in words)
+                    {
+                        string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
+                        Vector2 testSize = _font.MeasureString(testLine);
+
+                        if (testSize.X > textArea.Width && currentLine != "")
+                        {
+                            // Рисуем текущую линию если видима
+                            if (currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
+                            {
+                                spriteBatch.DrawString(_font, currentLine, new Vector2(textArea.X, currentPos.Y), Color.White);
+                            }
+                            currentPos.Y += lineHeight;
+                            currentLine = word;
+                        }
+                        else
+                        {
+                            currentLine = testLine;
+                        }
+                    }
+
+                    // Рисуем последнюю часть строки если видима
+                    if (!string.IsNullOrEmpty(currentLine) && currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
+                    {
+                        spriteBatch.DrawString(_font, currentLine, new Vector2(textArea.X, currentPos.Y), Color.White);
+                    }
+                    currentPos.Y += lineHeight;
+                }
+                else
+                {
+                    // Рисуем строку если видима
                     if (currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
                     {
                         spriteBatch.DrawString(_font, line, new Vector2(textArea.X, currentPos.Y), Color.White);
                     }
-
                     currentPos.Y += lineHeight;
-                    line = word;
                 }
-                else
-                {
-                    line = testLine;
-                }
-            }
 
-            // Рисуем последнюю линию, если видима
-            if (line != "" && currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
-            {
-                spriteBatch.DrawString(_font, line, new Vector2(textArea.X, currentPos.Y), Color.White);
+                // Прерываем если текст ушел за нижнюю границу
+                if (currentPos.Y > textArea.Y + textArea.Height + lineHeight)
+                    break;
             }
         }
 
