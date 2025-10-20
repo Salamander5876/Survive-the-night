@@ -76,6 +76,14 @@ namespace Survive_the_night.Interfaces
                 "Фишки, которые отскакивают между врагами.\n\n" +
                 "Каждая фишка может поразить нескольких врагов, перескакивая между ними.\n\n" +
                 "Эффективны против групп, расположенных близко друг к другу."
+            },
+            {
+                WeaponName.StickyBomb,
+                "ЛИПКАЯ БОМБА\n\n" +
+                "Тактическое оружие с отложенным взрывом.\n\n" +
+                "Бомба прилипает к врагу и взрывается через 60 секунд, нанося урон всем врагам в радиусе.\n\n" +
+                "Новые бомбы не появляются, пока все предыдущие не взорвались.\n\n" +
+                "Отлично подходит для контроля толп и стратегического планирования."
             }
         };
 
@@ -87,12 +95,13 @@ namespace Survive_the_night.Interfaces
             _previousMouseState = Mouse.GetState();
             _currentMouseState = Mouse.GetState();
 
-            // Инициализация списка оружия
+            // Инициализация списка оружия (ДОБАВЛЕНА StickyBomb)
             _availableWeapons = new List<WeaponName>
             {
                 WeaponName.PlayingCards,
                 WeaponName.GoldenBullet,
-                WeaponName.CasinoChips
+                WeaponName.CasinoChips,
+                WeaponName.StickyBomb // ДОБАВЛЕНО
             };
 
             CalculateLayout();

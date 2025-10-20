@@ -15,7 +15,7 @@ namespace Survive_the_night.Projectiles
         public int HitsLeft { get; set; }
         public float Rotation { get; protected set; }
 
-        private float _lifeTimer = 0f;
+        protected float _lifeTimer = 0f; // ИЗМЕНИТЕ с private на protected
         protected float MaxLifeTime = 3f;
 
         protected Projectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1)
@@ -105,6 +105,23 @@ namespace Survive_the_night.Projectiles
         protected virtual void OnDeactivate()
         {
             // Базовый метод ничего не делает, но может быть переопределен в наследниках
+        }
+
+        // В класс Projectile добавьте этот метод:
+        protected virtual void UpdateLifeTime(GameTime gameTime)
+        {
+            if (!IsActive) return;
+
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Обновляем таймер жизни
+            _lifeTimer += deltaTime;
+            if (_lifeTimer >= MaxLifeTime)
+            {
+                IsActive = false;
+                OnDeactivate();
+                return;
+            }
         }
     }
 }

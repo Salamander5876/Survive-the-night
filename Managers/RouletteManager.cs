@@ -1,147 +1,315 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using Survive_the_night; // Подключаем корневое пространство имен
+using Survive_the_night.Entities;
+using Survive_the_night.Weapons;
 using System;
-
-// Важно: Предполагаем, что класс UpgradeOption доступен.
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Survive_the_night.Managers
 {
-    // Здесь НЕТ определения public enum GameState!
-
     public class RouletteManager
     {
-        private LevelUpMenu _levelUpMenu;
+        private Player _player;
+        private List<Weapon> _weapons;
 
-        // --- Поля Рулетки ---
-        private const float SpinDuration = 3.0f;
-        private float _spinTimer = 0f;
-        private float _rotationSpeed = 600f;
+        // Переменные состояния для надежного ввода с клавиатуры и мыши
+        private KeyboardState _previousKeyboardState;
+        private MouseState _previousMouseState;
 
-        private int _selectedIndex = 0;
-        private int _finalChoiceIndex = -1;
-        private bool _isSpinning = false;
+        // Используем статический Random из Game1
+        private System.Random _random => Game1.Random;
 
-        // Используем List<UpgradeOption>
-        private List<UpgradeOption> _currentOptions;
-        private KeyboardState _oldKeyboardState;
+        public List<UpgradeOption> CurrentOptions { get; private set; } = new List<UpgradeOption>();
+        public bool IsVisible { get; private set; }
 
-        public RouletteManager(LevelUpMenu levelUpMenu)
+        private Texture2D _debugTexture;
+        private SpriteFont _font;
+        private GraphicsDevice _graphicsDevice;
+
+        public RouletteManager(Player player, List<Weapon> allWeapons, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
-            _levelUpMenu = levelUpMenu;
-            _oldKeyboardState = Keyboard.GetState();
-            _currentOptions = _levelUpMenu.CurrentOptions;
+            _player = player;
+            _weapons = allWeapons;
+            _graphicsDevice = graphicsDevice;
+            _debugTexture = debugTexture;
+            _font = font;
         }
 
         public void StartRoulette()
         {
-            _levelUpMenu.GenerateOptions();
-            _currentOptions = _levelUpMenu.CurrentOptions;
+            GenerateRouletteOptions();
+            IsVisible = true;
+            // Явно указываем полное пространство имен для GameState
+            Survive_the_night.Game1.CurrentState = Survive_the_night.GameState.Roulette;
+        }
 
-            if (_currentOptions == null || _currentOptions.Count == 0)
+        public void GenerateRouletteOptions()
+        {
+            CurrentOptions.Clear();
+            List<UpgradeOption> pool = new List<UpgradeOption>();
+
+            // Проверяем, есть ли еще обычные оружия для получения
+            bool hasAllRegularWeapons = _weapons.Any(w => w is PlayingCards) &&
+                                      _weapons.Any(w => w is CasinoChips) &&
+                                      _weapons.Any(w => w is GoldenBullet) &&
+                                      _weapons.Any(w => w is StickyBomb);
+
+            // Если все обычные оружия получены, показываем только легендарные
+            if (hasAllRegularWeapons)
             {
-                // Принудительно используем корневой тип
-                Game1.CurrentState = Survive_the_night.GameState.Playing;
-                return;
+                // Легендарные оружия (гарантированно)
+                if (!_weapons.Any(w => w is GoldenSword))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is MolotovCocktail))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
+                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is BigLaser))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
+                    });
+                }
+            }
+            else
+            {
+                // Смешанный пул: обычные оружия + 10% шанс на легендарные
+                List<UpgradeOption> regularPool = new List<UpgradeOption>();
+                List<UpgradeOption> legendaryPool = new List<UpgradeOption>();
+
+                // Обычные оружия
+                if (!_weapons.Any(w => w is StickyBomb))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Липкая бомба",
+                        Description = "Добавляет новое оружие: бомбы, которые прилипают к врагам и взрываются через время.",
+                        ApplyUpgrade = () => _weapons.Add(new StickyBomb(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is PlayingCards))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Игральные карты",
+                        Description = "Добавляет новое оружие: игральные карты, которые пробивают врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new PlayingCards(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is CasinoChips))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Фишки казино",
+                        Description = "Добавляет новое оружие: фишки, которые отскакивают между врагами.",
+                        ApplyUpgrade = () => _weapons.Add(new CasinoChips(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is GoldenBullet))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Золотая пуля",
+                        Description = "Добавляет новое оружие: точные золотые пули без пробития.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
+                    });
+                }
+
+                // Легендарные оружия (10% шанс появления каждого)
+                if (!_weapons.Any(w => w is GoldenSword) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is MolotovCocktail) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
+                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is BigLaser) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
+                    });
+                }
+
+                // Объединяем пулы, сначала легендарные (если есть), затем обычные
+                pool.AddRange(legendaryPool);
+                pool.AddRange(regularPool);
             }
 
-            _finalChoiceIndex = Game1.Random.Next(0, _currentOptions.Count);
+            // --- ИСПРАВЛЕНИЕ: Гарантируем, что всегда будет 3 варианта ---
 
-            _spinTimer = SpinDuration;
-            _isSpinning = true;
-            // !!! КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Принудительное использование корневого типа !!!
-            Game1.CurrentState = Survive_the_night.GameState.Roulette;
+            // Если доступных опций меньше 3, добавляем легендарные оружия (если они еще не добавлены)
+            if (pool.Count < 3)
+            {
+                // Проверяем и добавляем недостающие легендарные оружия
+                if (!_weapons.Any(w => w is GoldenSword) && !pool.Any(o => o.Title.Contains("Золотой меч")))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is MolotovCocktail) && !pool.Any(o => o.Title.Contains("Коктейль Молотова")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
+                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is BigLaser) && !pool.Any(o => o.Title.Contains("Большой лазер")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
+                    });
+                }
+            }
+
+            // Если все равно меньше 3 опций, добавляем кнопку-пустышку
+            while (pool.Count < 3)
+            {
+                pool.Add(new UpgradeOption
+                {
+                    Title = "Пропустить выбор",
+                    Description = "Продолжить без получения нового оружия. Удача улыбнется в следующий раз!",
+                    ApplyUpgrade = () => { /* Ничего не делаем - пустышка */ }
+                });
+            }
+
+            // Выбираем 3 случайных уникальных опции
+            int count = Math.Min(3, pool.Count);
+
+            if (pool.Count <= count)
+            {
+                CurrentOptions.AddRange(pool);
+            }
+            else
+            {
+                HashSet<int> indices = new HashSet<int>();
+                while (indices.Count < count)
+                {
+                    indices.Add(_random.Next(0, pool.Count));
+                }
+
+                foreach (int index in indices)
+                {
+                    CurrentOptions.Add(pool[index]);
+                }
+            }
         }
 
         public void Update(GameTime gameTime)
         {
-            KeyboardState newKeyboardState = Keyboard.GetState();
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (!IsVisible) return;
 
-            if (_isSpinning)
+            KeyboardState currentKs = Keyboard.GetState();
+            MouseState currentMs = Mouse.GetState();
+
+            bool choiceMade = false;
+
+            // Определяем размеры и позиции для расчета кликов
+            Vector2 startPosition = new Vector2(50, 50);
+            const int boxHeight = 150;
+            const int boxSpacing = 20;
+            int boxWidth = _graphicsDevice.Viewport.Width - 100;
+
+            // --- 1. Логика выбора с помощью клавиш D1-D3 (только при первом нажатии) ---
+            if (currentKs.IsKeyDown(Keys.D1) && !_previousKeyboardState.IsKeyDown(Keys.D1) && CurrentOptions.Count > 0)
             {
-                _spinTimer -= deltaTime;
-
-                if (_spinTimer <= 0)
-                {
-                    _isSpinning = false;
-                    _selectedIndex = _finalChoiceIndex;
-                    return;
-                }
-
-                // Логика вращения
-                float normalizedTime = _spinTimer / SpinDuration;
-                _rotationSpeed = MathHelper.Lerp(100f, 600f, normalizedTime);
-                float rotationAdvance = _rotationSpeed * deltaTime;
-                int steps = (int)(rotationAdvance / 100);
-
-                if (steps > 0 && _currentOptions != null && _currentOptions.Count > 0)
-                {
-                    _selectedIndex = (_selectedIndex + steps) % _currentOptions.Count;
-                }
+                ApplyChoice(0);
+                choiceMade = true;
             }
-            else // Остановлено, ждем ввода
+            else if (currentKs.IsKeyDown(Keys.D2) && !_previousKeyboardState.IsKeyDown(Keys.D2) && CurrentOptions.Count > 1)
             {
-                if (_spinTimer <= 0 && newKeyboardState.GetPressedKeys().Length > 0 && _oldKeyboardState.GetPressedKeys().Length == 0)
-                {
-                    _levelUpMenu.ApplyChoice(_finalChoiceIndex);
-                    // Принудительно используем корневой тип
-                    Game1.CurrentState = Survive_the_night.GameState.Playing;
-                    _levelUpMenu.CurrentOptions.Clear();
-                }
+                ApplyChoice(1);
+                choiceMade = true;
+            }
+            else if (currentKs.IsKeyDown(Keys.D3) && !_previousKeyboardState.IsKeyDown(Keys.D3) && CurrentOptions.Count > 2)
+            {
+                ApplyChoice(2);
+                choiceMade = true;
             }
 
-            _oldKeyboardState = newKeyboardState;
+            // --- 2. Логика выбора с помощью мыши (при клике) ---
+            if (!choiceMade && currentMs.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                Point mousePosition = currentMs.Position;
+
+                for (int i = 0; i < CurrentOptions.Count; i++)
+                {
+                    Rectangle box = new Rectangle(
+                        (int)startPosition.X,
+                        (int)startPosition.Y + i * boxHeight + i * boxSpacing,
+                        boxWidth,
+                        boxHeight
+                    );
+
+                    if (box.Contains(mousePosition))
+                    {
+                        ApplyChoice(i);
+                        choiceMade = true;
+                        break;
+                    }
+                }
+            }
+
+            // Обновляем состояния для следующего кадра
+            _previousKeyboardState = currentKs;
+            _previousMouseState = currentMs;
         }
 
-        public void Draw(SpriteBatch spriteBatch, SpriteFont font, Texture2D debugTexture, int screenWidth, int screenHeight)
+        public void ApplyChoice(int index)
         {
-            // Принудительно используем корневой тип
-            if (Game1.CurrentState != Survive_the_night.GameState.Roulette || _currentOptions == null || _currentOptions.Count == 0) return;
-
-            Vector2 center = new Vector2(screenWidth / 2, screenHeight / 2);
-            int boxWidth = 600;
-            int boxHeight = 100;
-            Rectangle box = new Rectangle((int)center.X - boxWidth / 2, (int)center.Y - boxHeight / 2, boxWidth, boxHeight);
-
-            string headerText = _isSpinning ? "АВТОМАТ. ПОЛУЧЕНИЕ НАГРАДЫ!" : "НАГРАДА ПОЛУЧЕНА!";
-            Vector2 headerSize = font.MeasureString(headerText);
-            spriteBatch.DrawString(font, headerText, center - new Vector2(headerSize.X / 2, 200), Color.Yellow);
-
-            // Отрисовка поля
-            spriteBatch.Draw(debugTexture, box, Color.DarkViolet * 0.5f);
-            spriteBatch.Draw(debugTexture, new Rectangle(box.X - 5, box.Y - 5, box.Width + 10, box.Height + 10), Color.Gold * 0.9f);
-
-            // Определение отображаемого текста
-            int displayIndex = _isSpinning ? _selectedIndex : _finalChoiceIndex;
-            string currentItemTitle = (_currentOptions.Count > displayIndex && displayIndex >= 0)
-                ? _currentOptions[displayIndex].Title
-                : "ОШИБКА ДАННЫХ";
-
-            Color textColor;
-
-            if (_isSpinning)
-            {
-                textColor = Color.White;
-            }
-            else
-            {
-                textColor = Color.LimeGreen;
-
-                string winText = "ПОБЕДА!";
-                string pressKeyText = "Нажмите любую кнопку...";
-
-                Vector2 winSize = font.MeasureString(winText);
-                Vector2 pressKeySize = font.MeasureString(pressKeyText);
-
-                spriteBatch.DrawString(font, winText, center - new Vector2(winSize.X / 2, 100), Color.LimeGreen);
-                spriteBatch.DrawString(font, pressKeyText, center + new Vector2(-pressKeySize.X / 2, 100), Color.White);
-            }
-
-            Vector2 textPos = center - font.MeasureString(currentItemTitle) / 2;
-            spriteBatch.DrawString(font, currentItemTitle, textPos, textColor);
+            CurrentOptions[index].ApplyUpgrade.Invoke();
+            IsVisible = false;
+            // Явно указываем полное пространство имен для GameState
+            Survive_the_night.Game1.CurrentState = Survive_the_night.GameState.Playing;
+            CurrentOptions.Clear();
         }
     }
 }

@@ -240,6 +240,39 @@ namespace Survive_the_night.Managers
                 }
                 else
 
+                // В цикле улучшений оружия добавьте:
+                if (weapon is StickyBomb sb)
+                {
+                    if (sb.DamageLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Урон +1 (Ур. {sb.DamageLevel}/10)",
+                            Description = $"Текущий урон: {sb.Damage}",
+                            ApplyUpgrade = () => sb.UpgradeDamage()
+                        });
+                    }
+                    if (sb.CountLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Количество +1 (Ур. {sb.CountLevel}/10)",
+                            Description = $"Текущее количество: {sb.NumBombs}",
+                            ApplyUpgrade = () => sb.UpgradeCount()
+                        });
+                    }
+                    if (sb.ExplosionTimeLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Время взрыва -5сек (Ур. {sb.ExplosionTimeLevel}/10)",
+                            Description = $"Текущее время: {sb.ExplosionTime:0} сек",
+                            ApplyUpgrade = () => sb.UpgradeExplosionTime()
+                        });
+                    }
+                }
+                else
+
                 {
                     if (weapon.Level < Weapon.MAX_LEVEL)
                     {
@@ -252,81 +285,6 @@ namespace Survive_the_night.Managers
                     }
                 }
             }
-
-            // Опция получения Игральных карт
-            bool hasPlayingCard = _weapons.Any(w => w is PlayingCards);
-            if (!hasPlayingCard)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Игральные карты",
-                    Description = "Добавляет новое оружие: игральные карты, которые пробивают врагов.",
-                    ApplyUpgrade = () => _weapons.Add(new PlayingCards(_player))
-                });
-            }
-
-            // Опция получения Золотого меча
-            bool hasGoldenSword = _weapons.Any(w => w is GoldenSword);
-            if (!hasGoldenSword)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Золотой меч",
-                    Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
-                    ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
-                });
-            }
-
-            // Опция получения Фишек казино
-            bool hasCasinoChips = _weapons.Any(w => w is CasinoChips);
-            if (!hasCasinoChips)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Фишки казино",
-                    Description = "Добавляет новое оружие: фишки, которые отскакивают между врагами.",
-                    ApplyUpgrade = () => _weapons.Add(new CasinoChips(_player))
-                });
-            }
-
-            // Опция получения Золотой пули
-            bool hasGoldenBullet = _weapons.Any(w => w is GoldenBullet);
-            if (!hasGoldenBullet)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Золотую пулю",
-                    Description = "Добавляет новое оружие: точные золотые пули без пробития.",
-                    ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
-                });
-            }
-
-            // Опция получения Молотова
-            bool hasMolotov = _weapons.Any(w => w is MolotovCocktail);
-            if (!hasMolotov)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Коктейль Молотова",
-                    Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
-                    ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
-                });
-            }
-
-            // Опция получения Большого лазера
-            bool hasBigLaser = _weapons.Any(w => w is BigLaser);
-            if (!hasBigLaser)
-            {
-                pool.Add(new UpgradeOption
-                {
-                    Title = "Взять Большой лазер",
-                    Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
-                    ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
-                });
-            }
-
-
-
 
             // 2. Улучшения игрока
             pool.Add(new UpgradeOption

@@ -56,6 +56,8 @@ namespace Survive_the_night
         private GameState _currentGameState;
         private MainMenuRenderer _mainMenu;
         private StartMenu _startMenu;
+        private RouletteManager _rouletteManager;
+        private RouletteMenu _rouletteMenu;
 
         // Game World Entities
         private Player _player;
@@ -76,7 +78,6 @@ namespace Survive_the_night
         private List<Weapon> _weapons = new List<Weapon>();
         private LevelUpMenu _levelUpMenu;
         private LevelUpMenuRenderer _levelUpMenuRenderer;
-        private RouletteManager _rouletteManager;
 
         // Content
         private Texture2D _debugTexture;
@@ -192,6 +193,18 @@ namespace Survive_the_night
             _heartTexture = Content.Load<Texture2D>("Sprites/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/GoldenHeart");
 
+            // Липкая бомба
+            var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
+            var bombExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/BombExplosion");
+            var bombThrowSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBombThrow"); // Звук броска
+            var bombExplosionSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBombExplosion"); // Звук взрыва
+
+            WeaponManager.LoadWeaponTextures(WeaponName.StickyBomb, stickyBombTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.StickyBomb, bombThrowSound); // Звук броска как основной звук оружия
+
+            StickyBombProjectile.SetTextures(stickyBombTexture, bombExplosionTexture);
+            StickyBomb.SetSounds(bombThrowSound, bombExplosionSound); // Устанавливаем оба звука
+
             // Загрузка текстур для StartMenu
             var weaponCellTexture = Content.Load<Texture2D>("Sprites/GUI/CellWeapon");
             var upButtonTexture = Content.Load<Texture2D>("Sprites/GUI/UpButton");
@@ -204,7 +217,10 @@ namespace Survive_the_night
 
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
-            _rouletteManager = new RouletteManager(_levelUpMenu);
+
+            // Инициализация рулетки
+            _rouletteManager = new RouletteManager(_player, _weapons, GraphicsDevice, _debugTexture, _font);
+            _rouletteMenu = new RouletteMenu(_rouletteManager, GraphicsDevice, _debugTexture, _font);
         }
 
         // Метод для инициализации выбранного оружия
@@ -349,7 +365,6 @@ namespace Survive_the_night
                             if (!health.IsActive) { _player.Heal((health.HealAmount + _player.HeartHealBonusPercent) * _player.MaxHealth); _healthOrbs.RemoveAt(i); }
                         }
                     }
-
                     break;
 
                 case GameState.LevelUp:
@@ -414,13 +429,7 @@ namespace Survive_the_night
                     if (_currentGameState == GameState.Roulette)
                     {
                         DrawLevelUpPendingScreen(_spriteBatch);
-                        _rouletteManager.Draw(
-                            _spriteBatch,
-                            _font,
-                            _debugTexture,
-                            GraphicsDevice.Viewport.Width,
-                            GraphicsDevice.Viewport.Height
-                        );
+                        _rouletteMenu.Draw(_spriteBatch);
                     }
 
                     if (_currentGameState == GameState.GameOver)
@@ -528,6 +537,18 @@ namespace Survive_the_night
                         if (bullet.IsActive)
                         {
                             bullet.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                // В разделе отрисовки оружия добавьте:
+                if (weapon is StickyBomb stickyBomb)
+                {
+                    foreach (var bomb in stickyBomb.ActiveBombs)
+                    {
+                        if (bomb.IsActive)
+                        {
+                            bomb.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }
