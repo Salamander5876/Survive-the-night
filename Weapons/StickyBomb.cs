@@ -11,7 +11,7 @@ namespace Survive_the_night.Weapons
     public class StickyBomb : Weapon
     {
         public int NumBombs { get; private set; } = 1;
-        public float ExplosionTime { get; private set; } = 60f; // Время до взрыва
+        public float ExplosionTime { get; private set; } = 60f;
         public List<StickyBombProjectile> ActiveBombs { get; private set; } = new List<StickyBombProjectile>();
         public float ProjectileSpeed { get; private set; } = 200f;
 
@@ -69,13 +69,11 @@ namespace Survive_the_night.Weapons
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Обновляем таймер броска
             if (_throwTimer > 0f)
             {
                 _throwTimer -= deltaTime;
             }
 
-            // Обновляем активные бомбы и проверяем нужно ли создать новые
             bool needNewBomb = false;
             for (int i = ActiveBombs.Count - 1; i >= 0; i--)
             {
@@ -86,13 +84,11 @@ namespace Survive_the_night.Weapons
                 }
                 else
                 {
-                    // Если бомба деактивирована без взрыва (враг умер), отмечаем что нужна новая
                     if (!bomb.HasExploded && bomb.StuckEnemy != null && !bomb.StuckEnemy.IsAlive)
                     {
                         needNewBomb = true;
                     }
 
-                    // Удаляем врага из списка если бомба взорвалась или деактивирована
                     if (bomb.StuckEnemy != null && _enemiesWithBombs.Contains(bomb.StuckEnemy))
                     {
                         _enemiesWithBombs.Remove(bomb.StuckEnemy);
@@ -101,13 +97,11 @@ namespace Survive_the_night.Weapons
                 }
             }
 
-            // Создаем новую бомбу если нужно
             if (needNewBomb && _throwTimer <= 0f)
             {
                 CreateNewBombForNewTarget();
             }
 
-            // Проверяем возможность начать новый цикл бросков
             if (!_isThrowing && ActiveBombs.Count == 0 && _throwTimer <= 0f)
             {
                 _isThrowing = true;
@@ -119,7 +113,6 @@ namespace Survive_the_night.Weapons
         {
             if (!_isThrowing) return;
 
-            // Ищем врага без бомбы
             Enemy target = FindEnemyWithoutBomb(enemies);
             if (target != null && _throwTimer <= 0f && _bombsThrownInCycle < NumBombs)
             {
@@ -127,7 +120,6 @@ namespace Survive_the_night.Weapons
                 _bombsThrownInCycle++;
                 _throwTimer = _throwCooldown;
 
-                // Если достигли максимального количества бросков в цикле
                 if (_bombsThrownInCycle >= NumBombs)
                 {
                     _isThrowing = false;
@@ -137,28 +129,26 @@ namespace Survive_the_night.Weapons
 
         private void CreateBombForTarget(Enemy target)
         {
-            // Создаем бомбу
+            // Размер передается, но будет автоматически переопределен в конструкторе бомбы
             var bomb = new StickyBombProjectile(
                 Player.Position,
-                20,
+                20, // Этот размер будет переопределен автоматически
                 Color.White,
                 this.Damage,
                 this.ProjectileSpeed,
                 target,
                 this.ExplosionTime,
-                _explosionSound // Передаем звук взрыва в снаряд
+                _explosionSound
             );
 
             ActiveBombs.Add(bomb);
             _enemiesWithBombs.Add(target);
 
-            // Проигрываем звук броска
             _throwSound?.Play();
         }
 
         private void CreateNewBombForNewTarget()
         {
-            // Ищем нового врага без бомбы
             Enemy newTarget = FindEnemyWithoutBomb(Game1.CurrentEnemies);
             if (newTarget != null)
             {

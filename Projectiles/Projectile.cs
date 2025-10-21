@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Survive_the_night.Projectiles
 {
@@ -76,7 +77,13 @@ namespace Survive_the_night.Projectiles
             if (!IsActive || texture == null) return;
 
             Vector2 origin = new Vector2(texture.Width / 2, texture.Height / 2);
-            float scale = (float)Size / texture.Width;
+
+            // Используем реальный размер текстуры для масштабирования
+            float scaleX = (float)Size / texture.Width;
+            float scaleY = (float)Size / texture.Height;
+
+            // Для взрыва можно использовать равномерное масштабирование или разные масштабы
+            float scale = Math.Min(scaleX, scaleY); // Используем минимальный масштаб для сохранения пропорций
 
             spriteBatch.Draw(
                 texture,

@@ -10,9 +10,9 @@ namespace Survive_the_night.Projectiles
     {
         public Enemy StuckEnemy { get; private set; }
         private float _explosionTimer;
-        private float _explosionDuration = 0.1f;
+        private float _explosionDuration = 0.2f;
         private bool _isExploding = false;
-        public bool HasExploded { get; private set; } = false; // Флаг взрыва
+        public bool HasExploded { get; private set; } = false;
 
         private static Texture2D _bombTexture;
         private static Texture2D _explosionTexture;
@@ -22,16 +22,24 @@ namespace Survive_the_night.Projectiles
         private bool _hasPlayedExplosionSound = false;
         private bool _isStuck = false;
 
+        // Автоматические размеры
+        private int _bombSize;
+        private int _explosionSize;
+
         public StickyBombProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy targetEnemy, float explosionTime, SoundEffect explosionSound)
             : base(position, size, color, damage, speed, targetEnemy.Position, 1)
         {
             StuckEnemy = targetEnemy;
             _explosionTimer = explosionTime;
             _explosionSound = explosionSound;
-            MaxLifeTime = 120f; // Максимальное время жизни бомбы
+            MaxLifeTime = 120f;
 
-            // Отключаем вращение для бомбы
-            Rotation = 0f;
+            // Автоматически определяем размеры из текстур
+            _bombSize = _bombTexture?.Width ?? size;
+            _explosionSize = _explosionTexture?.Width ?? 80; // По умолчанию 80 если текстуры нет
+
+            // Устанавливаем начальный размер как размер бомбы
+            Size = _bombSize;
         }
 
         public static void SetTextures(Texture2D bombTexture, Texture2D explosionTexture)
@@ -49,7 +57,6 @@ namespace Survive_the_night.Projectiles
             // Проверяем, жив ли враг
             if (StuckEnemy != null && !StuckEnemy.IsAlive && !_isExploding)
             {
-                // Враг умер до взрыва - просто уничтожаем бомбу без взрыва
                 IsActive = false;
                 return;
             }
@@ -60,15 +67,21 @@ namespace Survive_the_night.Projectiles
                 {
                     if (!_isStuck && Vector2.Distance(Position, StuckEnemy.Position) > 5f)
                     {
-                        // Летим к врагу
-                        Direction = Vector2.Normalize(StuckEnemy.Position - Position);
+                        // Летим к врагу и поворачиваемся в его направлении
+                        Vector2 direction = StuckEnemy.Position - Position;
+                        Direction = Vector2.Normalize(direction);
+
+                        // Вычисляем угол поворота к врагу (в градусах)
+                        Rotation = MathHelper.ToDegrees((float)System.Math.Atan2(direction.Y, direction.X));
+
                         Position += Direction * Speed * deltaTime;
                     }
                     else
                     {
-                        // Прилипли к врагу - следуем за ним
+                        // Прилипли к врагу - сохраняем текущий поворот (не сбрасываем!)
                         _isStuck = true;
                         Position = StuckEnemy.Position;
+                        // Rotation сохраняется таким, каким был при подлете к врагу
 
                         // Обновляем таймер взрыва только когда прилипли
                         _explosionTimer -= deltaTime;
@@ -89,7 +102,6 @@ namespace Survive_the_night.Projectiles
                 }
             }
 
-            // Обновляем время жизни через базовый метод (без вращения)
             UpdateLifeTime(gameTime);
         }
 
@@ -98,14 +110,13 @@ namespace Survive_the_night.Projectiles
             _isExploding = true;
             HasExploded = true;
 
-            // Проигрываем звук взрыва только один раз при начале взрыва
             if (!_hasPlayedExplosionSound && _explosionSound != null)
             {
                 _explosionSound.Play();
                 _hasPlayedExplosionSound = true;
             }
 
-            // Наносим урон всем врагам в радиусе
+            // Наносим урон всем врагам в радиусе взрыва
             if (Game1.CurrentEnemies != null)
             {
                 foreach (var enemy in Game1.CurrentEnemies)
@@ -113,7 +124,8 @@ namespace Survive_the_night.Projectiles
                     if (enemy.IsAlive && !_damagedEnemies.Contains(enemy))
                     {
                         float distance = Vector2.Distance(Position, enemy.Position);
-                        if (distance < 80f) // Радиус взрыва
+                        // Используем реальный размер взрыва для радиуса
+                        if (distance < _explosionSize / 2f)
                         {
                             enemy.TakeDamage(Damage);
                             _damagedEnemies.Add(enemy);
@@ -141,29 +153,77 @@ namespace Survive_the_night.Projectiles
             }
             else
             {
-                // Отрисовка взрыва
+                // Отрисовка взрыва - используем размер взрыва
                 if (_explosionTexture != null)
                 {
+                    // Временно меняем размер для отрисовки взрыва
+                    int originalSize = Size;
+                    Size = _explosionSize;
                     DrawWithTexture(spriteBatch, _explosionTexture);
+                    Size = originalSize;
                 }
                 else
                 {
-                    // Запасной вариант - красный круг для взрыва
                     Color explosionColor = Color.Red;
                     Rectangle rect = new Rectangle(
-                        (int)Position.X - Size * 2,
-                        (int)Position.Y - Size * 2,
-                        Size * 4,
-                        Size * 4
+                        (int)Position.X - _explosionSize / 2,
+                        (int)Position.Y - _explosionSize / 2,
+                        _explosionSize,
+                        _explosionSize
                     );
                     spriteBatch.Draw(debugTexture, rect, explosionColor);
                 }
             }
         }
 
+        public override void DrawWithTexture(SpriteBatch spriteBatch, Texture2D texture)
+        {
+            if (!IsActive || texture == null) return;
+
+            Vector2 origin = new Vector2(texture.Width / 2, texture.Height / 2);
+
+            // Автоматическое масштабирование под размер текстуры
+            float scale = (float)Size / texture.Width;
+
+            spriteBatch.Draw(
+                texture,
+                Position,
+                null,
+                Color,
+                MathHelper.ToRadians(Rotation),
+                origin,
+                scale,
+                SpriteEffects.None,
+                0f
+            );
+        }
+
+        public override Rectangle GetBounds()
+        {
+            if (_isExploding)
+            {
+                // Для взрыва используем размер взрыва
+                return new Rectangle(
+                    (int)Position.X - _explosionSize / 2,
+                    (int)Position.Y - _explosionSize / 2,
+                    _explosionSize,
+                    _explosionSize
+                );
+            }
+            else
+            {
+                // Для бомбы используем размер бомбы
+                return new Rectangle(
+                    (int)Position.X - _bombSize / 2,
+                    (int)Position.Y - _bombSize / 2,
+                    _bombSize,
+                    _bombSize
+                );
+            }
+        }
+
         protected override void OnDeactivate()
         {
-            // Очищаем ссылки при деактивации
             StuckEnemy = null;
             _damagedEnemies.Clear();
             _hasPlayedExplosionSound = false;
