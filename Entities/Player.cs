@@ -15,8 +15,6 @@ namespace Survive_the_night.Entities
         public int HealthLevel { get; private set; } = 0;
         public int HeartHealBonusLevel { get; private set; } = 0;
         public float HeartHealBonusPercent => HeartHealBonusLevel * 0.01f;
-        public int GoldenHeartBonusLevel { get; private set; } = 0;
-        public float GoldenHeartBonusPercent => GoldenHeartBonusLevel * 0.02f;
 
         // Таймер неуязвимости
         private float _invulnerabilityTimer = 0f;
@@ -32,6 +30,9 @@ namespace Survive_the_night.Entities
         // === СКОРОСТЬ ===
         public float BaseSpeed { get; set; } = 250f;
         public float MovementSpeed => BaseSpeed;
+
+        // === ВАЛЮТА ===
+        public int Coins { get; private set; } = 0;
 
         public Player(Vector2 initialPosition)
             : base(initialPosition, 24, Color.Blue)
@@ -90,6 +91,13 @@ namespace Survive_the_night.Entities
             }
         }
 
+        public void IncreaseMaxHealth(int amount)
+        {
+            MaxHealth += amount;
+            CurrentHealth += amount; // Также увеличиваем текущее здоровье
+            System.Diagnostics.Debug.WriteLine($"Увеличено макс. здоровье: +{amount}. Теперь: {MaxHealth}");
+        }
+
         public void Heal(float amount)
         {
             CurrentHealth = (int)MathHelper.Min(CurrentHealth + amount, MaxHealth);
@@ -127,7 +135,52 @@ namespace Survive_the_night.Entities
             IsLevelUpPending = false;
         }
 
-        // Метод ApplyUpgrade, который LevelUpMenu будет использовать
+        // === МЕТОДЫ ДЛЯ БОНУСОВ И ПРЕДМЕТОВ ===
+
+        public void UpgradeMaxHealth()
+        {
+            if (HealthLevel >= 10) return;
+            MaxHealth += 10;
+            CurrentHealth += 10;
+            if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
+            HealthLevel++;
+            System.Diagnostics.Debug.WriteLine($"Улучшение: Макс. здоровье +10 (Ур. {HealthLevel}/10)");
+        }
+
+        public void UpgradeHeartHealBonus()
+        {
+            if (HeartHealBonusLevel >= 10) return;
+            HeartHealBonusLevel++;
+            System.Diagnostics.Debug.WriteLine($"Улучшение: Бонус лечения от сердец +1% (Ур. {HeartHealBonusLevel}/10)");
+        }
+
+        public float GetGoldenHeartHealAmount(float basePercent)
+        {
+            // Теперь золотое сердце всегда лечит фиксированный процент
+            return basePercent * MaxHealth;
+        }
+
+        // === МЕТОДЫ ДЛЯ ВАЛЮТЫ ===
+
+        public void AddCoins(int amount)
+        {
+            Coins += amount;
+            System.Diagnostics.Debug.WriteLine($"Получено монет: +{amount}. Всего: {Coins}");
+        }
+
+        public bool SpendCoins(int amount)
+        {
+            if (Coins >= amount)
+            {
+                Coins -= amount;
+                System.Diagnostics.Debug.WriteLine($"Потрачено монет: -{amount}. Осталось: {Coins}");
+                return true;
+            }
+            return false;
+        }
+
+        // === УНИВЕРСАЛЬНЫЙ МЕТОД ДЛЯ ПРИМЕНЕНИЯ УЛУЧШЕНИЙ ===
+
         public void ApplyUpgrade(int upgradeId, float value)
         {
             switch (upgradeId)
@@ -142,34 +195,12 @@ namespace Survive_the_night.Entities
                     BaseSpeed += value;
                     System.Diagnostics.Debug.WriteLine($"Улучшение: Скорость +{value}");
                     break;
+                case 3: // Бонус лечения от сердец
+                    HeartHealBonusLevel += (int)value;
+                    System.Diagnostics.Debug.WriteLine($"Улучшение: Бонус лечения сердец +{value}%");
+                    break;
+                    // УБИРАЕМ case 4 для золотых сердец
             }
-        }
-
-        // Явные улучшения для меню
-        public void UpgradeMaxHealth()
-        {
-            if (HealthLevel >= 10) return;
-            MaxHealth += 10;
-            CurrentHealth += 10;
-            if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
-            HealthLevel++;
-        }
-
-        public void UpgradeHeartHealBonus()
-        {
-            if (HeartHealBonusLevel >= 10) return;
-            HeartHealBonusLevel++;
-        }
-
-        public void UpgradeGoldenHeartBonus()
-        {
-            if (GoldenHeartBonusLevel >= 10) return;
-            GoldenHeartBonusLevel++;
-        }
-
-        public float GetGoldenHeartHealAmount(float basePercent)
-        {
-            return (basePercent + GoldenHeartBonusPercent) * MaxHealth;
         }
     }
 }

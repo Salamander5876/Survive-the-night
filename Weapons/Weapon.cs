@@ -23,7 +23,8 @@ namespace Survive_the_night.Weapons
         GoldenSword,
         MolotovCocktail,
         BigLaser,
-        StickyBomb
+        StickyBomb,
+        Dice
     }
 
     public abstract class Weapon
@@ -92,7 +93,8 @@ namespace Survive_the_night.Weapons
             WeaponName.PlayingCards,
             WeaponName.CasinoChips,
             WeaponName.GoldenBullet,
-            WeaponName.StickyBomb
+            WeaponName.StickyBomb,
+            WeaponName.Dice
         };
 
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
@@ -160,8 +162,10 @@ namespace Survive_the_night.Weapons
                     return new MolotovCocktail(player);
                 case WeaponName.BigLaser:
                     return new BigLaser(player);
-                case WeaponName.StickyBomb: // ДОБАВЛЕНО
+                case WeaponName.StickyBomb:
                     return new StickyBomb(player);
+                case WeaponName.Dice:
+                    return new DiceWeapon(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -179,6 +183,7 @@ namespace Survive_the_night.Weapons
                 case WeaponName.MolotovCocktail: return "Коктейль Молотова";
                 case WeaponName.BigLaser: return "Большой лазер";
                 case WeaponName.StickyBomb: return "Липкая бомба";
+                case WeaponName.Dice: return "Игральные кости";
                 default: return "Неизвестное оружие";
             }
         }

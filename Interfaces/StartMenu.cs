@@ -84,6 +84,19 @@ namespace Survive_the_night.Interfaces
                 "Бомба прилипает к врагу и взрывается через 60 секунд, нанося урон всем врагам в радиусе.\n\n" +
                 "Новые бомбы не появляются, пока все предыдущие не взорвались.\n\n" +
                 "Отлично подходит для контроля толп и стратегического планирования."
+            },
+            {
+                WeaponName.Dice,
+                "ИГРАЛЬНЫЕ КОСТИ\n\n" +
+                "Магические кости с уникальными характеристиками для каждого значения.\n\n" +
+                "Кость 1: Урон 1, Пробитие 6\n" +
+                "Кость 2: Урон 2, Пробитие 5\n" +
+                "Кость 3: Урон 3, Пробитие 4\n" +
+                "Кость 4: Урон 4, Пробитие 3\n" +
+                "Кость 5: Урон 5, Пробитие 2\n" +
+                "Кость 6: Урон 6, Пробитие 1\n\n" +
+                "Перезарядка: 20 сек (после уничтожения всех костей)\n" +
+                "Меняют направление вращения после каждого перезапуска."
             }
         };
 
@@ -95,13 +108,18 @@ namespace Survive_the_night.Interfaces
             _previousMouseState = Mouse.GetState();
             _currentMouseState = Mouse.GetState();
 
-            // Инициализация списка оружия (ДОБАВЛЕНА StickyBomb)
+            // Инициализация списка оружия
             _availableWeapons = new List<WeaponName>
             {
                 WeaponName.PlayingCards,
                 WeaponName.GoldenBullet,
                 WeaponName.CasinoChips,
-                WeaponName.StickyBomb // ДОБАВЛЕНО
+                WeaponName.StickyBomb,
+                WeaponName.Dice,
+
+                WeaponName.BigLaser,
+                WeaponName.MolotovCocktail,
+                WeaponName.GoldenSword
             };
 
             CalculateLayout();

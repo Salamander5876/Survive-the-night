@@ -18,11 +18,11 @@ namespace Survive_the_night.Weapons
         public new float Rotation { get; set; }
         public float Length { get; private set; }
         public float Width { get; private set; }
-        public float DamageInterval { get; set; } = 0.11f;
+        public float DamageInterval { get; set; } = 0.2f;
         private float _damageTimer = 0f;
 
         private float _targetRotation;
-        public float RotationSpeed { get; set; } = 1.0f;
+        public float RotationSpeed { get; set; } = 1.5f; // Скорость поворота 1.5
 
         // Для отслеживания уже пораженных врагов в текущем цикле урона
         private HashSet<Enemy> _hitEnemiesThisCycle = new HashSet<Enemy>();
@@ -34,6 +34,10 @@ namespace Survive_the_night.Weapons
         private SoundEffect _laserSound;
         private SoundEffectInstance _laserSoundInstance;
 
+        // Фиксированные размеры хитбокса (толщина луча 33 пикселя)
+        private const float HITBOX_WIDTH = 33f;
+        private const float HITBOX_LENGTH = 800f;
+
         public BigLaserProjectile(Vector2 position, Player player, List<Enemy> enemies, int damage, Texture2D texture = null, SoundEffect laserSound = null)
             : base(position, 20, Color.White, damage, 0f, Vector2.Zero, int.MaxValue)
         {
@@ -42,19 +46,17 @@ namespace Survive_the_night.Weapons
             _laserTexture = texture ?? _defaultTexture;
             _laserSound = laserSound;
 
-            // Автоматически определяем размеры из текстуры
+            // Автоматически определяем размеры из текстуры для отрисовки
             if (_laserTexture != null)
             {
-                Width = _laserTexture.Height;
-                Length = _laserTexture.Width;
+                Width = _laserTexture.Height;   // 90 пикселей
+                Length = _laserTexture.Width;   // 800 пикселей
             }
             else
             {
-                Width = 40f;
+                Width = 90f;
                 Length = 800f;
             }
-
-            SetLifeTime(180f);
 
             Rotation = 0f;
             _targetRotation = 0f;
@@ -136,11 +138,11 @@ namespace Survive_the_night.Weapons
                 float distance = Vector2.Distance(Position, enemy.Position);
 
                 // Проверяем, что враг в пределах досягаемости
-                if (distance > Length) continue;
+                if (distance > HITBOX_LENGTH) continue;
 
                 // Вычисляем "ценность" цели:
                 // 1. Близость к игроку (чем ближе, тем лучше)
-                float proximityScore = 1.0f - (distance / Length);
+                float proximityScore = 1.0f - (distance / HITBOX_LENGTH);
 
                 // 2. Приоритет целей, которые дольше живут (ориентируемся на тип врага)
                 float typeScore = GetEnemyTypeScore(enemy);
@@ -179,7 +181,7 @@ namespace Survive_the_night.Weapons
 
                 if (_hitEnemiesThisCycle.Contains(enemy)) continue;
 
-                // Урон наносится только если враг пересекается со спрайтом лазера
+                // Урон наносится только если враг пересекается с хитбоксом лазера
                 if (IsEnemyInSpriteCollision(enemy))
                 {
                     enemy.TakeDamage(Damage);
@@ -190,46 +192,96 @@ namespace Survive_the_night.Weapons
 
         private bool IsEnemyInSpriteCollision(Enemy enemy)
         {
-            // Получаем границы спрайта лазера
-            Rectangle laserSpriteBounds = GetLaserSpriteBounds();
+            // Получаем вершины повернутого хитбокса лазера
+            Vector2[] laserVertices = GetRotatedHitboxVertices();
 
-            // Получаем границы врага
+            // Получаем вершины врага (предполагаем, что это прямоугольник)
             Rectangle enemyBounds = enemy.GetBounds();
+            Vector2[] enemyVertices = new Vector2[]
+            {
+                new Vector2(enemyBounds.Left, enemyBounds.Top),
+                new Vector2(enemyBounds.Right, enemyBounds.Top),
+                new Vector2(enemyBounds.Right, enemyBounds.Bottom),
+                new Vector2(enemyBounds.Left, enemyBounds.Bottom)
+            };
 
-            // Проверяем пересечение спрайта лазера с врагом
-            return laserSpriteBounds.Intersects(enemyBounds);
+            // Проверяем пересечение с помощью Separating Axis Theorem (SAT)
+            return PolygonsIntersect(laserVertices, enemyVertices);
         }
 
-        private Rectangle GetLaserSpriteBounds()
+        // Получаем вершины повернутого хитбокса
+        private Vector2[] GetRotatedHitboxVertices()
         {
-            // Вычисляем конечную точку лазера
             Vector2 endPoint = Position + new Vector2(
-                (float)System.Math.Cos(Rotation) * Length,
-                (float)System.Math.Sin(Rotation) * Length
+                (float)System.Math.Cos(Rotation) * HITBOX_LENGTH,
+                (float)System.Math.Sin(Rotation) * HITBOX_LENGTH
             );
 
-            // Создаем прямоугольник, представляющий спрайт лазера
             Vector2 laserDirection = Vector2.Normalize(endPoint - Position);
             Vector2 perpendicular = new Vector2(-laserDirection.Y, laserDirection.X);
 
-            // Четыре угла прямоугольника спрайта лазера
-            Vector2 topLeft = Position - perpendicular * Width / 2;
-            Vector2 topRight = Position + perpendicular * Width / 2;
-            Vector2 bottomLeft = endPoint - perpendicular * Width / 2;
-            Vector2 bottomRight = endPoint + perpendicular * Width / 2;
+            return new Vector2[]
+            {
+                Position - perpendicular * HITBOX_WIDTH / 2,  // Верхний левый
+                Position + perpendicular * HITBOX_WIDTH / 2,  // Верхний правый
+                endPoint + perpendicular * HITBOX_WIDTH / 2,   // Нижний правый
+                endPoint - perpendicular * HITBOX_WIDTH / 2    // Нижний левый
+            };
+        }
 
-            // Находим границы прямоугольника
-            float minX = MathHelper.Min(MathHelper.Min(topLeft.X, topRight.X), MathHelper.Min(bottomLeft.X, bottomRight.X));
-            float minY = MathHelper.Min(MathHelper.Min(topLeft.Y, topRight.Y), MathHelper.Min(bottomLeft.Y, bottomRight.Y));
-            float maxX = MathHelper.Max(MathHelper.Max(topLeft.X, topRight.X), MathHelper.Max(bottomLeft.X, bottomRight.X));
-            float maxY = MathHelper.Max(MathHelper.Max(topLeft.Y, topRight.Y), MathHelper.Max(bottomLeft.Y, bottomRight.Y));
+        // Проверка пересечения двух выпуклых полигонов с помощью SAT
+        private bool PolygonsIntersect(Vector2[] polyA, Vector2[] polyB)
+        {
+            // Проверяем все оси полигона A
+            for (int i = 0; i < polyA.Length; i++)
+            {
+                Vector2 edge = polyA[(i + 1) % polyA.Length] - polyA[i];
+                Vector2 axis = new Vector2(-edge.Y, edge.X);
+                axis.Normalize();
 
-            return new Rectangle(
-                (int)minX,
-                (int)minY,
-                (int)(maxX - minX),
-                (int)(maxY - minY)
-            );
+                if (!ProjectionsOverlap(polyA, polyB, axis))
+                    return false;
+            }
+
+            // Проверяем все оси полигона B
+            for (int i = 0; i < polyB.Length; i++)
+            {
+                Vector2 edge = polyB[(i + 1) % polyB.Length] - polyB[i];
+                Vector2 axis = new Vector2(-edge.Y, edge.X);
+                axis.Normalize();
+
+                if (!ProjectionsOverlap(polyA, polyB, axis))
+                    return false;
+            }
+
+            return true;
+        }
+
+        // Проверка перекрытия проекций на ось
+        private bool ProjectionsOverlap(Vector2[] polyA, Vector2[] polyB, Vector2 axis)
+        {
+            float minA = float.MaxValue;
+            float maxA = float.MinValue;
+            float minB = float.MaxValue;
+            float maxB = float.MinValue;
+
+            // Проецируем полигон A
+            foreach (Vector2 vertex in polyA)
+            {
+                float projection = Vector2.Dot(vertex, axis);
+                minA = MathHelper.Min(minA, projection);
+                maxA = MathHelper.Max(maxA, projection);
+            }
+
+            // Проецируем полигон B
+            foreach (Vector2 vertex in polyB)
+            {
+                float projection = Vector2.Dot(vertex, axis);
+                minB = MathHelper.Min(minB, projection);
+                maxB = MathHelper.Max(maxB, projection);
+            }
+
+            return maxA >= minB && maxB >= minA;
         }
 
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)
@@ -251,11 +303,14 @@ namespace Survive_the_night.Weapons
                 SpriteEffects.None,
                 0f
             );
+
+            // Хитбоксы УБРАНЫ - оставляем только красивый лазер!
         }
 
         public override Rectangle GetBounds()
         {
-            return GetLaserSpriteBounds();
+            // Возвращаем пустой прямоугольник, так как коллизии работают через SAT
+            return Rectangle.Empty;
         }
 
         public void UpdateTexture(Texture2D newTexture)

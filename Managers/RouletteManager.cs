@@ -24,6 +24,9 @@ namespace Survive_the_night.Managers
         public List<UpgradeOption> CurrentOptions { get; private set; } = new List<UpgradeOption>();
         public bool IsVisible { get; private set; }
 
+        // ДОБАВЛЕНО: Свойство IsActive для отслеживания активности рулетки
+        public bool IsActive => IsVisible;
+
         private Texture2D _debugTexture;
         private SpriteFont _font;
         private GraphicsDevice _graphicsDevice;
@@ -165,6 +168,16 @@ namespace Survive_the_night.Managers
                         Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
                         Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
                         ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is DiceWeapon))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Игральные кости",
+                        Description = "Добавляет новое оружие: магические кости, вращающиеся вокруг игрока.",
+                        ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
                     });
                 }
 

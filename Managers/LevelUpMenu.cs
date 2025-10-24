@@ -51,7 +51,7 @@ namespace Survive_the_night.Managers
             CurrentOptions.Clear();
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            // 1. Улучшения оружия
+            // 1. Улучшения оружия (оставляем только это)
             foreach (var weapon in _weapons)
             {
                 if (weapon is GoldenSword gs)
@@ -210,13 +210,13 @@ namespace Survive_the_night.Managers
 
                 if (weapon is BigLaser bl)
                 {
-                    if (bl.DamageIntervalLevel < 5)
+                    if (bl.DurationLevel < 5)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Скорость атаки -0.2с (Ур. {bl.DamageIntervalLevel}/5)",
-                            Description = $"Текущий интервал: {0.11f - (bl.DamageIntervalLevel * 0.02f):0.00}с",
-                            ApplyUpgrade = () => bl.UpgradeDamageInterval()
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel}/5)",
+                            Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
+                            ApplyUpgrade = () => bl.UpgradeDuration()
                         });
                     }
                     if (bl.DamageLevel < 5)
@@ -228,11 +228,11 @@ namespace Survive_the_night.Managers
                             ApplyUpgrade = () => bl.UpgradeDamage()
                         });
                     }
-                    if (bl.CooldownLevel < 5) // ЗАМЕНИЛИ скорость поворота на перезарядку
+                    if (bl.CooldownLevel < 5)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -10с (Ур. {bl.CooldownLevel}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel}/5)",
                             Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
                             ApplyUpgrade = () => bl.UpgradeCooldown()
                         });
@@ -273,6 +273,37 @@ namespace Survive_the_night.Managers
                 }
                 else
 
+                if (weapon is DiceWeapon dw)
+                {
+                    if (dw.DamageBonusLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительный урон +1 (Ур. {dw.DamageBonusLevel}/10)",
+                            Description = $"Текущий бонус урона: +{dw.DamageBonusLevel}",
+                            ApplyUpgrade = () => dw.UpgradeDamage()
+                        });
+                    }
+                    if (dw.PierceBonusLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительное пробитие +1 (Ур. {dw.PierceBonusLevel}/10)",
+                            Description = $"Текущий бонус пробития: +{dw.PierceBonusLevel}",
+                            ApplyUpgrade = () => dw.UpgradePierce()
+                        });
+                    }
+                    if (dw.CooldownLevel < 10)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Перезарядка -0.5с (Ур. {dw.CooldownLevel}/10)",
+                            Description = $"Текущая перезарядка: {dw.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => dw.UpgradeCooldown()
+                        });
+                    }
+                }
+                else
                 {
                     if (weapon.Level < Weapon.MAX_LEVEL)
                     {
@@ -286,21 +317,10 @@ namespace Survive_the_night.Managers
                 }
             }
 
-            // 2. Улучшения игрока
-            pool.Add(new UpgradeOption
-            {
-                Title = $"Макс. здоровье +10 (Ур. {_player.HealthLevel}/10)",
-                Description = $"Макс. здоровье: {_player.MaxHealth}",
-                ApplyUpgrade = () => _player.UpgradeMaxHealth()
-            });
-            pool.Add(new UpgradeOption
-            {
-                Title = $"Бонус получение хп от сердца +1% и золотого сердца +2%(Ур. {_player.HeartHealBonusLevel}/10)",
-                Description = $"Бонус к обычному сердцу: +{_player.HeartHealBonusPercent * 100:0}%\nБонус к золотому сердцу: +{_player.GoldenHeartBonusPercent * 100:0}%",
-                ApplyUpgrade = () => _player.UpgradeHeartHealBonus()
-            });
+            // УБИРАЕМ улучшения игрока (максимальное ХП, скорость, бонус лечения)
+            // Теперь это только в магазине бонусов
 
-            // 3. Выбор 3 случайных уникальных опций
+            // 2. Выбор 3 случайных уникальных опций (только улучшения оружия)
             int count = Math.Min(3, pool.Count);
 
             if (pool.Count <= count)

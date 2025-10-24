@@ -14,7 +14,7 @@ namespace Survive_the_night.Weapons
         public float ProjectileSpeed { get; private set; } = 500f;
 
         private float _baseCooldown = 2.5f;
-        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.2f);
+        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.02f);
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;

@@ -1,24 +1,33 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Items;
 
 namespace Survive_the_night.Entities
 {
-    public class GoldenHealthOrb : BaseHealthOrb
+    public class GoldenHealthOrbRenderer : GameObject
     {
         private static Texture2D _texture;
+        private GoldenHealthOrb _orb;
 
-        public GoldenHealthOrb(Vector2 initialPosition, float healPercentage = 0.5f)
-            : base(initialPosition, OrbHeight, Color.Gold, healPercentage) { }
+        public GoldenHealthOrbRenderer(GoldenHealthOrb orb)
+            : base(orb.Position, _texture?.Width ?? 22, Color.Gold)
+        {
+            _orb = orb;
+        }
 
         public static void SetTexture(Texture2D texture) { _texture = texture; }
+
+        public override void Update(GameTime gameTime)
+        {
+            Position = _orb.Position;
+        }
 
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
         {
             if (_texture != null)
             {
                 Vector2 origin = new Vector2(_texture.Width / 2f, _texture.Height / 2f);
-                float scaleX = OrbWidth / (float)_texture.Width;
-                float scaleY = OrbHeight / (float)_texture.Height;
+
                 spriteBatch.Draw(
                     _texture,
                     Position,
@@ -26,25 +35,32 @@ namespace Survive_the_night.Entities
                     Color.White,
                     0f,
                     origin,
-                    new Vector2(scaleX, scaleY),
+                    1.0f, // Масштаб 1:1
                     SpriteEffects.None,
                     0f
                 );
             }
             else
             {
-                base.Draw(spriteBatch, debugTexture, color ?? this.Color);
+                base.Draw(spriteBatch, debugTexture, Color.Gold);
             }
         }
 
         public override Rectangle GetBounds()
         {
-            return new Rectangle(
-                (int)(Position.X - OrbWidth / 2f),
-                (int)(Position.Y - OrbHeight / 2f),
-                OrbWidth,
-                OrbHeight
-            );
+            if (_texture != null)
+            {
+                return new Rectangle(
+                    (int)(Position.X - _texture.Width / 2f),
+                    (int)(Position.Y - _texture.Height / 2f),
+                    _texture.Width,
+                    _texture.Height
+                );
+            }
+            else
+            {
+                return base.GetBounds();
+            }
         }
     }
 }
