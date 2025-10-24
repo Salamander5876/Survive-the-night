@@ -21,6 +21,9 @@ namespace Survive_the_night.Interfaces
         private bool _isSkillButtonHovered = false;
         private bool _isExitButtonHovered = false;
 
+        // Для обработки кликов
+        private bool _wasMousePressed = false;
+
         public BonusShopInterface(BonusShopMenu shopMenu, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
             _shopMenu = shopMenu;
@@ -149,12 +152,17 @@ namespace Survive_the_night.Interfaces
 
         private void DrawButtons(SpriteBatch spriteBatch)
         {
+            // Проверяем доступность бонусов
+            bool canBuyBonus = _shopMenu.PlayerCoins >= _shopMenu.CurrentBonusPrice &&
+                              !_shopMenu.AreAllBonusesMaxLevel() &&
+                              _shopMenu.CanPurchaseBonus;
+
             // Кнопка бонусов
             Color bonusButtonColor = _isBonusButtonHovered ? Color.LightBlue : Color.Cyan;
-            if (_shopMenu.PlayerCoins < _shopMenu.CurrentBonusPrice) bonusButtonColor = Color.Gray;
+            if (!canBuyBonus) bonusButtonColor = Color.Gray;
 
             spriteBatch.Draw(_debugTexture, _bonusButtonRect, bonusButtonColor);
-            string bonusButtonText = $"Купить бонус ({_shopMenu.CurrentBonusPrice})";
+            string bonusButtonText = "Купить бонус"; // Убрали цену с кнопки
             Vector2 bonusTextSize = _font.MeasureString(bonusButtonText);
             Vector2 bonusTextPos = new Vector2(
                 _bonusButtonRect.Center.X - bonusTextSize.X / 2,
@@ -163,11 +171,12 @@ namespace Survive_the_night.Interfaces
             spriteBatch.DrawString(_font, bonusButtonText, bonusTextPos, Color.Black);
 
             // Кнопка навыков
+            bool canBuySkill = _shopMenu.PlayerCoins >= _shopMenu.CurrentSkillPrice && _shopMenu.CanPurchaseBonus;
             Color skillButtonColor = _isSkillButtonHovered ? Color.LightSalmon : Color.Orange;
-            if (_shopMenu.PlayerCoins < _shopMenu.CurrentSkillPrice) skillButtonColor = Color.Gray;
+            if (!canBuySkill) skillButtonColor = Color.Gray;
 
             spriteBatch.Draw(_debugTexture, _skillButtonRect, skillButtonColor);
-            string skillButtonText = $"Купить навык ({_shopMenu.CurrentSkillPrice})";
+            string skillButtonText = "Купить навык"; // Убрали цену с кнопки
             Vector2 skillTextSize = _font.MeasureString(skillButtonText);
             Vector2 skillTextPos = new Vector2(
                 _skillButtonRect.Center.X - skillTextSize.X / 2,
@@ -178,7 +187,7 @@ namespace Survive_the_night.Interfaces
             // Кнопка выхода
             Color exitButtonColor = _isExitButtonHovered ? Color.LightGray : Color.White;
             spriteBatch.Draw(_debugTexture, _exitButtonRect, exitButtonColor);
-            string exitButtonText = "Выйти (ESC/B)"; // Обновляем подсказку
+            string exitButtonText = "Выйти (ESC/B)";
             Vector2 exitTextSize = _font.MeasureString(exitButtonText);
             Vector2 exitTextPos = new Vector2(
                 _exitButtonRect.Center.X - exitTextSize.X / 2,
@@ -205,13 +214,18 @@ namespace Survive_the_night.Interfaces
             MouseState mouseState = Mouse.GetState();
             Point mousePos = mouseState.Position;
 
-            // Обновляем состояние кнопок с учетом текущих цен
-            _isBonusButtonHovered = _bonusButtonRect.Contains(mousePos) && _shopMenu.PlayerCoins >= _shopMenu.CurrentBonusPrice;
-            _isSkillButtonHovered = _skillButtonRect.Contains(mousePos) && _shopMenu.PlayerCoins >= _shopMenu.CurrentSkillPrice;
+            // Обновляем состояние кнопок
+            bool canBuyBonus = _shopMenu.PlayerCoins >= _shopMenu.CurrentBonusPrice &&
+                              !_shopMenu.AreAllBonusesMaxLevel() &&
+                              _shopMenu.CanPurchaseBonus;
+            bool canBuySkill = _shopMenu.PlayerCoins >= _shopMenu.CurrentSkillPrice && _shopMenu.CanPurchaseBonus;
+
+            _isBonusButtonHovered = _bonusButtonRect.Contains(mousePos) && canBuyBonus;
+            _isSkillButtonHovered = _skillButtonRect.Contains(mousePos) && canBuySkill;
             _isExitButtonHovered = _exitButtonRect.Contains(mousePos);
 
-            // Обработка кликов
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            // Обработка кликов (только при нажатии, а не удержании)
+            if (mouseState.LeftButton == ButtonState.Pressed && !_wasMousePressed)
             {
                 if (_isBonusButtonHovered)
                 {
@@ -225,6 +239,14 @@ namespace Survive_the_night.Interfaces
                 {
                     _shopMenu.Hide();
                 }
+
+                _wasMousePressed = true;
+            }
+            else if (mouseState.LeftButton == ButtonState.Released && _wasMousePressed)
+            {
+                // Разблокируем кнопки при отпускании мыши
+                _shopMenu.ResetPurchaseFlags();
+                _wasMousePressed = false;
             }
         }
     }

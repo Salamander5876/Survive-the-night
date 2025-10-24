@@ -9,9 +9,10 @@ namespace Survive_the_night.Items
         private const float AttractionRadius = 50f;
         public float HealPercentage { get; private set; }
 
-        public GoldenHealthOrb(Vector2 initialPosition, float healPercentage = 1.0f)  // Изменено с 0.5f на 1.0f (100%)
-    : base(initialPosition, healPercentage)
+        public GoldenHealthOrb(Vector2 position, float healPercentage = 1.0f)  // 100% лечение
         {
+            Position = position;
+            HealPercentage = healPercentage;
             Value = 2;
         }
 

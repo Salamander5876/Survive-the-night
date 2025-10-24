@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics; // днаюбхрэ щрс ярпнйс
 using Survive_the_night.Entities;
 
 namespace Survive_the_night.Items
@@ -7,11 +8,17 @@ namespace Survive_the_night.Items
     {
         private const float AttractionSpeed = 600f;
         private const float AttractionRadius = 60f;
+        private static Texture2D _texture;
 
         public ExperienceOrb(Vector2 position, int value)
         {
             Position = position;
             Value = value;
+        }
+
+        public static void SetTexture(Texture2D texture)
+        {
+            _texture = texture;
         }
 
         public override void Update(GameTime gameTime, Player player)

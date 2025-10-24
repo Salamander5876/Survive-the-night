@@ -137,8 +137,8 @@ namespace Survive_the_night
             // Новая система предметов
             _itemManager = new ItemManager(_player);
 
-            // Магазин бонусов
-            _bonusShop = new BonusShopMenu(_player);
+            // Магазин бонусов (теперь передаем ItemManager)
+            _bonusShop = new BonusShopMenu(_player, _itemManager);
             _bonusShopInterface = new BonusShopInterface(_bonusShop, GraphicsDevice, _debugTexture, _font);
 
             // Оружие будет инициализировано после выбора в StartMenu
@@ -219,15 +219,17 @@ namespace Survive_the_night
             GoldenSwordProjectile.SetDefaultTexture(swordTexture);
             CasinoChip.SetDefaultTexture(chipTexture1);
 
-            // Загрузка текстур для предметов с новыми путями
+            // Загрузка текстур для предметов
             _heartTexture = Content.Load<Texture2D>("Sprites/Items/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/Items/GoldenHeart");
             Texture2D coinTexture = Content.Load<Texture2D>("Sprites/Items/GoldMoney");
+            Texture2D experienceOrbTexture = Content.Load<Texture2D>("Sprites/Items/ExperienceOrb"); // Новая текстура
 
             // Установка текстур для рендереров предметов
             HealthOrbRenderer.SetTexture(_heartTexture);
             GoldenHealthOrbRenderer.SetTexture(_goldenHeartTexture);
             _itemManager.SetCoinTexture(coinTexture);
+            _itemManager.SetExperienceOrbTexture(experienceOrbTexture); // Устанавливаем текстуру эссенции
 
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
@@ -383,19 +385,20 @@ namespace Survive_the_night
                                     UpdateFloorTexture();
                                 }
 
-                                for (int j = 0; j < 10; j++)
-                                {
-                                    _itemManager.AddExperienceOrb(enemy.Position, 1);
-                                }
-
-                                // Элитные враги дропают 5 монет и золотое сердце со 100% шансом
+                                // Элитные враги дропают 5 монет, золотое сердце и 3 эссенции опыта
                                 for (int j = 0; j < 5; j++)
                                 {
                                     _itemManager.AddCoin(enemy.Position, 1);
                                 }
 
-                                // 100% шанс дропа золотого сердца от элитного врага (теперь лечит 100%)
-                                _itemManager.AddGoldenHealthOrb(enemy.Position, 1.0f);  // Изменено с 0.5f на 1.0f
+                                // 3 эссенции опыта от элитного врага
+                                for (int j = 0; j < 3; j++)
+                                {
+                                    _itemManager.AddExperienceOrb(enemy.Position, 1);
+                                }
+
+                                // 100% шанс дропа золотого сердца от элитного врага
+                                _itemManager.AddGoldenHealthOrb(enemy.Position, 1.0f);
 
                                 _rouletteManager.StartRoulette();
                                 Game1.CurrentState = GameState.Roulette;
@@ -405,7 +408,7 @@ namespace Survive_the_night
                                 // Обычный дроп опыта через менеджер предметов
                                 _itemManager.AddExperienceOrb(enemy.Position, 1);
 
-                                // Шанс дропа сердца 2% (оставляем только обычное)
+                                // Шанс дропа сердца 2%
                                 if (Game1.Random.NextDouble() < 0.02)
                                 {
                                     _itemManager.AddHealthOrb(enemy.Position, 0.25f);
@@ -417,7 +420,11 @@ namespace Survive_the_night
                                     _itemManager.AddCoin(enemy.Position, 1);
                                 }
 
-                                // УБИРАЕМ дроп золотого сердца с обычных врагов
+                                // НОВЫЙ: Шанс дропа эссенции опыта 50%
+                                if (Game1.Random.NextDouble() < 0.5)
+                                {
+                                    _itemManager.AddExperienceOrb(enemy.Position, 1);
+                                }
                             }
 
                             _enemies.RemoveAt(i);

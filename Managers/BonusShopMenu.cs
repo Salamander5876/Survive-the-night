@@ -11,6 +11,7 @@ namespace Survive_the_night.Managers
         public bool IsVisible { get; set; }
 
         private Player _player;
+        private ItemManager _itemManager;
         private Random _random;
         private KeyboardState _previousKeyboardState;
 
@@ -29,9 +30,14 @@ namespace Survive_the_night.Managers
         private int _bonusPurchaseCount = 0;
         private int _skillPurchaseCount = 0;
 
-        public BonusShopMenu(Player player)
+        // Флаг для предотвращения многократных покупок
+        private bool _canPurchaseBonus = true;
+        private bool _canPurchaseSkill = true;
+
+        public BonusShopMenu(Player player, ItemManager itemManager)
         {
             _player = player;
+            _itemManager = itemManager;
             _random = Game1.Random;
             InitializeBonuses();
         }
@@ -45,7 +51,7 @@ namespace Survive_the_night.Managers
                 Description = "Увеличивает максимальное здоровье на 50",
                 CurrentLevel = 0,
                 MaxLevel = 3,
-                BaseValue = 50f  // +50 HP за уровень
+                BaseValue = 50f
             };
 
             _playerBonuses["HeartHeal"] = new BonusData
@@ -54,7 +60,7 @@ namespace Survive_the_night.Managers
                 Description = "Увеличивает эффективность обычных сердец на 5%",
                 CurrentLevel = 0,
                 MaxLevel = 3,
-                BaseValue = 0.05f  // +5% за уровень
+                BaseValue = 0.05f
             };
 
             _playerBonuses["MovementSpeed"] = new BonusData
@@ -63,7 +69,27 @@ namespace Survive_the_night.Managers
                 Description = "Увеличивает скорость передвижения на 20%",
                 CurrentLevel = 0,
                 MaxLevel = 3,
-                BaseValue = 0.2f  // +20% за уровень
+                BaseValue = 0.2f
+            };
+
+            // Бонус: Дополнительный опыт
+            _playerBonuses["ExperienceBonus"] = new BonusData
+            {
+                Name = "Эссенция опыта",
+                Description = "Эссенция опыта дает дополнительный опыт +1",
+                CurrentLevel = 0,
+                MaxLevel = 3,
+                BaseValue = 1f
+            };
+
+            // НОВЫЙ БОНУС: Дополнительные монеты
+            _playerBonuses["CoinBonus"] = new BonusData
+            {
+                Name = "Доп. монеты",
+                Description = "Монеты дают дополнительную монету +1",
+                CurrentLevel = 0,
+                MaxLevel = 3,
+                BaseValue = 1f  // +1 дополнительная монета
             };
         }
 
@@ -72,6 +98,8 @@ namespace Survive_the_night.Managers
             IsVisible = true;
             _currentBonus = null;
             _currentSkill = null;
+            _canPurchaseBonus = true;
+            _canPurchaseSkill = true;
         }
 
         public void Hide()
@@ -81,15 +109,43 @@ namespace Survive_the_night.Managers
 
         public void RollBonus()
         {
+            // Проверяем возможность покупки
+            if (!_canPurchaseBonus) return;
             if (_player.Coins < CurrentBonusPrice) return;
+
+            // Проверяем есть ли доступные бонусы для улучшения
+            bool hasAvailableBonuses = false;
+            foreach (var bonus in _playerBonuses.Values)
+            {
+                if (bonus.CurrentLevel < bonus.MaxLevel)
+                {
+                    hasAvailableBonuses = true;
+                    break;
+                }
+            }
+
+            if (!hasAvailableBonuses)
+            {
+                _currentBonus = new BonusData
+                {
+                    Name = "Все бонусы максимальны!",
+                    Description = "Вы прокачали все доступные бонусы",
+                    CurrentLevel = 3,
+                    MaxLevel = 3
+                };
+                return; // Не тратим монеты
+            }
 
             _player.SpendCoins(CurrentBonusPrice);
 
             // Увеличиваем счетчик покупок и цену
             _bonusPurchaseCount++;
-            CurrentBonusPrice += 10; // +10 монет за каждую покупку
+            CurrentBonusPrice += 10;
 
-            // Выбираем случайный бонус
+            // Блокируем повторную покупку до следующего клика
+            _canPurchaseBonus = false;
+
+            // Выбираем случайный бонус из доступных
             var availableBonuses = new List<BonusData>();
             foreach (var bonus in _playerBonuses.Values)
             {
@@ -107,28 +163,22 @@ namespace Survive_the_night.Managers
                 // Применяем улучшение
                 ApplyBonus(_currentBonus);
             }
-            else
-            {
-                // Все бонусы на максимальном уровне
-                _currentBonus = new BonusData
-                {
-                    Name = "Все бонусы максимальны!",
-                    Description = "Вы прокачали все доступные бонусы",
-                    CurrentLevel = 3,
-                    MaxLevel = 3
-                };
-            }
         }
 
         public void RollSkill()
         {
+            // Проверяем возможность покупки
+            if (!_canPurchaseSkill) return;
             if (_player.Coins < CurrentSkillPrice) return;
 
             _player.SpendCoins(CurrentSkillPrice);
 
             // Увеличиваем счетчик покупок и цену
             _skillPurchaseCount++;
-            CurrentSkillPrice += 20; // +20 монет за каждую покупку
+            CurrentSkillPrice += 20;
+
+            // Блокируем повторную покупку до следующего клика
+            _canPurchaseSkill = false;
 
             // Заглушка для навыков
             _currentSkill = new SkillData
@@ -138,8 +188,13 @@ namespace Survive_the_night.Managers
                 CurrentLevel = 0,
                 MaxLevel = 3
             };
+        }
 
-            // Пока навыки не применяются
+        // Метод для разблокировки кнопок (вызывается из интерфейса при отпускании кнопки мыши)
+        public void ResetPurchaseFlags()
+        {
+            _canPurchaseBonus = true;
+            _canPurchaseSkill = true;
         }
 
         private void ApplyBonus(BonusData bonus)
@@ -149,19 +204,35 @@ namespace Survive_the_night.Managers
             switch (bonus.Name)
             {
                 case "Макс. здоровье":
-                    _player.IncreaseMaxHealth((int)bonus.BaseValue);  // +50 HP
+                    _player.IncreaseMaxHealth((int)bonus.BaseValue);
                     break;
                 case "Лечение сердец":
-                    // +5% за уровень - нужно вызвать метод 5 раз для +5%
                     for (int i = 0; i < 5; i++)
                     {
                         _player.UpgradeHeartHealBonus();
                     }
                     break;
                 case "Скорость":
-                    _player.BaseSpeed += bonus.BaseValue * 250f; // +20% от базовой скорости (50 единиц)
+                    _player.BaseSpeed += bonus.BaseValue * 250f;
+                    break;
+                case "Эссенция опыта":
+                    _itemManager.ApplyExperienceBonus((int)bonus.BaseValue);
+                    break;
+                case "Доп. монеты":
+                    _itemManager.ApplyCoinBonus((int)bonus.BaseValue);
                     break;
             }
+        }
+
+        // Метод для проверки доступности бонусов
+        public bool AreAllBonusesMaxLevel()
+        {
+            foreach (var bonus in _playerBonuses.Values)
+            {
+                if (bonus.CurrentLevel < bonus.MaxLevel)
+                    return false;
+            }
+            return true;
         }
 
         public void Update(GameTime gameTime)
@@ -185,6 +256,7 @@ namespace Survive_the_night.Managers
         public SkillData CurrentSkill => _currentSkill;
         public Dictionary<string, BonusData> PlayerBonuses => _playerBonuses;
         public int PlayerCoins => _player.Coins;
+        public bool CanPurchaseBonus => _canPurchaseBonus;
     }
 
     public class BonusData
