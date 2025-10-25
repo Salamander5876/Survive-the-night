@@ -1,8 +1,9 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
+using Survive_the_night.Items;
+using System;
+using System.Collections.Generic;
 
 namespace Survive_the_night.Managers
 {
@@ -82,7 +83,7 @@ namespace Survive_the_night.Managers
                 BaseValue = 1f
             };
 
-            // НОВЫЙ БОНУС: Дополнительные монеты
+            // Бонус: Дополнительные монеты
             _playerBonuses["CoinBonus"] = new BonusData
             {
                 Name = "Доп. монеты",
@@ -90,6 +91,16 @@ namespace Survive_the_night.Managers
                 CurrentLevel = 0,
                 MaxLevel = 3,
                 BaseValue = 1f  // +1 дополнительная монета
+            };
+
+            // Бонус: Урон динамита
+            _playerBonuses["DynamiteDamage"] = new BonusData
+            {
+                Name = "Урон динамита",
+                Description = "Увеличивает урон динамита на 5",
+                CurrentLevel = 0,
+                MaxLevel = 3,
+                BaseValue = 5f
             };
         }
 
@@ -220,6 +231,9 @@ namespace Survive_the_night.Managers
                     break;
                 case "Доп. монеты":
                     _itemManager.ApplyCoinBonus((int)bonus.BaseValue);
+                    break;
+                case "Урон динамита":
+                    Dynamite.ApplyDamageBonus((int)bonus.BaseValue);
                     break;
             }
         }

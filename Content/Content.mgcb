@@ -244,7 +244,40 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Items/ExperienceOrb.png
 
+#begin Sprites/Items/Dynamite.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Items/Dynamite.png
 
+
+
+
+#begin Sounds/Items/SFXDynamiteExplosion.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Items/SFXDynamiteExplosion.mp3
+
+
+
+#begin Sprites/Projectiles/DynamiteExplosion.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/DynamiteExplosion.png
 
 #begin Sprites/Projectiles/Card1.png
 /importer:TextureImporter

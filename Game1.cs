@@ -231,6 +231,15 @@ namespace Survive_the_night
             _itemManager.SetCoinTexture(coinTexture);
             _itemManager.SetExperienceOrbTexture(experienceOrbTexture); // Устанавливаем текстуру эссенции
 
+            // Динамит
+            var dynamiteTexture = Content.Load<Texture2D>("Sprites/Items/Dynamite");
+            var dynamiteExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/DynamiteExplosion");
+            var dynamiteExplosionSound = Content.Load<SoundEffect>("Sounds/Items/SFXDynamiteExplosion");
+
+            _itemManager.SetDynamiteTexture(dynamiteTexture);
+            Dynamite.SetExplosionSound(dynamiteExplosionSound);
+            DynamiteExplosion.SetTexture(dynamiteExplosionTexture);
+
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
             var bombExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/BombExplosion");
@@ -363,6 +372,9 @@ namespace Survive_the_night
                     // Обновление менеджера предметов
                     _itemManager.Update(gameTime);
 
+                    // Обновление взрывов динамита
+                    DynamiteExplosion.UpdateAll(gameTime, _enemies);
+
                     for (int i = _enemies.Count - 1; i >= 0; i--)
                     {
                         Enemy enemy = _enemies[i];
@@ -385,7 +397,7 @@ namespace Survive_the_night
                                     UpdateFloorTexture();
                                 }
 
-                                // Элитные враги дропают 5 монет, золотое сердце и 3 эссенции опыта
+                                // Элитные враги дропают 5 монет
                                 for (int j = 0; j < 5; j++)
                                 {
                                     _itemManager.AddCoin(enemy.Position, 1);
@@ -420,10 +432,16 @@ namespace Survive_the_night
                                     _itemManager.AddCoin(enemy.Position, 1);
                                 }
 
-                                // НОВЫЙ: Шанс дропа эссенции опыта 50%
+                                // Шанс дропа эссенции опыта 50%
                                 if (Game1.Random.NextDouble() < 0.5)
                                 {
                                     _itemManager.AddExperienceOrb(enemy.Position, 1);
+                                }
+
+                                // НОВЫЙ: Шанс дропа динамита 2% от обычных врагов
+                                if (Game1.Random.NextDouble() < 0.02)
+                                {
+                                    _itemManager.AddDynamite(enemy.Position);
                                 }
                             }
 
@@ -616,6 +634,8 @@ namespace Survive_the_night
                     molotov.DrawProjectiles(_spriteBatch);
                 }
             }
+
+            DynamiteExplosion.DrawAll(_spriteBatch);
 
             // Отрисовка врагов
             foreach (var enemy in _enemies)
