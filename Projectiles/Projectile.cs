@@ -16,6 +16,12 @@ namespace Survive_the_night.Projectiles
         public int HitsLeft { get; set; }
         public float Rotation { get; protected set; }
 
+
+        // Новые свойства для работы с текстурами
+        protected Texture2D _currentTexture;
+        protected Vector2 _textureOrigin;
+        protected float _textureScale = 1f;
+
         protected float _lifeTimer = 0f; // ИЗМЕНИТЕ с private на protected
         protected float MaxLifeTime = 3f;
 
@@ -82,8 +88,8 @@ namespace Survive_the_night.Projectiles
             float scaleX = (float)Size / texture.Width;
             float scaleY = (float)Size / texture.Height;
 
-            // Для взрыва можно использовать равномерное масштабирование или разные масштабы
-            float scale = Math.Min(scaleX, scaleY); // Используем минимальный масштаб для сохранения пропорций
+            // Для снарядов используем равномерное масштабирование
+            float scale = Math.Min(scaleX, scaleY);
 
             spriteBatch.Draw(
                 texture,
@@ -128,6 +134,22 @@ namespace Survive_the_night.Projectiles
                 IsActive = false;
                 OnDeactivate();
                 return;
+            }
+        }
+
+        // Метод для установки текстуры и автоматического расчета размера
+        protected void SetTexture(Texture2D texture)
+        {
+            _currentTexture = texture;
+            if (texture != null)
+            {
+                // Автоматически устанавливаем размер на основе текстуры
+                Size = Math.Max(texture.Width, texture.Height);
+                _textureOrigin = new Vector2(texture.Width / 2, texture.Height / 2);
+
+                // Масштабируем до разумного размера (можно настроить)
+                float baseSize = 32f; // Базовый размер для большинства снарядов
+                _textureScale = baseSize / Math.Max(texture.Width, texture.Height);
             }
         }
     }

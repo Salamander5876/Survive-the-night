@@ -100,7 +100,7 @@ namespace Survive_the_night.Weapons
 
                         var bullet = new GoldenBulletProjectile(
                             Player.Position + offset,
-                            12,
+                            0, // размер определится автоматически из текстуры
                             Color.Gold,
                             this.Damage,
                             this.ProjectileSpeed,

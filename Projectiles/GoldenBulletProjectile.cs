@@ -10,12 +10,16 @@ namespace Survive_the_night.Projectiles
         private static Texture2D _defaultTexture;
         private Texture2D _bulletTexture;
 
-        public GoldenBulletProjectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, Texture2D texture = null)
-            : base(position, size, color, damage, speed, target, 1) // hitsLeft = 1 (без пробития)
+        public GoldenBulletProjectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, Texture2D texture = null) : base(position, size, color, damage, speed, target, 1)
         {
             _bulletTexture = texture ?? _defaultTexture;
 
-            // Добавляем начальный поворот, чтобы пуля летела верхней стороной вперед
+            // Автоматически определяем размер из текстуры
+            if (_bulletTexture != null && size == 0) // если размер не задан
+            {
+                Size = Math.Max(_bulletTexture.Width, _bulletTexture.Height);
+            }
+
             Rotation = CalculateRotationToTarget(target);
         }
 

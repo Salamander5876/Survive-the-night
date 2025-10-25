@@ -2,6 +2,7 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Survive_the_night.Projectiles
 {
@@ -14,6 +15,12 @@ namespace Survive_the_night.Projectiles
             : base(position, size, color, damage, speed, target, hitsLeft)
         {
             _chipTexture = texture ?? _defaultTexture;
+
+            // Автоматически определяем размер из текстуры если size = 0
+            if (_chipTexture != null && size == 0)
+            {
+                Size = Math.Max(_chipTexture.Width, _chipTexture.Height);
+            }
 
             // Увеличиваем время жизни до 60 секунд
             SetLifeTime(60f);

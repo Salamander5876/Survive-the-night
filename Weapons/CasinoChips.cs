@@ -109,7 +109,7 @@ namespace Survive_the_night.Weapons
 
                         var chip = new CasinoChip(
                             Player.Position + offset,
-                            16,
+                            0, // размер определится автоматически из текстуры
                             Color.White,
                             this.Damage,
                             this.ProjectileSpeed,

@@ -82,7 +82,7 @@ namespace Survive_the_night.Weapons
                 {
                     var sword = new GoldenSwordProjectile(
                         Player.Position,
-                        32,
+                        0, // размер определится автоматически из текстуры
                         Color.Gold,
                         Damage,
                         ProjectileSpeed,

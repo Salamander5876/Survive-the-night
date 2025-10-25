@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
+using System;
 using System.Collections.Generic;
 
 namespace Survive_the_night.Projectiles
@@ -27,11 +28,16 @@ namespace Survive_the_night.Projectiles
         // Для предотвращения многократного попадания по одному врагу
         private List<Enemy> _hitEnemies = new List<Enemy>();
 
-        public GoldenSwordProjectile(Vector2 position, int size, Color color, int damage, float speed,
-                                   Enemy target, List<Enemy> potentialTargets, Player player, Texture2D texture = null)
-            : base(position, size, color, damage, speed, Vector2.Zero, int.MaxValue)
+        public GoldenSwordProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy target, List<Enemy> potentialTargets, Player player, Texture2D texture = null) : base(position, size, color, damage, speed, Vector2.Zero, int.MaxValue)
         {
             _swordTexture = texture ?? _defaultTexture;
+
+            // Автоматически определяем размер из текстуры
+            if (_swordTexture != null && size == 0)
+            {
+                Size = Math.Max(_swordTexture.Width, _swordTexture.Height);
+            }
+
             _startPosition = position;
             _player = player;
             _target = target;

@@ -2,6 +2,7 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Survive_the_night.Projectiles
 {
@@ -10,10 +11,15 @@ namespace Survive_the_night.Projectiles
         private static Texture2D _defaultTexture;
         private Texture2D _cardTexture;
 
-        public PlayingCard(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1, Texture2D texture = null)
-            : base(position, size, color, damage, speed, target, hitsLeft)
+        public PlayingCard(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, int hitsLeft = 1, Texture2D texture = null) : base(position, size, color, damage, speed, target, hitsLeft)
         {
             _cardTexture = texture ?? _defaultTexture;
+
+            // Автоматически определяем размер из текстуры
+            if (_cardTexture != null && size == 0)
+            {
+                Size = Math.Max(_cardTexture.Width, _cardTexture.Height);
+            }
         }
 
         // Метод для установки текстуры по умолчанию
