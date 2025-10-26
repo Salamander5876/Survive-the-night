@@ -1,33 +1,31 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Items;
 
 namespace Survive_the_night.Entities
 {
-    public class CoinRenderer : GameObject
+    public class MagnetRenderer : GameObject
     {
-        private Coin _coin;
+        private Magnet _magnet;
         private Texture2D _texture;
-        private int _coinSize; // Размер будет определяться текстурой
 
-        public CoinRenderer(Coin coin, Texture2D texture)
-            : base(coin.Position, texture?.Width ?? 20, Color.Gold) // Используем ширину текстуры как размер
+        public MagnetRenderer(Magnet magnet, Texture2D texture)
+            : base(magnet.Position, texture?.Width ?? 16, Color.White)
         {
-            _coin = coin;
+            _magnet = magnet;
             _texture = texture;
-            _coinSize = texture?.Width ?? 20; // Сохраняем размер для использования
         }
 
         public override void Update(GameTime gameTime)
         {
-            Position = _coin.Position;
+            Position = _magnet.Position;
+            // ������ �������� - ������ �� �������� ���� �� ��������
         }
 
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
         {
             if (_texture != null)
             {
-                // Используем натуральный размер текстуры
                 Vector2 origin = new Vector2(_texture.Width / 2f, _texture.Height / 2f);
 
                 spriteBatch.Draw(
@@ -35,23 +33,21 @@ namespace Survive_the_night.Entities
                     Position,
                     null,
                     Color.White,
-                    0f,
+                    0f, // ������ ��������
                     origin,
-                    1.0f, // Масштаб 1:1 - используем оригинальный размер
+                    1.0f,
                     SpriteEffects.None,
                     0f
                 );
             }
             else
             {
-                // Резервная отрисовка через код
-                base.Draw(spriteBatch, debugTexture, Color.Gold);
+                base.Draw(spriteBatch, debugTexture, Color.Blue);
             }
         }
 
         public override Rectangle GetBounds()
         {
-            // Хитбокс соответствует размеру текстуры
             if (_texture != null)
             {
                 return new Rectangle(

@@ -240,6 +240,10 @@ namespace Survive_the_night
             Dynamite.SetExplosionSound(dynamiteExplosionSound);
             DynamiteExplosion.SetTexture(dynamiteExplosionTexture);
 
+            // Магнит
+            var magnetTexture = Content.Load<Texture2D>("Sprites/Items/Magnet");
+            _itemManager.SetMagnetTexture(magnetTexture);
+
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
             var bombExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/BombExplosion");
@@ -438,6 +442,12 @@ namespace Survive_the_night
                                     _itemManager.AddExperienceOrb(enemy.Position, 1);
                                 }
 
+                                // Шанс дропа магнита 2% от обычных врагов
+                                if (Game1.Random.NextDouble() < 0.02 && !(enemy is EliteEnemy))
+                                {
+                                    _itemManager.AddMagnet(enemy.Position);
+                                }
+
                                 // НОВЫЙ: Шанс дропа динамита 2% от обычных врагов
                                 if (Game1.Random.NextDouble() < 0.02)
                                 {
@@ -517,6 +527,14 @@ namespace Survive_the_night
 
             _previousKeyboardState = currentKs;
             base.Update(gameTime);
+        }
+
+        // Статический метод для активации магнита из других классов
+        public static void ActivateMagnet(float duration, float speed)
+        {
+            // Получаем доступ к ItemManager через существующий экземпляр
+            // Этот метод будет вызван из Magnet.ApplyEffect()
+            // Временное решение - нужно передать ссылку на ItemManager в Magnet
         }
 
         // Метод для обновления текстуры пола

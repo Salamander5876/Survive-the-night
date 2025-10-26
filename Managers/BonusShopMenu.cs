@@ -24,8 +24,8 @@ namespace Survive_the_night.Managers
         private SkillData _currentSkill;
 
         // Прогрессирующие цены
-        public int CurrentBonusPrice { get; private set; } = 25;
-        public int CurrentSkillPrice { get; private set; } = 50;
+        public int CurrentBonusPrice { get; private set; } = 50; // ИЗМЕНЕНО: было 25, стало 50
+        public int CurrentSkillPrice { get; private set; } = 100; // ИЗМЕНЕНО: было 50, стало 100
 
         // Счетчики покупок для прогрессии цен
         private int _bonusPurchaseCount = 0;
@@ -102,6 +102,16 @@ namespace Survive_the_night.Managers
                 MaxLevel = 3,
                 BaseValue = 5f
             };
+
+            // Бонус: Скорость магнита
+            _playerBonuses["MagnetSpeed"] = new BonusData
+            {
+                Name = "Скорость магнита",
+                Description = "Увеличивает скорость притяжения магнита на 200",
+                CurrentLevel = 0,
+                MaxLevel = 3,
+                BaseValue = 200f
+            };
         }
 
         public void Show()
@@ -124,56 +134,79 @@ namespace Survive_the_night.Managers
             if (!_canPurchaseBonus) return;
             if (_player.Coins < CurrentBonusPrice) return;
 
-            // Проверяем есть ли доступные бонусы для улучшения
-            bool hasAvailableBonuses = false;
-            foreach (var bonus in _playerBonuses.Values)
-            {
-                if (bonus.CurrentLevel < bonus.MaxLevel)
-                {
-                    hasAvailableBonuses = true;
-                    break;
-                }
-            }
-
-            if (!hasAvailableBonuses)
-            {
-                _currentBonus = new BonusData
-                {
-                    Name = "Все бонусы максимальны!",
-                    Description = "Вы прокачали все доступные бонусы",
-                    CurrentLevel = 3,
-                    MaxLevel = 3
-                };
-                return; // Не тратим монеты
-            }
-
             _player.SpendCoins(CurrentBonusPrice);
 
-            // Увеличиваем счетчик покупок и цену
+            // Увеличиваем счетчик покупок
             _bonusPurchaseCount++;
-            CurrentBonusPrice += 10;
+
+            // НОВАЯ ЛОГИКА: 50% шанс выпадения бонуса
+            if (_random.NextDouble() < 0.5) // 50% шанс
+            {
+                // Проверяем есть ли доступные бонусы для улучшения
+                bool hasAvailableBonuses = false;
+                foreach (var bonus in _playerBonuses.Values)
+                {
+                    if (bonus.CurrentLevel < bonus.MaxLevel)
+                    {
+                        hasAvailableBonuses = true;
+                        break;
+                    }
+                }
+
+                if (!hasAvailableBonuses)
+                {
+                    _currentBonus = new BonusData
+                    {
+                        Name = "Все бонусы максимальны!",
+                        Description = "Вы прокачали все доступные бонусы",
+                        CurrentLevel = 3,
+                        MaxLevel = 3
+                    };
+                    // Увеличиваем цену на +10 если ничего не выпало
+                    CurrentBonusPrice += 10;
+                }
+                else
+                {
+                    // Выбираем случайный бонус из доступных
+                    var availableBonuses = new List<BonusData>();
+                    foreach (var bonus in _playerBonuses.Values)
+                    {
+                        if (bonus.CurrentLevel < bonus.MaxLevel)
+                        {
+                            availableBonuses.Add(bonus);
+                        }
+                    }
+
+                    if (availableBonuses.Count > 0)
+                    {
+                        int index = _random.Next(0, availableBonuses.Count);
+                        _currentBonus = availableBonuses[index];
+
+                        // Применяем улучшение
+                        ApplyBonus(_currentBonus);
+
+                        // Увеличиваем цену на +25 если бонус выпал
+                        CurrentBonusPrice += 25;
+                    }
+                }
+            }
+            else
+            {
+                // 50% шанс что ничего не выпадет
+                _currentBonus = new BonusData
+                {
+                    Name = "ПУСТО!",
+                    Description = "Вам не повезло, попробуйте еще раз",
+                    CurrentLevel = 0,
+                    MaxLevel = 0
+                };
+
+                // Увеличиваем цену на +10 если ничего не выпало
+                CurrentBonusPrice += 10;
+            }
 
             // Блокируем повторную покупку до следующего клика
             _canPurchaseBonus = false;
-
-            // Выбираем случайный бонус из доступных
-            var availableBonuses = new List<BonusData>();
-            foreach (var bonus in _playerBonuses.Values)
-            {
-                if (bonus.CurrentLevel < bonus.MaxLevel)
-                {
-                    availableBonuses.Add(bonus);
-                }
-            }
-
-            if (availableBonuses.Count > 0)
-            {
-                int index = _random.Next(0, availableBonuses.Count);
-                _currentBonus = availableBonuses[index];
-
-                // Применяем улучшение
-                ApplyBonus(_currentBonus);
-            }
         }
 
         public void RollSkill()
@@ -186,7 +219,7 @@ namespace Survive_the_night.Managers
 
             // Увеличиваем счетчик покупок и цену
             _skillPurchaseCount++;
-            CurrentSkillPrice += 20;
+            CurrentSkillPrice += 50; // ИЗМЕНЕНО: было +20, стало +50
 
             // Блокируем повторную покупку до следующего клика
             _canPurchaseSkill = false;
@@ -234,6 +267,9 @@ namespace Survive_the_night.Managers
                     break;
                 case "Урон динамита":
                     Dynamite.ApplyDamageBonus((int)bonus.BaseValue);
+                    break;
+                case "Скорость магнита":
+                    Magnet.ApplySpeedBonus((int)bonus.BaseValue);
                     break;
             }
         }

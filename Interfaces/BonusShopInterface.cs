@@ -91,12 +91,18 @@ namespace Survive_the_night.Interfaces
                 // Название бонуса и уровень
                 string bonusName = $"{bonus.Name} (Ур. {bonus.LevelText})";
                 Vector2 nameSize = _font.MeasureString(bonusName);
-                spriteBatch.DrawString(_font, bonusName, new Vector2(centerX / 2 - nameSize.X / 2, 150), Color.LightGreen);
+
+                // Разный цвет для разных исходов
+                Color nameColor = bonus.Name == "ПУСТО!" ? Color.Red :
+                                 bonus.Name == "Все бонусы максимальны!" ? Color.Gold : Color.LightGreen;
+
+                spriteBatch.DrawString(_font, bonusName, new Vector2(centerX / 2 - nameSize.X / 2, 150), nameColor);
 
                 // Описание
-                spriteBatch.DrawString(_font, bonus.Description, new Vector2(centerX / 2 - 150, 180), Color.LightGray);
+                Color descColor = bonus.Name == "ПУСТО!" ? Color.Red : Color.LightGray;
+                spriteBatch.DrawString(_font, bonus.Description, new Vector2(centerX / 2 - 150, 180), descColor);
 
-                if (bonus.IsMaxLevel)
+                if (bonus.IsMaxLevel && bonus.Name != "ПУСТО!")
                 {
                     spriteBatch.DrawString(_font, "МАКСИМАЛЬНЫЙ УРОВЕНЬ!", new Vector2(centerX / 2 - 80, 210), Color.Gold);
                 }

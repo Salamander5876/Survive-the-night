@@ -4,22 +4,24 @@ using Survive_the_night.Items;
 
 namespace Survive_the_night.Entities
 {
-    public class ExperienceOrbRenderer : GameObject
+    public class CoinRenderer : GameObject
     {
-        private ExperienceOrb _orb;
+        private Coin _coin;
         private Texture2D _texture;
+        private int _coinSize;
         private float _rotation = 0f;
 
-        public ExperienceOrbRenderer(ExperienceOrb orb, Texture2D texture)
-            : base(orb.Position, texture?.Width ?? 8, Color.Yellow)
+        public CoinRenderer(Coin coin, Texture2D texture)
+            : base(coin.Position, texture?.Width ?? 20, Color.Gold)
         {
-            _orb = orb;
+            _coin = coin;
             _texture = texture;
+            _coinSize = texture?.Width ?? 20;
         }
 
         public override void Update(GameTime gameTime)
         {
-            Position = _orb.Position;
+            Position = _coin.Position;
         }
 
         // ПЕРЕОПРЕДЕЛЯЕМ метод Draw с вращением
@@ -44,7 +46,7 @@ namespace Survive_the_night.Entities
             else
             {
                 // Резервная отрисовка через код (без вращения)
-                base.Draw(spriteBatch, debugTexture, Color.Yellow);
+                base.Draw(spriteBatch, debugTexture, Color.Gold);
             }
         }
 

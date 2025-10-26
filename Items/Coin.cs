@@ -8,8 +8,6 @@ namespace Survive_the_night.Items
     {
         private const float AttractionSpeed = 350f;
         private const float AttractionRadius = 45f;
-
-        // ИЗМЕНЕНИЕ: делаем поле internal или public static
         public static Texture2D Texture { get; private set; }
 
         public Coin(Vector2 position, int value = 1)
