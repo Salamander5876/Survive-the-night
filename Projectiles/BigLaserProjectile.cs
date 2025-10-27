@@ -18,23 +18,18 @@ namespace Survive_the_night.Weapons
         public new float Rotation { get; set; }
         public float Length { get; private set; }
         public float Width { get; private set; }
-        public float DamageInterval { get; set; } = 0.2f;
+        public float DamageInterval { get; set; } = 0.1f; // УМЕНЬШЕНО с 0.2с до 0.1с
+
         private float _damageTimer = 0f;
 
         private float _targetRotation;
-        public float RotationSpeed { get; set; } = 1.5f; // Скорость поворота 1.5
+        public float RotationSpeed { get; set; } = 1.5f;
 
-        // Для отслеживания уже пораженных врагов в текущем цикле урона
         private HashSet<Enemy> _hitEnemiesThisCycle = new HashSet<Enemy>();
-
-        // Текущая цель для прицеливания
         private Enemy _currentTarget;
-
-        // Звук лазера
         private SoundEffect _laserSound;
         private SoundEffectInstance _laserSoundInstance;
 
-        // Фиксированные размеры хитбокса (толщина луча 33 пикселя)
         private const float HITBOX_WIDTH = 33f;
         private const float HITBOX_LENGTH = 800f;
 
@@ -46,11 +41,10 @@ namespace Survive_the_night.Weapons
             _laserTexture = texture ?? _defaultTexture;
             _laserSound = laserSound;
 
-            // Автоматически определяем размеры из текстуры для отрисовки
             if (_laserTexture != null)
             {
-                Width = _laserTexture.Height;   // 90 пикселей
-                Length = _laserTexture.Width;   // 800 пикселей
+                Width = _laserTexture.Height;
+                Length = _laserTexture.Width;
             }
             else
             {
@@ -62,7 +56,6 @@ namespace Survive_the_night.Weapons
             _targetRotation = 0f;
             _currentTarget = FindBestTarget();
 
-            // Создаем экземпляр звука для непрерывного воспроизведения
             if (_laserSound != null)
             {
                 _laserSoundInstance = _laserSound.CreateInstance();

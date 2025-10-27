@@ -12,7 +12,7 @@ namespace Survive_the_night.Weapons
     {
         public int NumBottles { get; private set; } = 1;
         public float BurnDuration { get; private set; } = 5f;
-        public float DamageInterval { get; private set; } = 1.2f;
+        public float DamageInterval { get; private set; } = 0.2f; // ФИКСИРОВАННЫЙ интервал
 
         public List<MolotovProjectile> ActiveBottles { get; private set; } = new List<MolotovProjectile>();
         public List<FireArea> ActiveFires { get; private set; } = new List<FireArea>();
@@ -22,9 +22,9 @@ namespace Survive_the_night.Weapons
 
         public int CountLevel { get; private set; } = 0;
         public int DurationLevel { get; private set; } = 0;
-        public int RateLevel { get; private set; } = 0;
+        public int DamageLevel { get; private set; } = 0; // НОВОЕ: уровень урона вместо скорости атаки
 
-        public MolotovCocktail(Player player) : base(player, WeaponType.Legendary, WeaponName.MolotovCocktail, 5.0f, 2)
+        public MolotovCocktail(Player player) : base(player, WeaponType.Legendary, WeaponName.MolotovCocktail, 5.0f, 1) // УРОН УМЕНЬШЕН с 2 до 1
         {
         }
 
@@ -54,11 +54,11 @@ namespace Survive_the_night.Weapons
             DurationLevel++;
         }
 
-        public void UpgradeDamageRate()
+        public void UpgradeDamage() // НОВЫЙ МЕТОД: улучшение урона вместо скорости атаки
         {
-            if (RateLevel >= 5) return;
-            DamageInterval -= 0.2f;
-            RateLevel++;
+            if (DamageLevel >= 5) return;
+            Damage += 1; // +1 урон за уровень
+            DamageLevel++;
         }
 
         public override void Update(GameTime gameTime)
@@ -78,9 +78,9 @@ namespace Survive_the_night.Weapons
                         bottle.Position,
                         (int)(_fireTexture.Width * 1.5f),
                         Color.White,
-                        Damage,
+                        Damage, // Используем текущий урон оружия
                         BurnDuration,
-                        DamageInterval
+                        DamageInterval // Фиксированный интервал 0.2с
                     );
 
                     ActiveFires.Add(fireArea);

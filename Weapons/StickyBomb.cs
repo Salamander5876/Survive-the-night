@@ -11,7 +11,7 @@ namespace Survive_the_night.Weapons
     public class StickyBomb : Weapon
     {
         public int NumBombs { get; private set; } = 1;
-        public float ExplosionTime { get; private set; } = 60f;
+        public float ExplosionTime { get; private set; } = 15f; // ”ћ≈Ќ№Ў≈Ќќ с 60 до 15 секунд
         public List<StickyBombProjectile> ActiveBombs { get; private set; } = new List<StickyBombProjectile>();
         public float ProjectileSpeed { get; private set; } = 200f;
 
@@ -26,7 +26,7 @@ namespace Survive_the_night.Weapons
 
         private List<Enemy> _enemiesWithBombs = new List<Enemy>();
 
-        // «вуки
+        // 
         private static SoundEffect _throwSound;
         private static SoundEffect _explosionSound;
 
@@ -45,7 +45,7 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
-            Damage += 1;
+            Damage += 3; // ”¬≈Ћ»„≈Ќќ с +1 до +3 за уровень
             DamageLevel++;
         }
 
@@ -59,7 +59,7 @@ namespace Survive_the_night.Weapons
         public void UpgradeExplosionTime()
         {
             if (ExplosionTimeLevel >= 10) return;
-            ExplosionTime -= 5f;
+            ExplosionTime -= 1f; // ”ћ≈Ќ№Ў≈Ќќ с -5с до -1с за уровень
             ExplosionTimeLevel++;
         }
 
@@ -134,10 +134,10 @@ namespace Survive_the_night.Weapons
                 Player.Position,
                 20, // Ётот размер будет переопределен автоматически
                 Color.White,
-                this.Damage,
+                this.Damage, // ”рон теперь 5 (базовый) и +3 за уровень
                 this.ProjectileSpeed,
                 target,
-                this.ExplosionTime,
+                this.ExplosionTime, // “еперь 15 секунд вместо 60
                 _explosionSound
             );
 

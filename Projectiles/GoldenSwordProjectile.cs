@@ -11,7 +11,6 @@ namespace Survive_the_night.Projectiles
         private static Texture2D _defaultTexture;
         private Texture2D _swordTexture;
 
-        // Параметры траектории бумеранга
         private Vector2 _startPosition;
         private Player _player;
         private Vector2 _controlPoint1;
@@ -23,16 +22,19 @@ namespace Survive_the_night.Projectiles
         private bool _returning = false;
         private Vector2 _currentTargetPosition;
 
-        // УБРАНО: дублирование полей _lifeTimer и MaxLifeTime (они уже в базовом классе)
+        // НОВОЕ: лимит целей
+        private int _maxTargets;
+        private int _targetsHit = 0;
 
-        // Для предотвращения многократного попадания по одному врагу
+        // УБРАНО дублирование: оставляем только одно объявление _hitEnemies
         private List<Enemy> _hitEnemies = new List<Enemy>();
 
-        public GoldenSwordProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy target, List<Enemy> potentialTargets, Player player, Texture2D texture = null) : base(position, size, color, damage, speed, Vector2.Zero, int.MaxValue)
+        public GoldenSwordProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy target, List<Enemy> potentialTargets, Player player, Texture2D texture = null, int maxTargets = 10)
+            : base(position, size, color, damage, speed, Vector2.Zero, int.MaxValue)
         {
             _swordTexture = texture ?? _defaultTexture;
+            _maxTargets = maxTargets; // Сохраняем лимит целей
 
-            // Автоматически определяем размер из текстуры
             if (_swordTexture != null && size == 0)
             {
                 Size = Math.Max(_swordTexture.Width, _swordTexture.Height);
@@ -45,9 +47,7 @@ namespace Survive_the_night.Projectiles
             _currentTargetPosition = target?.Position ?? position + new Vector2(300, 0);
             _curveSpeed = (speed * 1.5f) / 400f;
 
-            // УСТАНОВКА времени жизни через базовый класс
-            SetLifeTime(30f); // 30 секунд вместо 2 минут (было слишком долго)
-
+            SetLifeTime(30f);
             CalculateCurvePoints();
         }
 
@@ -66,7 +66,6 @@ namespace Survive_the_night.Projectiles
             Vector2 toTarget = _currentTargetPosition - _startPosition;
             float distance = toTarget.Length();
 
-            // Создаем плавную овальную траекторию
             Vector2 perpendicular = new Vector2(-toTarget.Y, toTarget.X);
             perpendicular = Vector2.Normalize(perpendicular) * (distance * 0.6f);
 
@@ -80,7 +79,6 @@ namespace Survive_the_night.Projectiles
             Vector2 toPlayer = _player.Position - currentPosition;
             float distance = toPlayer.Length();
 
-            // Создаем плавную траекторию возврата к игроку
             Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X);
             perpendicular = Vector2.Normalize(perpendicular) * (distance * 0.4f);
 
@@ -114,34 +112,34 @@ namespace Survive_the_night.Projectiles
         {
             if (!IsActive) return;
 
-            // УБРАНО: дублирование логики таймера жизни (она в базовом классе)
-            // Просто вызываем базовый метод
             base.Update(gameTime);
-            if (!IsActive) return; // Проверяем после вызова base.Update
+            if (!IsActive) return;
 
-            // Обновляем позицию цели, если она жива
+            // ПРОВЕРКА ЛИМИТА ЦЕЛЕЙ
+            if (_targetsHit >= _maxTargets)
+            {
+                IsActive = false;
+                return;
+            }
+
             if (_target != null && _target.IsAlive)
             {
                 _currentTargetPosition = _target.Position;
             }
 
-            // Проверяем, жива ли текущая цель (только если не возвращаемся)
             if (!_returning && _target != null && (!_target.IsAlive || _hitEnemies.Contains(_target)))
             {
-                // Ищем новую цель
                 Enemy newTarget = FindNewTarget();
                 if (newTarget != null)
                 {
-                    // Нашли новую цель - продолжаем лететь к ней
                     _target = newTarget;
                     _currentTargetPosition = _target.Position;
-                    _startPosition = Position; // Начинаем новую траекторию с текущей позиции
+                    _startPosition = Position;
                     _curveProgress = 0f;
                     CalculateCurvePoints();
                 }
                 else
                 {
-                    // Не нашли новую цель - начинаем возвращаться к игроку
                     _returning = true;
                     _curveProgress = 0f;
                     CalculateReturnCurvePoints();
@@ -150,12 +148,10 @@ namespace Survive_the_night.Projectiles
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Двигаемся по кривой Безье
             _curveProgress += _curveSpeed * deltaTime;
 
             if (!_returning)
             {
-                // Движение от текущей позиции к цели
                 if (_curveProgress < 1.0f)
                 {
                     Position = CalculateCubicBezierPoint(_startPosition, _controlPoint1, _controlPoint2,
@@ -163,7 +159,6 @@ namespace Survive_the_night.Projectiles
                 }
                 else
                 {
-                    // Достигли цели - начинаем возвращаться к игроку
                     _returning = true;
                     _curveProgress = 0f;
                     CalculateReturnCurvePoints();
@@ -171,7 +166,6 @@ namespace Survive_the_night.Projectiles
             }
             else
             {
-                // Движение обратно к игроку
                 if (_curveProgress < 1.0f)
                 {
                     Position = CalculateCubicBezierPoint(_currentTargetPosition, _controlPoint1, _controlPoint2,
@@ -179,12 +173,10 @@ namespace Survive_the_night.Projectiles
                 }
                 else
                 {
-                    // Вернулись к игроку - деактивируем
                     IsActive = false;
                 }
             }
 
-            // Вращение снаряда
             Rotation += 450f * deltaTime;
         }
 
@@ -216,22 +208,20 @@ namespace Survive_the_night.Projectiles
             }
         }
 
-        // Метод для проверки столкновения с врагом
         public bool CheckEnemyHit(Enemy enemy)
         {
-            if (!IsActive || _hitEnemies.Contains(enemy) || !enemy.IsAlive)
+            if (!IsActive || _hitEnemies.Contains(enemy) || !enemy.IsAlive || _targetsHit >= _maxTargets)
                 return false;
 
-            // Увеличиваем хитбокс для лучшего обнаружения
             Rectangle projectileBounds = GetBounds();
             Rectangle enemyBounds = enemy.GetBounds();
 
-            // Расширяем хитбокс снаряда
             projectileBounds.Inflate(8, 8);
 
             if (projectileBounds.Intersects(enemyBounds))
             {
                 _hitEnemies.Add(enemy);
+                _targetsHit++;
                 return true;
             }
 
@@ -240,7 +230,6 @@ namespace Survive_the_night.Projectiles
 
         public override Rectangle GetBounds()
         {
-            // Увеличиваем хитбокс для лучшего обнаружения столкновений
             return new Rectangle(
                 (int)Position.X - Size,
                 (int)Position.Y - Size,
@@ -249,7 +238,6 @@ namespace Survive_the_night.Projectiles
             );
         }
 
-        // Сброс списка пораженных врагов
         public void ResetHitEnemies()
         {
             _hitEnemies.Clear();

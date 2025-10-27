@@ -9,12 +9,12 @@ namespace Survive_the_night.Weapons
     public class GoldenBullet : Weapon
     {
         public int NumBullets { get; private set; } = 1;
-        public float ProjectileSpeed { get; private set; } = 500f;
+        public float ProjectileSpeed { get; private set; } = 800f; // УВЕЛИЧЕНО с 500 до 800
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
-        public int SpeedLevel { get; private set; } = 0;
+        public int KnockbackLevel { get; private set; } = 0; // НОВОЕ: уровень отталкивания
 
         private const float ShotIntervalSeconds = 0.2f;
         private const float BurstCooldownSeconds = 1.0f;
@@ -23,7 +23,7 @@ namespace Survive_the_night.Weapons
         private float _nextShotTimer = 0f;
         private float _burstCooldownTimer = 0f;
 
-        public GoldenBullet(Player player) : base(player, WeaponType.Regular, WeaponName.GoldenBullet, 1.5f, 1)
+        public GoldenBullet(Player player) : base(player, WeaponType.Regular, WeaponName.GoldenBullet, 1.5f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
         {
         }
 
@@ -39,15 +39,20 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
-            Damage += 1;
+            Damage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
             DamageLevel++;
         }
 
-        public void UpgradeSpeed()
+        public void UpgradeKnockback() // НОВЫЙ МЕТОД: улучшение отталкивания
         {
-            if (SpeedLevel >= 10) return;
-            ProjectileSpeed += 50f;
-            SpeedLevel++;
+            if (KnockbackLevel >= 10) return;
+            KnockbackLevel++;
+        }
+
+        // Метод для получения силы отталкивания
+        public float GetKnockbackForce()
+        {
+            return 5f + (KnockbackLevel * 5f); // 5px базовое + 5px за уровень
         }
 
         public override void Update(GameTime gameTime)
@@ -102,10 +107,11 @@ namespace Survive_the_night.Weapons
                             Player.Position + offset,
                             0, // размер определится автоматически из текстуры
                             Color.Gold,
-                            this.Damage,
-                            this.ProjectileSpeed,
+                            this.Damage, // Теперь урон 2 (базовый)
+                            this.ProjectileSpeed, // Теперь скорость 800
                             target.Position,
-                            WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenBullet)
+                            WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenBullet),
+                            this // Передаем ссылку на оружие для отталкивания
                         );
                         ActiveProjectiles.Add(bullet);
 
@@ -141,11 +147,29 @@ namespace Survive_the_night.Weapons
                     if (bullet.GetBounds().Intersects(enemy.GetBounds()))
                     {
                         enemy.TakeDamage(bullet.Damage);
+
+                        // ПРИМЕНЯЕМ ОТТАЛКИВАНИЕ (только к обычным врагам)
+                        if (!(enemy is EliteEnemy))
+                        {
+                            ApplyKnockback(enemy, bullet);
+                        }
+
                         bullet.IsActive = false;
                         break;
                     }
                 }
             }
+        }
+
+        // НОВЫЙ МЕТОД: применение отталкивания к врагу
+        private void ApplyKnockback(Enemy enemy, Projectile bullet)
+        {
+            Vector2 knockbackDirection = Vector2.Normalize(enemy.Position - bullet.Position);
+            float knockbackForce = GetKnockbackForce();
+
+            // Применяем отталкивание к врагу
+            // Нужно будет добавить метод ApplyKnockback в класс Enemy
+            enemy.ApplyKnockback(knockbackDirection * knockbackForce);
         }
 
         private Enemy FindClosestEnemyForBullets(List<Enemy> enemies)

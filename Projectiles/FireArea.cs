@@ -14,15 +14,14 @@ namespace Survive_the_night.Projectiles
         private float _damageTimer = 0f;
         private SoundEffectInstance _fireSoundInstance;
         private bool _soundPlayed = false;
-        private float _fadeOutDuration = 1.5f; // ƒлительность плавного исчезновени€
+        private float _fadeOutDuration = 1.5f;
 
         public FireArea(Vector2 position, int size, Color color, int damage, float duration, float damageInterval)
-            : base(position, size, color, damage, 0f, position, 1)
+            : base(position, size, color, damage, 0f, position, 1) // ”рон передаетс€ из MolotovCocktail
         {
             _timeToLive = duration;
             _damageCooldown = damageInterval;
 
-            // —оздаем экземпл€р звука дл€ плавного управлени€
             if (Game1.SFXFireBurn != null)
             {
                 _fireSoundInstance = Game1.SFXFireBurn.CreateInstance();

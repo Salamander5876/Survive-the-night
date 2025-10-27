@@ -14,6 +14,10 @@ namespace Survive_the_night.Entities
 
         public bool IsAlive => Health > 0;
 
+        // !!! ДОБАВЛЕНО: Переменные для отталкивания !!!
+        private Vector2 _knockbackVelocity = Vector2.Zero;
+        private float _knockbackDecay = 0.9f; // Замедление отталкивания
+
         // !!! НОВЫЙ МАСТЕР-КОНСТРУКТОР !!!
         public Enemy(Vector2 initialPosition, Player playerTarget, int health, float speed, Color color, int damage)
             : base(initialPosition, 24, color)
@@ -36,14 +40,29 @@ namespace Survive_the_night.Entities
             if (!IsAlive || _target == null) return;
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Vector2 direction = _target.Position - Position;
 
-            if (direction != Vector2.Zero)
+            // !!! ОБРАБОТКА ОТТАЛКИВАНИЯ !!!
+            if (_knockbackVelocity != Vector2.Zero)
             {
-                direction.Normalize();
-            }
+                Position += _knockbackVelocity * deltaTime;
+                _knockbackVelocity *= _knockbackDecay; // Постепенное замедление
 
-            Position += direction * speed * deltaTime;
+                // Если отталкивание стало очень маленьким, обнуляем его
+                if (_knockbackVelocity.LengthSquared() < 1f)
+                {
+                    _knockbackVelocity = Vector2.Zero;
+                }
+            }
+            else
+            {
+                // Обычное движение к игроку (только если нет отталкивания)
+                Vector2 direction = _target.Position - Position;
+                if (direction != Vector2.Zero)
+                {
+                    direction.Normalize();
+                }
+                Position += direction * speed * deltaTime;
+            }
         }
 
         public void TakeDamage(int damageAmount)
@@ -53,6 +72,12 @@ namespace Survive_the_night.Entities
             {
                 Health = 0;
             }
+        }
+
+        // !!! НОВЫЙ МЕТОД: ПРИМЕНЕНИЕ ОТТАЛКИВАНИЯ !!!
+        public void ApplyKnockback(Vector2 force)
+        {
+            _knockbackVelocity = force;
         }
     }
 }

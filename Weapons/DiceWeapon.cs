@@ -181,7 +181,9 @@ namespace Survive_the_night.Weapons
         {
             if (diceValue < 1 || diceValue > 6 || Player == null) return;
 
-            int diceDamage = diceValue + DamageBonusLevel;
+            // ИЗМЕНЕНО: базовый урон костей увеличен
+            int baseDiceDamage = GetBaseDiceDamage(diceValue); // Новый метод для расчета урона
+            int diceDamage = baseDiceDamage + DamageBonusLevel;
             int basePierce = 7 - diceValue;
             int totalPierce = basePierce + PierceBonusLevel;
 
@@ -195,6 +197,21 @@ namespace Survive_the_night.Weapons
 
             ActiveDice.Add(dice);
             _hitEnemies[dice] = new List<Enemy>();
+        }
+
+        // НОВЫЙ МЕТОД: расчет базового урона для кости
+        private int GetBaseDiceDamage(int diceValue)
+        {
+            switch (diceValue)
+            {
+                case 1: return 2; // УВЕЛИЧЕНО с 1 до 2
+                case 2: return 4; // УВЕЛИЧЕНО с 2 до 4
+                case 3: return 6; // УВЕЛИЧЕНО с 3 до 6
+                case 4: return 8; // УВЕЛИЧЕНО с 4 до 8
+                case 5: return 10; // УВЕЛИЧЕНО с 5 до 10
+                case 6: return 12; // УВЕЛИЧЕНО с 6 до 12
+                default: return 1;
+            }
         }
 
         private void CheckCollisions(List<Enemy> enemies)

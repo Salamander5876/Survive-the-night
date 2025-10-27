@@ -18,8 +18,8 @@ namespace Survive_the_night.Weapons
         public float ProjectileSpeed { get; private set; } = 500f;
         public float ParticleLifetime { get; private set; } = 0.5f;
         public int MaxBounces { get; private set; } = 10;
-        public int ParticleDamage { get; private set; } = 1;
-        public int BallDamage { get; private set; } = 1;
+        public int ParticleDamage { get; private set; } = 2; // УВЕЛИЧЕНО с 1 до 2
+        public int BallDamage { get; private set; } = 2; // УВЕЛИЧЕНО с 1 до 2
 
         // Уровни прокачки
         public int SpeedLevel { get; private set; } = 0;
@@ -33,9 +33,9 @@ namespace Survive_the_night.Weapons
         private float _particleTimer = 0f;
         private const float PARTICLE_INTERVAL = 0.1f;
 
-        public RouletteBall(Player player) : base(player, WeaponType.Regular, WeaponName.RouletteBall, 4f, 1)
+        public RouletteBall(Player player) : base(player, WeaponType.Regular, WeaponName.RouletteBall, 4f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
         {
-            Damage = 1;
+            Damage = 2; // Устанавливаем базовый урон
         }
 
         public override void LevelUp()
@@ -61,8 +61,8 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
-            ParticleDamage += 1;
-            BallDamage += 1;
+            ParticleDamage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
+            BallDamage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
             DamageLevel++;
             Debug.WriteLine($"Улучшен урон рулетки: шарик={BallDamage}, частички={ParticleDamage} (Ур. {DamageLevel})");
         }
@@ -182,7 +182,7 @@ namespace Survive_the_night.Weapons
                 ProjectileSpeed,
                 direction,
                 MaxBounces,
-                BallDamage
+                BallDamage // Теперь урон 2 (базовый)
             );
 
             // УСТАНАВЛИВАЕМ ССЫЛКУ НА ОРУЖИЕ
@@ -233,7 +233,7 @@ namespace Survive_the_night.Weapons
                 position,
                 0,
                 Color.White,
-                ParticleDamage,
+                ParticleDamage, // Теперь урон 2 (базовый)
                 ParticleLifetime
             );
             ActiveParticles.Add(particle);

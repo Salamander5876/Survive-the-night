@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using Survive_the_night.Weapons;
 
 namespace Survive_the_night.Projectiles
 {
@@ -10,9 +11,12 @@ namespace Survive_the_night.Projectiles
         private static Texture2D _defaultTexture;
         private Texture2D _bulletTexture;
 
-        public GoldenBulletProjectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, Texture2D texture = null) : base(position, size, color, damage, speed, target, 1)
+        private GoldenBullet _weapon; // Ссылка на оружие для отталкивания
+
+        public GoldenBulletProjectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, Texture2D texture = null, GoldenBullet weapon = null) : base(position, size, color, damage, speed, target, 1)
         {
             _bulletTexture = texture ?? _defaultTexture;
+            _weapon = weapon;
 
             // Автоматически определяем размер из текстуры
             if (_bulletTexture != null && size == 0) // если размер не задан

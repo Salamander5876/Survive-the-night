@@ -30,7 +30,7 @@ namespace Survive_the_night.Weapons
 
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public CasinoChips(Player player) : base(player, WeaponType.Regular, WeaponName.CasinoChips, 2.0f, 1)
+        public CasinoChips(Player player) : base(player, WeaponType.Regular, WeaponName.CasinoChips, 2.0f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
         {
         }
 
@@ -39,7 +39,7 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
-            Damage += 1;
+            Damage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
             DamageLevel++;
         }
 
@@ -111,7 +111,7 @@ namespace Survive_the_night.Weapons
                             Player.Position + offset,
                             0, // размер определится автоматически из текстуры
                             Color.White,
-                            this.Damage,
+                            this.Damage, // Теперь урон 2 (базовый)
                             this.ProjectileSpeed,
                             target.Position,
                             BounceLevel + 1,

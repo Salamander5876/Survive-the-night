@@ -14,7 +14,7 @@ namespace Survive_the_night.Managers
         public string Title { get; set; }
         public string Description { get; set; }
         public System.Action ApplyUpgrade { get; set; }
-        public bool IsSkipOption { get; set; } = false; // Новое свойство для пропускных опций
+        public bool IsSkipOption { get; set; } = false;
     }
 
     public class LevelUpMenu
@@ -22,19 +22,17 @@ namespace Survive_the_night.Managers
         private Player _player;
         private List<Weapon> _weapons;
 
-        // Переменные состояния для надежного ввода с клавиатуры и мыши
         private KeyboardState _previousKeyboardState;
         private MouseState _previousMouseState;
 
-        // Используем статический Random из Game1
         private System.Random _random => Game1.Random;
 
         public List<UpgradeOption> CurrentOptions { get; private set; } = new List<UpgradeOption>();
         public bool IsVisible => _player.IsLevelUpPending;
 
-        private Texture2D _debugTexture; // ВОССТАНОВИТЬ
-        private SpriteFont _font; // ВОССТАНОВИТЬ
-        private GraphicsDevice _graphicsDevice; // ВОССТАНОВИТЬ
+        private Texture2D _debugTexture;
+        private SpriteFont _font;
+        private GraphicsDevice _graphicsDevice;
 
         public LevelUpMenu(Player player, List<Weapon> allWeapons, GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
@@ -52,40 +50,9 @@ namespace Survive_the_night.Managers
             CurrentOptions.Clear();
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            // 1. Улучшения оружия (оставляем только это)
             foreach (var weapon in _weapons)
             {
-                if (weapon is GoldenSword gs)
-                {
-                    if (gs.CountLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel + 1}/5)",
-                            Description = $"Текущее количество: {gs.NumSwords}",
-                            ApplyUpgrade = () => gs.UpgradeCount()
-                        });
-                    }
-                    if (gs.DamageLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +2 (Ур. {gs.DamageLevel + 1}/5)",
-                            Description = $"Текущий урон: {gs.Damage}",
-                            ApplyUpgrade = () => gs.UpgradeDamage()
-                        });
-                    }
-                    if (gs.SpeedLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Скорость полета +20 (Ур. {gs.SpeedLevel + 1}/5)",
-                            Description = $"Текущая скорость: {gs.ProjectileSpeed:0}",
-                            ApplyUpgrade = () => gs.UpgradeSpeed()
-                        });
-                    }
-                }
-                else if (weapon is PlayingCards pc)
+                if (weapon is PlayingCards pc)
                 {
                     if (pc.CountLevel < 10)
                     {
@@ -100,7 +67,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +1 (Ур. {pc.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +2 (Ур. {pc.DamageLevel + 1}/10)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
@@ -130,18 +97,19 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Урон +1 (Ур. {gb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Урон +2 (Ур. {gb.DamageLevel + 1}/10)",
                             Description = $"Текущий урон: {gb.Damage}",
                             ApplyUpgrade = () => gb.UpgradeDamage()
                         });
                     }
-                    if (gb.SpeedLevel < 10)
+                    // ЗАМЕНА: Вместо скорости - отталкивание
+                    if (gb.KnockbackLevel < 10)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Скорость полета +50 (Ур. {gb.SpeedLevel + 1}/10)",
-                            Description = $"Текущая скорость: {gb.ProjectileSpeed:0}",
-                            ApplyUpgrade = () => gb.UpgradeSpeed()
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Отталкивание +5px (Ур. {gb.KnockbackLevel + 1}/10)",
+                            Description = $"Текущее отталкивание: {gb.GetKnockbackForce()}px",
+                            ApplyUpgrade = () => gb.UpgradeKnockback()
                         });
                     }
                 }
@@ -151,7 +119,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Урон +1 (Ур. {cc.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Урон +2 (Ур. {cc.DamageLevel + 1}/10)",
                             Description = $"Текущий урон: {cc.Damage}",
                             ApplyUpgrade = () => cc.UpgradeDamage()
                         });
@@ -175,73 +143,13 @@ namespace Survive_the_night.Managers
                         });
                     }
                 }
-                else if (weapon is MolotovCocktail mc)
-                {
-                    if (mc.CountLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel + 1}/5)",
-                            Description = $"Текущее количество: {mc.NumBottles}",
-                            ApplyUpgrade = () => mc.UpgradeBottleCount()
-                        });
-                    }
-                    if (mc.DurationLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel + 1}/5)",
-                            Description = $"Текущее время: {mc.BurnDuration:0} сек",
-                            ApplyUpgrade = () => mc.UpgradeBurnDuration()
-                        });
-                    }
-                    if (mc.RateLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Частота урона (Ур. {mc.RateLevel + 1}/5)",
-                            Description = $"Текущий интервал: {mc.DamageInterval:0.0} сек",
-                            ApplyUpgrade = () => mc.UpgradeDamageRate()
-                        });
-                    }
-                }
-                else if (weapon is BigLaser bl)
-                {
-                    if (bl.DurationLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel + 1}/5)",
-                            Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
-                            ApplyUpgrade = () => bl.UpgradeDuration()
-                        });
-                    }
-                    if (bl.DamageLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel + 1}/5)",
-                            Description = $"Текущий урон: {bl.Damage}",
-                            ApplyUpgrade = () => bl.UpgradeDamage()
-                        });
-                    }
-                    if (bl.CooldownLevel < 5)
-                    {
-                        pool.Add(new UpgradeOption
-                        {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel + 1}/5)",
-                            Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
-                            ApplyUpgrade = () => bl.UpgradeCooldown()
-                        });
-                    }
-                }
                 else if (weapon is StickyBomb sb)
                 {
                     if (sb.DamageLevel < 10)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Урон +1 (Ур. {sb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Урон +3 (Ур. {sb.DamageLevel + 1}/10)",
                             Description = $"Текущий урон: {sb.Damage}",
                             ApplyUpgrade = () => sb.UpgradeDamage()
                         });
@@ -259,7 +167,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Время взрыва -5сек (Ур. {sb.ExplosionTimeLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Время взрыва -1сек (Ур. {sb.ExplosionTimeLevel + 1}/10)",
                             Description = $"Текущее время: {sb.ExplosionTime:0} сек",
                             ApplyUpgrade = () => sb.UpgradeExplosionTime()
                         });
@@ -319,20 +227,114 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Урон частичек +1 (Ур. {rb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Урон частичек +2 (Ур. {rb.DamageLevel + 1}/10)",
                             Description = $"Текущий урон: {rb.ParticleDamage}",
                             ApplyUpgrade = () => rb.UpgradeDamage()
                         });
                     }
+                    // В методе GenerateOptions() добавить после секции RouletteBall:
+
+                    // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
+                    else if (weapon is GoldenSword gs)
+                    {
+                        if (gs.CountLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel + 1}/5)",
+                                Description = $"Текущее количество: {gs.NumSwords}",
+                                ApplyUpgrade = () => gs.UpgradeCount()
+                            });
+                        }
+                        if (gs.DamageLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +3 (Ур. {gs.DamageLevel + 1}/5)",
+                                Description = $"Текущий урон: {gs.Damage}",
+                                ApplyUpgrade = () => gs.UpgradeDamage()
+                            });
+                        }
+                        // НОВОЕ: прокачка количества целей вместо скорости
+                        if (gs.TargetsLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Целей +5 (Ур. {gs.TargetsLevel + 1}/5)",
+                                Description = $"Текущее количество целей: {gs.MaxTargets}",
+                                ApplyUpgrade = () => gs.UpgradeTargets()
+                            });
+                        }
+                    }
+                    else if (weapon is MolotovCocktail mc)
+                    {
+                        if (mc.CountLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel + 1}/5)",
+                                Description = $"Текущее количество: {mc.NumBottles}",
+                                ApplyUpgrade = () => mc.UpgradeBottleCount()
+                            });
+                        }
+                        if (mc.DurationLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel + 1}/5)",
+                                Description = $"Текущее время: {mc.BurnDuration:0} сек",
+                                ApplyUpgrade = () => mc.UpgradeBurnDuration()
+                            });
+                        }
+                        // ИЗМЕНЕНО: прокачка урона вместо скорости атаки
+                        if (mc.DamageLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Урон огня +1 (Ур. {mc.DamageLevel + 1}/5)",
+                                Description = $"Текущий урон: {mc.Damage}",
+                                ApplyUpgrade = () => mc.UpgradeDamage()
+                            });
+                        }
+                    }
+                    else if (weapon is BigLaser bl)
+                    {
+                        if (bl.DurationLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel + 1}/5)",
+                                Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
+                                ApplyUpgrade = () => bl.UpgradeDuration()
+                            });
+                        }
+                        if (bl.DamageLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel + 1}/5)",
+                                Description = $"Текущий урон: {bl.Damage}",
+                                ApplyUpgrade = () => bl.UpgradeDamage()
+                            });
+                        }
+                        if (bl.CooldownLevel < 5)
+                        {
+                            pool.Add(new UpgradeOption
+                            {
+                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel + 1}/5)",
+                                Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
+                                ApplyUpgrade = () => bl.UpgradeCooldown()
+                            });
+                        }
+                    }
                 }
             }
 
-            // 2. Всегда показываем 3 опции
+            // Всегда показываем 3 опции
             int targetCount = 3;
 
             if (pool.Count >= targetCount)
             {
-                // Выбираем 3 случайных уникальных опции
                 HashSet<int> indices = new HashSet<int>();
                 while (indices.Count < targetCount)
                 {
@@ -346,10 +348,8 @@ namespace Survive_the_night.Managers
             }
             else
             {
-                // Если доступных улучшений меньше 3, добавляем их все
                 CurrentOptions.AddRange(pool);
 
-                // Добавляем кнопки "Пропустить" для заполнения до 3 опций
                 int skipOptionsNeeded = targetCount - pool.Count;
                 for (int i = 0; i < skipOptionsNeeded; i++)
                 {
@@ -373,13 +373,11 @@ namespace Survive_the_night.Managers
 
             bool choiceMade = false;
 
-            // Определяем размеры и позиции для расчета кликов
             Vector2 startPosition = new Vector2(50, 50);
             const int boxHeight = 150;
             const int boxSpacing = 20;
             int boxWidth = _graphicsDevice.Viewport.Width - 100;
 
-            // --- 1. Логика выбора с помощью клавиш D1-D3 (только при первом нажатии) ---
             if (currentKs.IsKeyDown(Keys.D1) && !_previousKeyboardState.IsKeyDown(Keys.D1) && CurrentOptions.Count > 0)
             {
                 ApplyChoice(0);
@@ -396,7 +394,6 @@ namespace Survive_the_night.Managers
                 choiceMade = true;
             }
 
-            // --- 2. Логика выбора с помощью мыши (при клике) ---
             if (!choiceMade && currentMs.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
             {
                 Point mousePosition = currentMs.Position;
@@ -414,12 +411,11 @@ namespace Survive_the_night.Managers
                     {
                         ApplyChoice(i);
                         choiceMade = true;
-                        break; // Выбираем только одну опцию за клик
+                        break;
                     }
                 }
             }
 
-            // Обновляем состояния для следующего кадра
             _previousKeyboardState = currentKs;
             _previousMouseState = currentMs;
         }

@@ -12,22 +12,22 @@ namespace Survive_the_night.Weapons
         public float RotationSpeed { get; private set; } = 1.5f;
 
         // Уровни прокачки
-        public int DurationLevel { get; private set; } = 0;    // +10 сек за уровень (вместо интервала атаки)
-        public int DamageLevel { get; private set; } = 0;      // +2 урона за уровень
-        public int CooldownLevel { get; private set; } = 0;    // -5 сек перезарядки за уровень
+        public int DurationLevel { get; private set; } = 0;
+        public int DamageLevel { get; private set; } = 0;
+        public int CooldownLevel { get; private set; } = 0;
 
-        private const float BASE_DURATION = 30f;               // Базовая длительность 30 сек
-        private const float BASE_COOLDOWN = 30f;               // Базовая перезарядка 30 сек
+        private const float BASE_DURATION = 30f;
+        private const float BASE_COOLDOWN = 30f;
 
-        public float CurrentDuration => BASE_DURATION + (DurationLevel * 10f); // +10 сек за уровень
-        public float CurrentCooldown => BASE_COOLDOWN - (CooldownLevel * 5f);  // -5 сек за уровень
+        public float CurrentDuration => BASE_DURATION + (DurationLevel * 10f);
+        public float CurrentCooldown => BASE_COOLDOWN - (CooldownLevel * 5f);
 
         private float _cooldownTimer = 0f;
         private bool _isLaserActive = false;
 
         private List<Enemy> _enemies;
 
-        public BigLaser(Player player) : base(player, WeaponType.Legendary, WeaponName.BigLaser, BASE_COOLDOWN, 2) // Урон понижен до 2
+        public BigLaser(Player player) : base(player, WeaponType.Legendary, WeaponName.BigLaser, BASE_COOLDOWN, 3) // УРОН УВЕЛИЧЕН с 2 до 3
         {
             _enemies = Game1.CurrentEnemies;
             _cooldownTimer = 0f;
@@ -42,14 +42,13 @@ namespace Survive_the_night.Weapons
         {
             if (DurationLevel >= 5) return;
             DurationLevel++;
-            // Длительность автоматически обновится через свойство CurrentDuration
         }
 
         public void UpgradeDamage()
         {
             if (DamageLevel >= 5) return;
-            DamageLevel++;
             Damage += 2;
+            DamageLevel++;
 
             if (ActiveLaser != null)
             {
@@ -61,7 +60,6 @@ namespace Survive_the_night.Weapons
         {
             if (CooldownLevel >= 5) return;
             CooldownLevel++;
-            // Перезарядка автоматически обновится через свойство CurrentCooldown
         }
 
         public override void Update(GameTime gameTime)
@@ -81,7 +79,6 @@ namespace Survive_the_night.Weapons
 
                 if (!ActiveLaser.IsActive)
                 {
-                    // Останавливаем звук перед удалением лазера
                     ActiveLaser.StopSound();
                     ActiveLaser = null;
                     _isLaserActive = false;
@@ -109,13 +106,11 @@ namespace Survive_the_night.Weapons
                 laserSound
             )
             {
-                DamageInterval = 0.2f, // Фиксированный интервал 0.1 сек
+                DamageInterval = 0.1f, // УМЕНЬШЕНО с 0.2с до 0.1с
                 RotationSpeed = RotationSpeed
             };
 
-            // Устанавливаем улучшенную длительность
             ActiveLaser.SetLifeTime(CurrentDuration);
-
             _isLaserActive = true;
         }
 

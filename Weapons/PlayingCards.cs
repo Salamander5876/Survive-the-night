@@ -11,7 +11,7 @@ namespace Survive_the_night.Weapons
         public int NumCards { get; private set; } = 1;
         public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
-        public float ProjectileSpeed { get; private set; } = 250f;
+        public float ProjectileSpeed { get; private set; } = 300f; // УВЕЛИЧЕНО с 250 до 300
 
         private float _baseCooldown = 1.5f;
         public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.1f);
@@ -29,7 +29,7 @@ namespace Survive_the_night.Weapons
 
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 1)
+        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
         {
         }
 
@@ -45,7 +45,7 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 10) return;
-            Damage += 1;
+            Damage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
             DamageLevel++;
         }
 
@@ -111,8 +111,8 @@ namespace Survive_the_night.Weapons
                             Player.Position + offset,
                             0, // размер определится автоматически из текстуры
                             Color.White,
-                            this.Damage,
-                            this.ProjectileSpeed,
+                            this.Damage, // Теперь урон 2 (базовый)
+                            this.ProjectileSpeed, // Теперь скорость 300
                             target.Position,
                             3,
                             WeaponManager.GetRandomWeaponTexture(WeaponName.PlayingCards)

@@ -11,15 +11,16 @@ namespace Survive_the_night.Weapons
     public class GoldenSword : Weapon
     {
         public int NumSwords { get; private set; } = 1;
-        public float ProjectileSpeed { get; private set; } = 400f;
+        public float ProjectileSpeed { get; private set; } = 500f; // ФИКСИРОВАННАЯ скорость
         public List<GoldenSwordProjectile> ActiveProjectiles { get; private set; } = new List<GoldenSwordProjectile>();
+        public int MaxTargets { get; private set; } = 10; // НОВОЕ: максимальное количество целей
 
         private float _baseCooldown = 2.0f;
         public float CurrentCooldown => _baseCooldown;
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
-        public int SpeedLevel { get; private set; } = 0;
+        public int TargetsLevel { get; private set; } = 0; // НОВОЕ: уровень количества целей
 
         public bool HasActiveSwords => ActiveProjectiles.Count > 0;
 
@@ -39,15 +40,15 @@ namespace Survive_the_night.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 5) return;
-            Damage += 2;
+            Damage += 3; // УВЕЛИЧЕНО с +2 до +3 за уровень
             DamageLevel++;
         }
 
-        public void UpgradeSpeed()
+        public void UpgradeTargets() // НОВЫЙ МЕТОД: улучшение количества целей
         {
-            if (SpeedLevel >= 5) return;
-            ProjectileSpeed += 20f;
-            SpeedLevel++;
+            if (TargetsLevel >= 5) return;
+            MaxTargets += 5; // +5 целей за уровень
+            TargetsLevel++;
         }
 
         public override void Update(GameTime gameTime)
@@ -82,14 +83,15 @@ namespace Survive_the_night.Weapons
                 {
                     var sword = new GoldenSwordProjectile(
                         Player.Position,
-                        0, // размер определится автоматически из текстуры
+                        0,
                         Color.Gold,
                         Damage,
                         ProjectileSpeed,
                         target,
                         enemies,
                         Player,
-                        WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenSword)
+                        WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenSword),
+                        MaxTargets // ПЕРЕДАЕМ максимальное количество целей
                     );
 
                     ActiveProjectiles.Add(sword);
