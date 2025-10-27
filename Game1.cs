@@ -28,7 +28,10 @@ namespace Survive_the_night
         LevelUp,
         GameOver,
         Roulette,
-        BonusShop
+        BonusShop,
+        Paused,
+        Loading,
+        ExitGame
     }
 
     public class Game1 : Game
@@ -99,8 +102,14 @@ namespace Survive_the_night
         // Стартовое оружие
         private WeaponName _selectedStartingWeapon = WeaponName.PlayingCards;
 
-        // Для обработки ввода
         private KeyboardState _previousKeyboardState;
+        private MouseState _previousMouseState;
+
+        // Меню паузы
+        private PauseMenu _pauseMenu;
+
+        // Экран загрузки
+        private LoadingScreen _loadingScreen;
 
         public Game1()
         {
@@ -305,12 +314,29 @@ namespace Survive_the_night
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
 
+
+            // Загрузка текстур для кнопок HUD
+            var pauseButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonPause");
+            var shopButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonShop");
+
+            System.Diagnostics.Debug.WriteLine($"Загружены текстуры кнопок: Пауза={pauseButtonTexture != null} ({pauseButtonTexture?.Width}x{pauseButtonTexture?.Height}), Магазин={shopButtonTexture != null} ({shopButtonTexture?.Width}x{shopButtonTexture?.Height})");
+
+            // Передаем текстуры в HUD
+            _gameHUD.LoadButtonTextures(pauseButtonTexture, shopButtonTexture);
+            
+
             // Инициализация рулетки
             _rouletteManager = new RouletteManager(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _rouletteMenu = new RouletteMenu(_rouletteManager, GraphicsDevice, _debugTexture, _font);
 
             // Инициализация магазина бонусов (после загрузки текстур)
             _bonusShopInterface = new BonusShopInterface(_bonusShop, GraphicsDevice, _debugTexture, _font);
+
+            // Инициализация меню паузы
+            _pauseMenu = new PauseMenu(GraphicsDevice, _debugTexture, _font);
+
+            // Инициализация экрана загрузки
+            _loadingScreen = new LoadingScreen(GraphicsDevice, _debugTexture, _font);
         }
 
         // Метод для инициализации выбранного оружия
@@ -324,41 +350,118 @@ namespace Survive_the_night
         protected override void Update(GameTime gameTime)
         {
             KeyboardState currentKs = Keyboard.GetState();
+            MouseState currentMs = Mouse.GetState(); // Добавляем получение состояния мыши
 
-            if (currentKs.IsKeyDown(Keys.Escape))
-                Exit();
+            // Обработка ESC - новое поведение
+            if (currentKs.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
+            {
+                if (_currentGameState == GameState.Playing)
+                {
+                    // В игре - открываем меню паузы
+                    _pauseMenu.Show();
+                    Game1.CurrentState = GameState.Paused;
+                }
+                else if (_currentGameState == GameState.Paused)
+                {
+                    // В паузе - закрываем меню паузы
+                    _pauseMenu.Hide();
+                    Game1.CurrentState = GameState.Playing;
+                }
+                else if (_currentGameState == GameState.BonusShop)
+                {
+                    // В магазине - закрываем магазин
+                    _bonusShop.Hide();
+                    Game1.CurrentState = GameState.Playing;
+                }
+                else if (_currentGameState == GameState.MainMenu)
+                {
+                    // В главном меню - выходим из игры
+                    Exit();
+                }
+            }
 
-            // Тестирование магазина бонусов - клавиша B
+            // Обработка клавиши B для открытия магазина из состояния Playing
             if (currentKs.IsKeyDown(Keys.B) && !_previousKeyboardState.IsKeyDown(Keys.B) &&
                 _currentGameState == GameState.Playing)
             {
                 _bonusShop.Show();
                 Game1.CurrentState = GameState.BonusShop;
+                System.Diagnostics.Debug.WriteLine("Магазин открыт по клавише B");
+            }
+
+            // Обработка кликов по кнопкам HUD
+            if (currentMs.LeftButton == ButtonState.Pressed &&
+                _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                Point mousePos = currentMs.Position;
+
+                if (_gameHUD.IsPauseButtonClicked(mousePos) && _currentGameState == GameState.Playing)
+                {
+                    // Открываем меню паузы по кнопке
+                    _pauseMenu.Show();
+                    Game1.CurrentState = GameState.Paused;
+                    System.Diagnostics.Debug.WriteLine("Меню паузы открыто по кнопке");
+                }
+                else if (_gameHUD.IsShopButtonClicked(mousePos) && _currentGameState == GameState.Playing)
+                {
+                    // Открываем магазин бонусов
+                    _bonusShop.Show();
+                    Game1.CurrentState = GameState.BonusShop;
+                    System.Diagnostics.Debug.WriteLine("Магазин бонусов открыт");
+                }
             }
 
             // Обновляем приватное состояние из статического для работы switch'а
             _currentGameState = Game1.CurrentState;
 
+            // Управление музыкой в зависимости от состояния
+            UpdateMusicForState();
+
             switch (_currentGameState)
             {
                 case GameState.MainMenu:
                     Game1.CurrentState = _mainMenu.Update(gameTime);
+                    var menuState = _mainMenu.Update(gameTime);
+                    if (menuState == GameState.StartMenu)
+                    {
+                        Game1.CurrentState = GameState.StartMenu;
+                    }
+                    else if (menuState == GameState.ExitGame)
+                    {
+                        Exit(); // Выход из игры
+                    }
                     break;
 
                 case GameState.StartMenu:
                     var newState = _startMenu.Update(gameTime);
-                    if (newState == GameState.Playing)
+                    if (newState == GameState.Loading) // Меняем проверку
                     {
-                        // Сохраняем выбранное оружие и инициализируем игрока
+                        // Сохраняем выбранное оружие
                         _selectedStartingWeapon = _startMenu.SelectedWeapon;
+                    }
+                    Game1.CurrentState = newState;
+                    break;
+
+                case GameState.Loading:
+                    bool startGame = _loadingScreen.Update(gameTime);
+
+                    if (startGame)
+                    {
+                        // Останавливаем музыку меню перед началом игры
+                        _musicManager.StopMusicForGameStart();
+
+                        // Инициализируем игрока с выбранным оружием
                         InitializePlayerWeapon();
 
                         // Сбрасываем менеджеры при начале новой игры
                         _levelManager.Reset();
-                        _itemManager.Clear(); // Очищаем предметы при новой игре
+                        _itemManager.Clear();
                         _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
+
+                        Game1.CurrentState = GameState.Playing;
+                        _loadingScreen.Reset();
+                        System.Diagnostics.Debug.WriteLine("Игра начата по нажатию кнопки");
                     }
-                    Game1.CurrentState = newState;
                     break;
 
                 case GameState.Playing:
@@ -396,6 +499,27 @@ namespace Survive_the_night
 
                     // Обновление взрывов динамита
                     DynamiteExplosion.UpdateAll(gameTime, _enemies);
+
+                    // Обработка кликов по кнопкам HUD
+                    MouseState mouseState = Mouse.GetState();
+                    if (mouseState.LeftButton == ButtonState.Pressed &&
+                        _previousMouseState.LeftButton == ButtonState.Released)
+                    {
+                        Point mousePos = mouseState.Position;
+
+                        if (_gameHUD.IsPauseButtonClicked(mousePos))
+                        {
+                            // TODO: Реализовать функционал паузы
+                            System.Diagnostics.Debug.WriteLine("Кнопка паузы нажата");
+                        }
+                        else if (_gameHUD.IsShopButtonClicked(mousePos))
+                        {
+                            // Открываем магазин бонусов
+                            _bonusShop.Show();
+                            Game1.CurrentState = GameState.BonusShop;
+                            System.Diagnostics.Debug.WriteLine("Магазин бонусов открыт");
+                        }
+                    }
 
                     for (int i = _enemies.Count - 1; i >= 0; i--)
                     {
@@ -524,6 +648,33 @@ namespace Survive_the_night
                     }
                     break; // ДОБАВЬТЕ break В КОНЦЕ case
 
+                case GameState.Paused:
+                    _pauseMenu.Update();
+
+                    // Проверяем, не изменилось ли состояние игры через меню паузы
+                    if (Game1.CurrentState == GameState.MainMenu)
+                    {
+                        // Сбрасываем игру
+                        _enemies.Clear();
+                        _weapons.Clear();
+                        _levelManager.Reset();
+                        _itemManager.Clear();
+                        _survivalTime = 0f;
+                        _killCount = 0;
+
+                        // Запускаем музыку меню
+                        _musicManager.PlayMenuMusic();
+
+                        _pauseMenu.Hide();
+                        System.Diagnostics.Debug.WriteLine("Возврат в главное меню, музыка меню запущена");
+                    }
+                    else if (!_pauseMenu.IsVisible)
+                    {
+                        // Если меню паузы скрылось, возвращаемся в игру
+                        Game1.CurrentState = GameState.Playing;
+                    }
+                    break;
+
                 case GameState.LevelUp:
                     if (_levelUpMenu.CurrentOptions.Count == 0) { _levelUpMenu.GenerateOptions(); }
                     _levelUpMenu.Update(gameTime);
@@ -552,10 +703,13 @@ namespace Survive_the_night
 
                 case GameState.BonusShop:
                     _bonusShop.Update(gameTime);
-                    _bonusShopInterface.UpdateInput(); // Добавляем обработку ввода
+                    _bonusShopInterface.UpdateInput();
+
+                    // Если магазин скрылся, возвращаемся в игру
                     if (!_bonusShop.IsVisible)
                     {
                         Game1.CurrentState = GameState.Playing;
+                        System.Diagnostics.Debug.WriteLine("Возврат в игру после закрытия магазина");
                     }
                     break;
 
@@ -564,7 +718,9 @@ namespace Survive_the_night
                     break;
             }
 
+            // В конце метода Update обновляем предыдущее состояние
             _previousKeyboardState = currentKs;
+            _previousMouseState = currentMs; // Добавляем это
             base.Update(gameTime);
         }
 
@@ -609,6 +765,12 @@ namespace Survive_the_night
                     _spriteBatch.End();
                     break;
 
+                case GameState.Loading:
+                    _spriteBatch.Begin();
+                    _loadingScreen.Draw(_spriteBatch);
+                    _spriteBatch.End();
+                    break;
+
                 case GameState.Playing:
                 case GameState.LevelUp:
                 case GameState.GameOver:
@@ -645,6 +807,53 @@ namespace Survive_the_night
                     {
                         DrawLevelUpPendingScreen(_spriteBatch);
                         _bonusShopInterface.Draw(_spriteBatch);
+                    }
+
+                    if (_currentGameState == GameState.GameOver)
+                    {
+                        DrawGameOverScreen(_spriteBatch);
+                    }
+
+                    _spriteBatch.End();
+                    break;
+                case GameState.Paused:  // Добавляем Paused
+                                        // Отрисовка игрового мира (с камерой)
+                    _spriteBatch.Begin(transformMatrix: _camera.Transform);
+                    DrawWorldObjects();
+                    _spriteBatch.End();
+
+                    // Отрисовка HUD и UI (без камеры)
+                    _spriteBatch.Begin();
+
+                    // Используем новый HUD для отрисовки интерфейса
+                    if (_currentGameState == GameState.Playing)
+                    {
+                        _gameHUD.Draw(_spriteBatch);
+                        _gameHUD.DrawStageAnnouncement(_spriteBatch);
+                    }
+
+                    if (_currentGameState == GameState.LevelUp)
+                    {
+                        DrawLevelUpPendingScreen(_spriteBatch);
+                        _levelUpMenuRenderer.Draw(_spriteBatch);
+                    }
+
+                    if (_currentGameState == GameState.Roulette)
+                    {
+                        DrawLevelUpPendingScreen(_spriteBatch);
+                        _rouletteMenu.Draw(_spriteBatch);
+                    }
+
+                    if (_currentGameState == GameState.BonusShop)
+                    {
+                        DrawLevelUpPendingScreen(_spriteBatch);
+                        _bonusShopInterface.Draw(_spriteBatch);
+                    }
+
+                    if (_currentGameState == GameState.Paused)
+                    {
+                        DrawLevelUpPendingScreen(_spriteBatch); // Затемняем фон
+                        _pauseMenu.Draw(_spriteBatch);
                     }
 
                     if (_currentGameState == GameState.GameOver)
@@ -899,6 +1108,35 @@ namespace Survive_the_night
         {
             _musicManager?.Dispose();
             base.UnloadContent();
+        }
+
+        private void UpdateMusicForState()
+        {
+            switch (_currentGameState)
+            {
+                case GameState.MainMenu:
+                case GameState.StartMenu:
+                case GameState.Loading:
+                    // В этих состояниях играет музыка главного меню
+                    _musicManager.PlayMenuMusic();
+                    break;
+
+                case GameState.Playing:
+                    // Музыка уровня уже управляется через PlayLevelMusic в состоянии Playing
+                    break;
+
+                case GameState.Paused:
+                case GameState.BonusShop:
+                case GameState.LevelUp:
+                case GameState.Roulette:
+                    // В этих состояниях музыка продолжает играть (если это музыка уровня)
+                    break;
+
+                case GameState.GameOver:
+                    // В GameOver можно остановить музыку или переключить на другую
+                    _musicManager.StopMusic();
+                    break;
+            }
         }
     }
 }

@@ -8,8 +8,10 @@ namespace Survive_the_night.Managers
     public class MusicsManager
     {
         private Dictionary<int, Song> _levelSongs;
+        private Song _mainMenuMusic; // Добавляем музыку для меню
         private int _currentLevel = 1;
         private bool _isMusicEnabled = true;
+        private GameState _currentMusicState = GameState.MainMenu; // Отслеживаем состояние для музыки
 
         public MusicsManager()
         {
@@ -20,6 +22,9 @@ namespace Survive_the_night.Managers
         {
             try
             {
+                // Загружаем музыку для главного меню
+                _mainMenuMusic = content.Load<Song>("Musics/MainMusic");
+
                 // Загружаем музыку для всех 8 уровней
                 for (int i = 1; i <= 8; i++)
                 {
@@ -29,12 +34,42 @@ namespace Survive_the_night.Managers
 
                 // Настраиваем медиаплеер
                 MediaPlayer.IsRepeating = true;
-                MediaPlayer.Volume = 0.5f; // 50% громкость
+                MediaPlayer.Volume = 0.75f; // 75% громкость
+
+                // Сразу запускаем музыку меню
+                PlayMenuMusic();
             }
             catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Ошибка загрузки музыки: {ex.Message}");
                 // Продолжаем без музыки, если есть ошибки
+            }
+        }
+
+        // Новый метод для воспроизведения музыки меню
+        public void PlayMenuMusic()
+        {
+            if (!_isMusicEnabled) return;
+
+            try
+            {
+                if (_mainMenuMusic != null && MediaPlayer.State != MediaState.Playing)
+                {
+                    MediaPlayer.Play(_mainMenuMusic);
+                    _currentMusicState = GameState.MainMenu;
+                    System.Diagnostics.Debug.WriteLine("🎵 Воспроизведение музыки главного меню");
+                }
+                else if (_mainMenuMusic != null && _currentMusicState != GameState.MainMenu)
+                {
+                    MediaPlayer.Stop();
+                    MediaPlayer.Play(_mainMenuMusic);
+                    _currentMusicState = GameState.MainMenu;
+                    System.Diagnostics.Debug.WriteLine("🎵 Переключение на музыку главного меню");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка воспроизведения музыки меню: {ex.Message}");
             }
         }
 
@@ -67,6 +102,20 @@ namespace Survive_the_night.Managers
             }
         }
 
+        // Новый метод для остановки музыки при завершении загрузки
+        public void StopMusicForGameStart()
+        {
+            try
+            {
+                if (MediaPlayer.State == MediaState.Playing)
+                {
+                    MediaPlayer.Stop();
+                    _currentMusicState = GameState.Playing; // Устанавливаем состояние игры
+                    System.Diagnostics.Debug.WriteLine("🎵 Музыка остановлена для начала игры");
+                }
+            }
+            catch { }
+        }
         public void StopMusic()
         {
             try
@@ -74,6 +123,7 @@ namespace Survive_the_night.Managers
                 if (MediaPlayer.State == MediaState.Playing)
                 {
                     MediaPlayer.Stop();
+                    _currentMusicState = GameState.MainMenu;
                 }
             }
             catch { }
@@ -109,6 +159,11 @@ namespace Survive_the_night.Managers
             if (!enabled)
             {
                 StopMusic();
+            }
+            else if (enabled && MediaPlayer.State != MediaState.Playing)
+            {
+                // Если музыка включена и не играет, запускаем музыку меню
+                PlayMenuMusic();
             }
         }
 

@@ -22,6 +22,36 @@
 
 
 
+
+
+#begin Sprites\GUI\ButtonPause.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites\GUI\ButtonPause.png
+
+#begin Sprites\GUI\ButtonShop.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites\GUI\ButtonShop.png
+
+
+
+
+
 #begin Sprites\GUI\CellWeapon.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -878,3 +908,8 @@
 /importer:Mp3Importer
 /processor:SongProcessor
 /build:Musics/HardLevel8.mp3
+
+#begin Musics/MainMusic.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Musics/MainMusic.mp3

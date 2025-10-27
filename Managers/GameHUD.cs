@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
 using Survive_the_night.Interfaces;
 using System;
@@ -24,6 +25,13 @@ namespace Survive_the_night.Managers
         private const float STAGE_ANNOUNCEMENT_DURATION = 3f;
         private Color _stageAnnouncementColor = Color.Transparent;
 
+        // Кнопки
+        private Texture2D _pauseButtonTexture;
+        private Texture2D _shopButtonTexture;
+        private Rectangle _pauseButtonRect;
+        private Rectangle _shopButtonRect;
+        private const int BUTTON_MARGIN = 10; // Отступ между кнопками
+
         public GameHUD(Player player, LevelManager levelManager, SpriteFont font, Texture2D debugTexture, Viewport viewport)
         {
             _player = player;
@@ -31,6 +39,47 @@ namespace Survive_the_night.Managers
             _font = font;
             _debugTexture = debugTexture;
             _viewport = viewport;
+        }
+
+        // Метод для загрузки текстур кнопок
+        public void LoadButtonTextures(Texture2D pauseButton, Texture2D shopButton)
+        {
+            _pauseButtonTexture = pauseButton;
+            _shopButtonTexture = shopButton;
+
+            // Расчет позиций кнопок в левом нижнем углу над полоской опыта
+            int buttonY = _viewport.Height - 85; // Над полоской опыта (полоска на 720-10=710, кнопки выше)
+            int startX = 10; // Отступ слева
+
+            // Используем реальные размеры спрайтов
+            if (_pauseButtonTexture != null)
+            {
+                _pauseButtonRect = new Rectangle(startX, buttonY, _pauseButtonTexture.Width, _pauseButtonTexture.Height);
+            }
+            else
+            {
+                _pauseButtonRect = new Rectangle(startX, buttonY, 50, 50); // Запасной размер
+            }
+
+            if (_shopButtonTexture != null)
+            {
+                _shopButtonRect = new Rectangle(
+                    _pauseButtonRect.Right + BUTTON_MARGIN,
+                    buttonY,
+                    _shopButtonTexture.Width,
+                    _shopButtonTexture.Height
+                );
+            }
+            else
+            {
+                _shopButtonRect = new Rectangle(
+                    _pauseButtonRect.Right + BUTTON_MARGIN,
+                    buttonY,
+                    50, 50
+                ); // Запасной размер
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Кнопки инициализированы: Пауза={_pauseButtonRect}, Магазин={_shopButtonRect}");
         }
 
         public void UpdateGameStats(float survivalTime, int killCount)
@@ -49,6 +98,7 @@ namespace Survive_the_night.Managers
             DrawHealthBar(spriteBatch);
             DrawExperienceBar(spriteBatch);
             DrawTopHUD(spriteBatch);
+            DrawButtons(spriteBatch); // Добавляем отрисовку кнопок
         }
 
         public void DrawStageAnnouncement(SpriteBatch spriteBatch)
@@ -210,6 +260,68 @@ namespace Survive_the_night.Managers
             );
 
             spriteBatch.DrawString(_font, healthText, textPosition, Color.White);
+        }
+
+        private void DrawButtons(SpriteBatch spriteBatch)
+        {
+            MouseState mouseState = Mouse.GetState();
+            Point mousePos = mouseState.Position;
+
+            // Проверяем наведение на кнопки
+            bool isPauseHovered = _pauseButtonRect.Contains(mousePos);
+            bool isShopHovered = _shopButtonRect.Contains(mousePos);
+
+            Color pauseColor = isPauseHovered ? Color.LightBlue : Color.White;
+            Color shopColor = isShopHovered ? Color.LightGreen : Color.White;
+
+            // Отрисовка кнопки паузы
+            if (_pauseButtonTexture != null)
+            {
+                spriteBatch.Draw(_pauseButtonTexture, _pauseButtonRect, pauseColor);
+            }
+            else
+            {
+                // Запасной вариант если текстура не загружена
+                spriteBatch.Draw(_debugTexture, _pauseButtonRect, Color.Blue * (isPauseHovered ? 0.8f : 0.6f));
+                string pauseText = "II";
+                Vector2 textSize = _font.MeasureString(pauseText);
+                Vector2 textPos = new Vector2(
+                    _pauseButtonRect.Center.X - textSize.X / 2,
+                    _pauseButtonRect.Center.Y - textSize.Y / 2
+                );
+                spriteBatch.DrawString(_font, pauseText, textPos, Color.White);
+            }
+
+            // Отрисовка кнопки магазина
+            if (_shopButtonTexture != null)
+            {
+                spriteBatch.Draw(_shopButtonTexture, _shopButtonRect, shopColor);
+            }
+            else
+            {
+                // Запасной вариант если текстура не загружена
+                spriteBatch.Draw(_debugTexture, _shopButtonRect, Color.Green * (isShopHovered ? 0.8f : 0.6f));
+                string shopText = "$";
+                Vector2 textSize = _font.MeasureString(shopText);
+                Vector2 textPos = new Vector2(
+                    _shopButtonRect.Center.X - textSize.X / 2,
+                    _shopButtonRect.Center.Y - textSize.Y / 2
+                );
+                spriteBatch.DrawString(_font, shopText, textPos, Color.White);
+            }
+
+            // Подсказку убрали - добавим позже в другое место
+        }
+
+        // Методы для проверки нажатий на кнопки (будут использоваться позже)
+        public bool IsPauseButtonClicked(Point mousePosition)
+        {
+            return _pauseButtonRect.Contains(mousePosition);
+        }
+
+        public bool IsShopButtonClicked(Point mousePosition)
+        {
+            return _shopButtonRect.Contains(mousePosition);
         }
     }
 }

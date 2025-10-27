@@ -193,7 +193,7 @@ namespace Survive_the_night.Interfaces
             // Кнопка выхода
             Color exitButtonColor = _isExitButtonHovered ? Color.LightGray : Color.White;
             spriteBatch.Draw(_debugTexture, _exitButtonRect, exitButtonColor);
-            string exitButtonText = "Выйти (ESC/B)";
+            string exitButtonText = "Выйти (ESC)";
             Vector2 exitTextSize = _font.MeasureString(exitButtonText);
             Vector2 exitTextPos = new Vector2(
                 _exitButtonRect.Center.X - exitTextSize.X / 2,

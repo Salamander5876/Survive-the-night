@@ -16,6 +16,9 @@ namespace Survive_the_night.Interfaces
         private const int ButtonWidth = 300;
         private const int ButtonHeight = 80;
 
+        // Новая кнопка выхода
+        private Rectangle _exitButtonRect;
+
         public MainMenuRenderer(GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
             _graphicsDevice = graphicsDevice;
@@ -32,6 +35,14 @@ namespace Survive_the_night.Interfaces
                 ButtonWidth,
                 ButtonHeight
             );
+
+            // Кнопка выхода (под кнопкой старта)
+            _exitButtonRect = new Rectangle(
+                centerX - ButtonWidth / 2,
+                centerY + ButtonHeight + 20, // Под кнопкой старта с отступом
+                ButtonWidth,
+                ButtonHeight
+            );
         }
 
         /// <summary>
@@ -43,17 +54,28 @@ namespace Survive_the_night.Interfaces
 
             if (_startButtonRect.Contains(currentMouseState.Position))
             {
-                // Нажатие кнопки
                 if (currentMouseState.LeftButton == ButtonState.Released &&
                     _previousMouseState.LeftButton == ButtonState.Pressed)
                 {
-                    // Возвращаем новое состояние
                     return GameState.StartMenu;
                 }
             }
 
+            // Обработка кнопки выхода
+            if (_exitButtonRect.Contains(currentMouseState.Position))
+            {
+                if (currentMouseState.LeftButton == ButtonState.Released &&
+                    _previousMouseState.LeftButton == ButtonState.Pressed)
+                {
+                    // Выход из игры
+                    // Нужно получить доступ к Game1 для выхода
+                    // Пока просто возвращаем состояние, обработку выхода добавим в Game1
+                    return GameState.ExitGame;
+                }
+            }
+
             _previousMouseState = currentMouseState;
-            return GameState.MainMenu; // Остаемся в меню
+            return GameState.MainMenu;
         }
 
         /// <summary>
@@ -96,6 +118,25 @@ namespace Survive_the_night.Interfaces
                 _startButtonRect.Y + (_startButtonRect.Height - textSize.Y) / 2
             );
             spriteBatch.DrawString(_font, buttonText, textPos, Color.White);
+
+            // Отрисовка кнопки выхода
+            Color exitButtonColor = _exitButtonRect.Contains(Mouse.GetState().Position) ?
+            Color.Red : Color.Red * 0.7f;
+
+            spriteBatch.Draw(_debugTexture, _exitButtonRect, exitButtonColor);
+
+            // Рамка кнопки выхода
+            spriteBatch.Draw(_debugTexture, new Rectangle(_exitButtonRect.X, _exitButtonRect.Y, ButtonWidth, 2), Color.White);
+            spriteBatch.Draw(_debugTexture, new Rectangle(_exitButtonRect.X, _exitButtonRect.Y + ButtonHeight - 2, ButtonWidth, 2), Color.White);
+
+            // Текст на кнопке выхода
+            string exitButtonText = "ВЫЙТИ";
+            Vector2 exitTextSize = _font.MeasureString(exitButtonText);
+            Vector2 exitTextPos = new Vector2(
+                _exitButtonRect.X + (_exitButtonRect.Width - exitTextSize.X) / 2,
+                _exitButtonRect.Y + (_exitButtonRect.Height - exitTextSize.Y) / 2
+            );
+            spriteBatch.DrawString(_font, exitButtonText, exitTextPos, Color.White);
         }
     }
 }

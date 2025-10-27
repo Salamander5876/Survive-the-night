@@ -291,11 +291,11 @@ namespace Survive_the_night.Managers
 
             KeyboardState currentKs = Keyboard.GetState();
 
-            // Выход по ESC или B
-            if ((currentKs.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape)) ||
-                (currentKs.IsKeyDown(Keys.B) && !_previousKeyboardState.IsKeyDown(Keys.B)))
+            // Выход ТОЛЬКО по ESC (убираем B)
+            if (currentKs.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
             {
                 Hide();
+                System.Diagnostics.Debug.WriteLine("Магазин бонусов закрыт по ESC");
             }
 
             _previousKeyboardState = currentKs;

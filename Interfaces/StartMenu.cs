@@ -410,7 +410,7 @@ namespace Survive_the_night.Interfaces
                 // Кнопка Старт
                 if (_startButtonRect.Contains(_currentMouseState.Position))
                 {
-                    return GameState.Playing;
+                    return GameState.Loading; // Меняем на Loading вместо Playing
                 }
 
                 // Кнопка Назад
