@@ -229,7 +229,7 @@ namespace Survive_the_night.Interfaces
             );
         }
 
-        // Метод для получения прямоугольника отрисовки спрайта оружия с сохранением пропорций
+        // Метод для получения прямоугольника отрисовки спрайта оружия в оригинальном размере
         private Rectangle GetWeaponSpriteRectangle()
         {
             if (!_weaponSprites.ContainsKey(_availableWeapons[_selectedWeaponIndex]))
@@ -237,15 +237,11 @@ namespace Survive_the_night.Interfaces
 
             Texture2D weaponTexture = _weaponSprites[_availableWeapons[_selectedWeaponIndex]];
 
-            // Вычисляем размеры с сохранением пропорций
-            float scale = Math.Min(
-                (float)(WeaponCellSize - 20) / weaponTexture.Width,
-                (float)(WeaponCellSize - 20) / weaponTexture.Height
-            );
+            // Используем оригинальные размеры текстуры
+            int width = weaponTexture.Width;
+            int height = weaponTexture.Height;
 
-            int width = (int)(weaponTexture.Width * scale);
-            int height = (int)(weaponTexture.Height * scale);
-
+            // Центрируем спрайт в ячейке
             return new Rectangle(
                 _weaponCellRect.Center.X - width / 2,
                 _weaponCellRect.Center.Y - height / 2,
