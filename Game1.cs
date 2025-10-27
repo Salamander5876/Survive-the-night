@@ -299,6 +299,9 @@ namespace Survive_the_night
             _startMenu = new StartMenu(GraphicsDevice, _debugTexture, _font);
             _startMenu.LoadContent(weaponCellTexture, upButtonTexture, downButtonTexture);
 
+            // ЗАГРУЗКА СПРАЙТОВ ОРУЖИЙ ДЛЯ СТАРТОВОГО МЕНЮ
+            _startMenu.LoadWeaponSprites(Content);
+
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
 

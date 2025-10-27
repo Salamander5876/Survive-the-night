@@ -18,6 +18,9 @@ namespace Survive_the_night.Interfaces
         private Texture2D _upButtonTexture;
         private Texture2D _downButtonTexture;
 
+        // Текстуры спрайтов оружий для отображения в ячейке
+        private Dictionary<WeaponName, Texture2D> _weaponSprites;
+
         // Состояние ввода
         private MouseState _previousMouseState;
         private MouseState _currentMouseState;
@@ -33,7 +36,6 @@ namespace Survive_the_night.Interfaces
         private Rectangle _scrollThumbRect;
 
         // Данные меню
-        private string _playerName = "Игрок";
         private List<WeaponName> _availableWeapons;
         private int _selectedWeaponIndex = 0;
         private float _scrollPosition = 0f;
@@ -43,15 +45,14 @@ namespace Survive_the_night.Interfaces
         // Константы
         private const int ButtonWidth = 200;
         private const int ButtonHeight = 50;
-        private const int WeaponCellSize = 120;
+        private const int WeaponCellSize = 150; // Увеличил размер для лучшего отображения спрайтов
         private const int ArrowButtonSize = 40;
         private const int DescriptionWidth = 400;
-        private const int DescriptionHeight = 300; // Увеличил высоту
+        private const int DescriptionHeight = 300;
         private const int ScrollBarWidth = 15;
         private const int ScrollThumbMinHeight = 30;
 
         public WeaponName SelectedWeapon => _availableWeapons[_selectedWeaponIndex];
-        public string PlayerName => _playerName;
 
         // Описания оружий с использованием \n для переносов
         private Dictionary<WeaponName, string> _weaponDescriptions = new Dictionary<WeaponName, string>
@@ -98,7 +99,6 @@ namespace Survive_the_night.Interfaces
                 "Перезарядка: 20 сек (после уничтожения всех костей)\n" +
                 "Меняют направление вращения после каждого перезапуска."
             },
-
             {
                 WeaponName.RouletteBall,
                 "РУЛЕТКА\n\n" +
@@ -118,6 +118,7 @@ namespace Survive_the_night.Interfaces
             _font = font;
             _previousMouseState = Mouse.GetState();
             _currentMouseState = Mouse.GetState();
+            _weaponSprites = new Dictionary<WeaponName, Texture2D>();
 
             // Инициализация списка оружия
             _availableWeapons = new List<WeaponName>
@@ -128,7 +129,6 @@ namespace Survive_the_night.Interfaces
                 WeaponName.StickyBomb,
                 WeaponName.Dice,
                 WeaponName.RouletteBall,
-
                 WeaponName.BigLaser,
                 WeaponName.MolotovCocktail,
                 WeaponName.GoldenSword
@@ -142,6 +142,24 @@ namespace Survive_the_night.Interfaces
             _weaponCellTexture = weaponCell;
             _upButtonTexture = upButton;
             _downButtonTexture = downButton;
+        }
+
+        // Новый метод для загрузки спрайтов оружий
+        public void LoadWeaponSprites(Microsoft.Xna.Framework.Content.ContentManager content)
+        {
+            try
+            {
+                _weaponSprites[WeaponName.PlayingCards] = content.Load<Texture2D>("Sprites/GUI/WeaponPlayingCards");
+                _weaponSprites[WeaponName.GoldenBullet] = content.Load<Texture2D>("Sprites/GUI/WeaponGoldenBullet");
+                _weaponSprites[WeaponName.CasinoChips] = content.Load<Texture2D>("Sprites/GUI/WeaponCasinoChips");
+                _weaponSprites[WeaponName.StickyBomb] = content.Load<Texture2D>("Sprites/GUI/WeaponStickyBomb");
+                _weaponSprites[WeaponName.Dice] = content.Load<Texture2D>("Sprites/GUI/WeaponDice");
+                _weaponSprites[WeaponName.RouletteBall] = content.Load<Texture2D>("Sprites/GUI/WeaponRoulette");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки спрайтов оружий: {ex.Message}");
+            }
         }
 
         private void CalculateLayout()
@@ -176,10 +194,10 @@ namespace Survive_the_night.Interfaces
                 ArrowButtonSize
             );
 
-            // Область описания (правая часть) - увеличил высоту
+            // Область описания (правая часть)
             _descriptionRect = new Rectangle(
                 screenWidth - DescriptionWidth - 50,
-                180, // Поднял немного выше
+                180,
                 DescriptionWidth,
                 DescriptionHeight
             );
@@ -208,6 +226,31 @@ namespace Survive_the_night.Interfaces
                 screenHeight - ButtonHeight - 30,
                 ButtonWidth,
                 ButtonHeight
+            );
+        }
+
+        // Метод для получения прямоугольника отрисовки спрайта оружия с сохранением пропорций
+        private Rectangle GetWeaponSpriteRectangle()
+        {
+            if (!_weaponSprites.ContainsKey(_availableWeapons[_selectedWeaponIndex]))
+                return _weaponCellRect;
+
+            Texture2D weaponTexture = _weaponSprites[_availableWeapons[_selectedWeaponIndex]];
+
+            // Вычисляем размеры с сохранением пропорций
+            float scale = Math.Min(
+                (float)(WeaponCellSize - 20) / weaponTexture.Width,
+                (float)(WeaponCellSize - 20) / weaponTexture.Height
+            );
+
+            int width = (int)(weaponTexture.Width * scale);
+            int height = (int)(weaponTexture.Height * scale);
+
+            return new Rectangle(
+                _weaponCellRect.Center.X - width / 2,
+                _weaponCellRect.Center.Y - height / 2,
+                width,
+                height
             );
         }
 
@@ -252,6 +295,9 @@ namespace Survive_the_night.Interfaces
 
         private float MeasureTextHeight(string text, float maxWidth)
         {
+            if (string.IsNullOrEmpty(text))
+                return 0f;
+
             string[] lines = text.Split('\n');
             float lineHeight = _font.MeasureString("A").Y;
             float totalHeight = 0f;
@@ -264,36 +310,38 @@ namespace Survive_the_night.Interfaces
                     continue;
                 }
 
-                Vector2 size = _font.MeasureString(line);
+                // Разбиваем строку на слова
+                string[] words = line.Split(' ');
+                string currentLine = "";
 
-                // Если строка слишком длинная, разбиваем ее
-                if (size.X > maxWidth)
+                foreach (string word in words)
                 {
-                    string[] words = line.Split(' ');
-                    string currentLine = "";
+                    string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
+                    Vector2 testSize = _font.MeasureString(testLine);
 
-                    foreach (string word in words)
+                    // Если строка становится слишком длинной, переносим
+                    if (testSize.X > maxWidth)
                     {
-                        string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
-                        Vector2 testSize = _font.MeasureString(testLine);
-
-                        if (testSize.X > maxWidth && currentLine != "")
+                        if (currentLine == "")
                         {
-                            totalHeight += lineHeight;
-                            currentLine = word;
+                            // Если даже одно слово не помещается, разбиваем его по символам
+                            currentLine = ProcessLongWord(word, maxWidth, ref totalHeight, lineHeight);
                         }
                         else
                         {
-                            currentLine = testLine;
+                            // Добавляем высоту для текущей строки и начинаем новую
+                            totalHeight += lineHeight;
+                            currentLine = word;
                         }
                     }
-
-                    if (!string.IsNullOrEmpty(currentLine))
+                    else
                     {
-                        totalHeight += lineHeight;
+                        currentLine = testLine;
                     }
                 }
-                else
+
+                // Добавляем высоту для последней строки в абзаце
+                if (!string.IsNullOrEmpty(currentLine))
                 {
                     totalHeight += lineHeight;
                 }
@@ -390,11 +438,6 @@ namespace Survive_the_night.Interfaces
             Vector2 titlePos = new Vector2((screenWidth - titleSize.X) / 2, 80);
             spriteBatch.DrawString(_font, title, titlePos, Color.White);
 
-            // Имя игрока
-            string nameText = $"Имя: {_playerName}";
-            Vector2 namePos = new Vector2((screenWidth - _font.MeasureString(nameText).X) / 2, 120);
-            spriteBatch.DrawString(_font, nameText, namePos, Color.LightGray);
-
             // Название выбранного оружия (над областью описания)
             string weaponName = WeaponManager.GetDisplayName(_availableWeapons[_selectedWeaponIndex]);
             Vector2 weaponNameSize = _font.MeasureString(weaponName);
@@ -422,6 +465,14 @@ namespace Survive_the_night.Interfaces
                 spriteBatch.Draw(_weaponCellTexture, _weaponCellRect, Color.White);
             else
                 spriteBatch.Draw(_debugTexture, _weaponCellRect, Color.DarkGray);
+
+            // Отрисовка спрайта выбранного оружия
+            if (_weaponSprites.ContainsKey(_availableWeapons[_selectedWeaponIndex]))
+            {
+                Texture2D weaponSprite = _weaponSprites[_availableWeapons[_selectedWeaponIndex]];
+                Rectangle spriteRect = GetWeaponSpriteRectangle();
+                spriteBatch.Draw(weaponSprite, spriteRect, Color.White);
+            }
 
             // Кнопки выбора
             if (_upButtonTexture != null)
@@ -456,12 +507,12 @@ namespace Survive_the_night.Interfaces
                 ? _weaponDescriptions[currentWeapon]
                 : "Описание отсутствует.";
 
-            // Область для текста (исключая полосу прокрутки)
+            // Увеличиваем отступы для лучшего вида
             Rectangle textArea = new Rectangle(
-                _descriptionRect.X + 10,
-                _descriptionRect.Y + 10,
-                _descriptionRect.Width - ScrollBarWidth - 20,
-                _descriptionRect.Height - 20
+                _descriptionRect.X + 15,  // Увеличил отступ слева
+                _descriptionRect.Y + 15,  // Увеличил отступ сверху
+                _descriptionRect.Width - ScrollBarWidth - 25, // Увеличил отступ справа
+                _descriptionRect.Height - 30  // Увеличил отступ снизу
             );
 
             DrawTextWithNewlines(spriteBatch, description, textArea, _scrollPosition);
@@ -469,79 +520,82 @@ namespace Survive_the_night.Interfaces
 
         private void DrawTextWithNewlines(SpriteBatch spriteBatch, string text, Rectangle textArea, float scrollOffset)
         {
-            string[] lines = text.Split('\n');
+            if (string.IsNullOrEmpty(text))
+                return;
+
+            string[] paragraphs = text.Split('\n');
             float lineHeight = _font.MeasureString("A").Y;
             Vector2 currentPos = new Vector2(textArea.X, textArea.Y - scrollOffset);
 
-            foreach (string line in lines)
+            // Границы области отрисовки
+            float minY = textArea.Y;
+            float maxY = textArea.Y + textArea.Height;
+
+            foreach (string paragraph in paragraphs)
             {
-                if (string.IsNullOrEmpty(line))
+                if (string.IsNullOrEmpty(paragraph))
                 {
-                    currentPos.Y += lineHeight * 0.5f; // Пустая строка - отступ
+                    currentPos.Y += lineHeight * 0.5f;
                     continue;
                 }
 
-                Vector2 size = _font.MeasureString(line);
+                // Разбиваем параграф на строки
+                string[] words = paragraph.Split(' ');
+                string currentLine = "";
 
-                // Если строка слишком длинная, разбиваем ее
-                if (size.X > textArea.Width)
+                foreach (string word in words)
                 {
-                    string[] words = line.Split(' ');
-                    string currentLine = "";
+                    string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
+                    Vector2 testSize = _font.MeasureString(testLine);
 
-                    foreach (string word in words)
+                    if (testSize.X > textArea.Width)
                     {
-                        string testLine = currentLine + (currentLine == "" ? "" : " ") + word;
-                        Vector2 testSize = _font.MeasureString(testLine);
-
-                        if (testSize.X > textArea.Width && currentLine != "")
+                        if (currentLine == "")
                         {
-                            // Рисуем текущую линию если видима
-                            if (currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
+                            // Очень длинное слово - разбиваем по символам
+                            currentLine = DrawLongWord(spriteBatch, word, textArea, ref currentPos, lineHeight, minY, maxY);
+                            if (currentPos.Y > maxY) return;
+                        }
+                        else
+                        {
+                            // Рисуем текущую строку если она видима
+                            if (currentPos.Y >= minY && currentPos.Y + lineHeight <= maxY)
                             {
                                 spriteBatch.DrawString(_font, currentLine, new Vector2(textArea.X, currentPos.Y), Color.White);
                             }
                             currentPos.Y += lineHeight;
+                            if (currentPos.Y > maxY) return;
                             currentLine = word;
                         }
-                        else
-                        {
-                            currentLine = testLine;
-                        }
                     }
+                    else
+                    {
+                        currentLine = testLine;
+                    }
+                }
 
-                    // Рисуем последнюю часть строки если видима
-                    if (!string.IsNullOrEmpty(currentLine) && currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
+                // Рисуем последнюю строку параграфа если она видима
+                if (!string.IsNullOrEmpty(currentLine))
+                {
+                    if (currentPos.Y >= minY && currentPos.Y + lineHeight <= maxY)
                     {
                         spriteBatch.DrawString(_font, currentLine, new Vector2(textArea.X, currentPos.Y), Color.White);
                     }
                     currentPos.Y += lineHeight;
-                }
-                else
-                {
-                    // Рисуем строку если видима
-                    if (currentPos.Y + lineHeight >= textArea.Y && currentPos.Y <= textArea.Y + textArea.Height)
-                    {
-                        spriteBatch.DrawString(_font, line, new Vector2(textArea.X, currentPos.Y), Color.White);
-                    }
-                    currentPos.Y += lineHeight;
+                    if (currentPos.Y > maxY) return;
                 }
 
-                // Прерываем если текст ушел за нижнюю границу
-                if (currentPos.Y > textArea.Y + textArea.Height + lineHeight)
-                    break;
+                // Добавляем отступ между параграфами
+                currentPos.Y += lineHeight * 0.3f;
+                if (currentPos.Y > maxY) return;
             }
         }
 
         private void DrawRectangle(SpriteBatch spriteBatch, Rectangle rect, Color color)
         {
-            // Верхняя линия
             spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, rect.Width, 2), color);
-            // Нижняя линия
             spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y + rect.Height - 2, rect.Width, 2), color);
-            // Левая линия
             spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, 2, rect.Height), color);
-            // Правая линия
             spriteBatch.Draw(_debugTexture, new Rectangle(rect.X + rect.Width - 2, rect.Y, 2, rect.Height), color);
         }
 
@@ -559,6 +613,85 @@ namespace Survive_the_night.Interfaces
                 rect.Y + (rect.Height - textSize.Y) / 2
             );
             spriteBatch.DrawString(_font, text, textPos, Color.White);
+        }
+
+        // Обработка очень длинных слов, которые не помещаются в строку
+        private string ProcessLongWord(string word, float maxWidth, ref float totalHeight, float lineHeight)
+        {
+            string remainingWord = word;
+
+            while (remainingWord.Length > 0)
+            {
+                string testPart = "";
+                int charsToTake = 0;
+
+                // Находим максимальное количество символов, которые помещаются
+                for (int i = 1; i <= remainingWord.Length; i++)
+                {
+                    testPart = remainingWord.Substring(0, i);
+                    if (_font.MeasureString(testPart).X > maxWidth)
+                    {
+                        break;
+                    }
+                    charsToTake = i;
+                }
+
+                if (charsToTake == 0)
+                {
+                    // Если даже один символ не помещается, берем минимум 1 символ
+                    charsToTake = 1;
+                }
+
+                string linePart = remainingWord.Substring(0, charsToTake);
+                totalHeight += lineHeight;
+                remainingWord = remainingWord.Substring(charsToTake);
+            }
+
+            return remainingWord; // Возвращаем оставшуюся часть (обычно пустую)
+        }
+
+        // Отрисовка очень длинных слов посимвольно
+        // Отрисовка очень длинных слов посимвольно с проверкой границ
+        private string DrawLongWord(SpriteBatch spriteBatch, string word, Rectangle textArea, ref Vector2 currentPos, float lineHeight, float minY, float maxY)
+        {
+            string remainingWord = word;
+
+            while (remainingWord.Length > 0)
+            {
+                string testPart = "";
+                int charsToTake = 0;
+
+                // Находим максимальное количество символов, которые помещаются
+                for (int i = 1; i <= remainingWord.Length; i++)
+                {
+                    testPart = remainingWord.Substring(0, i);
+                    if (_font.MeasureString(testPart).X > textArea.Width)
+                    {
+                        break;
+                    }
+                    charsToTake = i;
+                }
+
+                if (charsToTake == 0)
+                {
+                    charsToTake = 1;
+                }
+
+                string linePart = remainingWord.Substring(0, charsToTake);
+
+                // Рисуем часть слова только если она видима
+                if (currentPos.Y >= minY && currentPos.Y + lineHeight <= maxY)
+                {
+                    spriteBatch.DrawString(_font, linePart, new Vector2(textArea.X, currentPos.Y), Color.White);
+                }
+
+                currentPos.Y += lineHeight;
+                if (currentPos.Y > maxY) return "";
+
+                remainingWord = remainingWord.Substring(charsToTake);
+            }
+
+            return "";
         }
     }
 }
