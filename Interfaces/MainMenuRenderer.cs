@@ -68,7 +68,7 @@ namespace Survive_the_night.Interfaces
             spriteBatch.Draw(_debugTexture, new Rectangle(0, 0, screenWidth, screenHeight), Color.DarkSlateGray);
 
             // Отрисовка заголовка
-            string title = "SURVIVE THE NIGHT";
+            string title = "CASINO SURVIVORS";
             Vector2 titleSize = _font.MeasureString(title);
             Vector2 titlePos = new Vector2(
                 (screenWidth - 100) / 3,

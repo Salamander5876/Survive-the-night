@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
+using Survive_the_night.Managers;
 using Survive_the_night.Projectiles;
 using System.Collections.Generic;
 
@@ -24,7 +25,8 @@ namespace Survive_the_night.Weapons
         MolotovCocktail,
         BigLaser,
         StickyBomb,
-        Dice
+        Dice,
+        RouletteBall
     }
 
     public abstract class Weapon
@@ -94,7 +96,8 @@ namespace Survive_the_night.Weapons
             WeaponName.CasinoChips,
             WeaponName.GoldenBullet,
             WeaponName.StickyBomb,
-            WeaponName.Dice
+            WeaponName.Dice,
+            WeaponName.RouletteBall
         };
 
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
@@ -166,9 +169,18 @@ namespace Survive_the_night.Weapons
                     return new StickyBomb(player);
                 case WeaponName.Dice:
                     return new DiceWeapon(player);
+                case WeaponName.RouletteBall:
+                    return new RouletteBall(player);
                 default:
                     return new PlayingCards(player);
             }
+        }
+
+        // Временный метод - нужно будет заменить на получение реального GameBoundaries
+        private static GameBoundaries CreateTemporaryGameBoundaries()
+        {
+            // Это временное решение - в реальной игре нужно получить GameBoundaries из Game1
+            return null;
         }
 
         // Получение отображаемого имени оружия
@@ -184,6 +196,7 @@ namespace Survive_the_night.Weapons
                 case WeaponName.BigLaser: return "Большой лазер";
                 case WeaponName.StickyBomb: return "Липкая бомба";
                 case WeaponName.Dice: return "Игральные кости";
+                case WeaponName.RouletteBall: return "Рулетка";
                 default: return "Неизвестное оружие";
             }
         }

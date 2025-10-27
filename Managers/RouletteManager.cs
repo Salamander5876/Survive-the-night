@@ -57,7 +57,9 @@ namespace Survive_the_night.Managers
             bool hasAllRegularWeapons = _weapons.Any(w => w is PlayingCards) &&
                                       _weapons.Any(w => w is CasinoChips) &&
                                       _weapons.Any(w => w is GoldenBullet) &&
-                                      _weapons.Any(w => w is StickyBomb);
+                                      _weapons.Any(w => w is StickyBomb) &&
+                                      _weapons.Any(w => w is DiceWeapon) &&
+                                      _weapons.Any(w => w is RouletteBall);
 
             // Если все обычные оружия получены, показываем только легендарные
             if (hasAllRegularWeapons)
@@ -140,6 +142,28 @@ namespace Survive_the_night.Managers
                     });
                 }
 
+                // ДОБАВЬТЕ РУЛЕТКУ В СПИСОК ОБЫЧНЫХ ОРУЖИЙ
+                if (!_weapons.Any(w => w is RouletteBall))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Рулетка",
+                        Description = "Шарик рулетки летит случайно и отскакивает от стен (10 отскоков).\n" +
+                                     "Оставляет след из частичек с уроном 1, которые уничтожаются при столкновении.",
+                        ApplyUpgrade = () => _weapons.Add(new RouletteBall(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is DiceWeapon))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Игральные кости",
+                        Description = "Добавляет новое оружие: магические кости, вращающиеся вокруг игрока.",
+                        ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
+                    });
+                }
+
                 // Легендарные оружия (10% шанс появления каждого)
                 if (!_weapons.Any(w => w is GoldenSword) && _random.NextDouble() < 0.1)
                 {
@@ -168,16 +192,6 @@ namespace Survive_the_night.Managers
                         Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
                         Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
                         ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is DiceWeapon))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Игральные кости",
-                        Description = "Добавляет новое оружие: магические кости, вращающиеся вокруг игрока.",
-                        ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
                     });
                 }
 

@@ -274,6 +274,21 @@ namespace Survive_the_night
             DiceProjectile.SetTextures(diceTexture1, diceTexture2, diceTexture3, diceTexture4, diceTexture5, diceTexture6);
             DiceProjectile.SetHitSound(diceSound);
 
+            // Рулетка
+            var rouletteBallTexture = Content.Load<Texture2D>("Sprites/Projectiles/RouletteBall");
+            var rouletteSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXRouletteDamage");
+
+            // Загружаем все текстуры частичек
+            for (int i = 1; i <= 15; i++)
+            {
+                var particleTexture = Content.Load<Texture2D>($"Sprites/Projectiles/Roulette{i}");
+                RouletteParticle.AddParticleTexture(particleTexture);
+            }
+
+            WeaponManager.LoadWeaponTextures(WeaponName.RouletteBall, rouletteBallTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.RouletteBall, rouletteSound);
+            RouletteBallProjectile.SetDefaultTexture(rouletteBallTexture);
+
             // Загрузка текстур для StartMenu
             var weaponCellTexture = Content.Load<Texture2D>("Sprites/GUI/CellWeapon");
             var upButtonTexture = Content.Load<Texture2D>("Sprites/GUI/UpButton");
@@ -358,14 +373,14 @@ namespace Survive_the_night
                     {
                         Game1.CurrentState = GameState.GameOver;
                         _musicManager.StopMusic();
-                        return;
+                        break;
                     }
 
                     // Обычный LevelUp
                     if (_player.IsLevelUpPending)
                     {
                         Game1.CurrentState = GameState.LevelUp;
-                        return;
+                        break;
                     }
 
                     // Игровая логика
@@ -482,8 +497,29 @@ namespace Survive_the_night
                     {
                         weapon.Update(gameTime);
                         weapon.Attack(gameTime, _enemies);
+
+                        // Особый случай для RouletteBall - обновляем границы шариков
+                        if (weapon is RouletteBall rouletteBall)
+                        {
+                            // Создаем актуальные границы экрана
+                            Rectangle screenBounds = new Rectangle(
+                                (int)_camera.Position.X,
+                                (int)_camera.Position.Y,
+                                GraphicsDevice.Viewport.Width,
+                                GraphicsDevice.Viewport.Height
+                            );
+
+                            // Обновляем границы для ВСЕХ активных шариков
+                            foreach (var ball in rouletteBall.ActiveBalls) // ИСПОЛЬЗУЕМ ActiveBalls вместо ActiveBall
+                            {
+                                if (ball.IsActive)
+                                {
+                                    ball.ScreenBounds = screenBounds;
+                                }
+                            }
+                        }
                     }
-                    break;
+                    break; // ДОБАВЬТЕ break В КОНЦЕ case
 
                 case GameState.LevelUp:
                     if (_levelUpMenu.CurrentOptions.Count == 0) { _levelUpMenu.GenerateOptions(); }
@@ -748,7 +784,49 @@ namespace Survive_the_night
                         }
                     }
                 }
+
+                // Отрисовка рулетки
+                if (weapon is RouletteBall roulette)
+                {
+                    // Отрисовываем частички ПОД шариками
+                    foreach (var particle in roulette.ActiveParticles)
+                    {
+                        if (particle.IsActive)
+                        {
+                            particle.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+
+                    // Отрисовываем ВСЕ шарики (ActiveBalls вместо ActiveBall)
+                    foreach (var ball in roulette.ActiveBalls)
+                    {
+                        if (ball.IsActive)
+                        {
+                            ball.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+
+                    // ОТЛАДКА: рисуем границы отскока (только если есть активные шарики)
+                    if (roulette.ActiveBalls.Count > 0)
+                    {
+                        // Используем актуальные границы из первого шарика
+                        Rectangle bounds = roulette.ActiveBalls[0].ScreenBounds;
+                        DrawDebugRectangle(_spriteBatch, bounds, Color.Red * 0.2f);
+                    }
+                }
             }
+        }
+
+        private void DrawDebugRectangle(SpriteBatch spriteBatch, Rectangle rect, Color color)
+        {
+            // Верхняя линия
+            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, rect.Width, 2), color);
+            // Нижняя линия
+            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y + rect.Height - 2, rect.Width, 2), color);
+            // Левая линия
+            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, 2, rect.Height), color);
+            // Правая линия
+            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X + rect.Width - 2, rect.Y, 2, rect.Height), color);
         }
 
         private void DrawGameOverScreen(SpriteBatch spriteBatch)
@@ -800,6 +878,17 @@ namespace Survive_the_night
                 (int)(position.Y - Size),
                 Size * 2,
                 Size * 2
+            );
+        }
+
+        // ДОБАВЬТЕ: фиксированные границы экрана для отскоков
+        public static Rectangle GetScreenBounds(Camera camera, Viewport viewport)
+        {
+            return new Rectangle(
+                (int)camera.Position.X,
+                (int)camera.Position.Y,
+                viewport.Width,
+                viewport.Height
             );
         }
 
