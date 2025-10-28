@@ -5,6 +5,7 @@ using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
 using System.Collections.Generic;
 using System.Linq;
+using Survive_the_night.Entities.Enemies.Elite;
 
 namespace Survive_the_night.Weapons
 {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Survive_the_night.Managers
 {
@@ -23,14 +24,38 @@ namespace Survive_the_night.Managers
             }
         }
 
+        // В LevelManager.cs добавьте отладочный вывод
         public void EliteKilled()
         {
             _elitesKilled++;
+
+            Debug.WriteLine($"Элитный враг убит! Всего: {_elitesKilled}");
 
             // Каждые 2 убитых элитных врага повышаем уровень (максимум 8)
             if (_elitesKilled % 2 == 0 && _currentLevel < 8)
             {
                 _currentLevel++;
+                Debug.WriteLine($"Уровень повышен до {_currentLevel}!");
+            }
+            else
+            {
+                Debug.WriteLine($"Текущий уровень: {_currentLevel}, элитных убито: {_elitesKilled}");
+            }
+        }
+
+        private string GetEnemyTypeForStage(int stage)
+        {
+            switch (stage)
+            {
+                case 1: return "BasicEnemy";
+                case 2: return "TankEnemy";
+                case 3: return "FastEnemy";
+                case 4: return "StrongEnemy";
+                case 5: return "VampireEnemy";
+                case 6: return "RangedEnemy";
+                case 7: return "UndyingEnemy";
+                case 8: return "UndyingEnemy";
+                default: return "BasicEnemy";
             }
         }
 

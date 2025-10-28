@@ -14,6 +14,8 @@ using Survive_the_night.Projectiles;
 using Survive_the_night.Managers;
 using Survive_the_night.Interfaces;
 using Survive_the_night.Items;
+using Survive_the_night.Entities.Enemies.Regular;
+using Survive_the_night.Entities.Enemies.Elite;
 
 namespace Survive_the_night
 {
@@ -31,7 +33,8 @@ namespace Survive_the_night
         BonusShop,
         Paused,
         Loading,
-        ExitGame
+        ExitGame,
+        Victory
     }
 
     public class Game1 : Game
@@ -111,8 +114,21 @@ namespace Survive_the_night
         // Экран загрузки
         private LoadingScreen _loadingScreen;
 
+        // Экран Game Over
+        private GameOverScreen _gameOverScreen;
+
+        // Экран победы
+        private VictoryScreen _victoryScreen;
+
+        // Статическое свойство для доступа из GameOverScreen
+        public static Game1 Instance { get; private set; }
+
+        // Свойство для доступа к времени выживания
+        public float SurvivalTime => _survivalTime;
+
         public Game1()
         {
+            Instance = this;
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
@@ -124,6 +140,14 @@ namespace Survive_the_night
 
         protected override void Initialize()
         {
+            // Сначала создаем debugTexture
+            _debugTexture = new Texture2D(GraphicsDevice, 1, 1);
+            _debugTexture.SetData(new[] { Color.White });
+
+            // Загружаем шрифт (нужно создать временный SpriteBatch)
+            var tempSpriteBatch = new SpriteBatch(GraphicsDevice);
+            // Шрифт будет загружен в LoadContent, но для инициализации можно использовать временный
+
             // Синхронизация локального и статического состояния
             _currentGameState = GameState.MainMenu;
             Game1.CurrentState = GameState.MainMenu;
@@ -136,22 +160,24 @@ namespace Survive_the_night
             _player = new Player(initialPlayerPosition);
             _camera = new Camera(_player, GraphicsDevice.Viewport);
 
-            // Спавн менеджер с границами
-            _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport);
-
-            // Инициализация менеджеров
+            // СНАЧАЛА инициализируем менеджеры
             _musicManager = new MusicsManager();
             _levelManager = new LevelManager();
+
+            // ПОТОМ создаем SpawnManager и передаем LevelManager
+            _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager);
 
             // Новая система предметов
             _itemManager = new ItemManager(_player);
 
-            // Магазин бонусов (теперь передаем ItemManager)
+            // Магазин бонусов
             _bonusShop = new BonusShopMenu(_player, _itemManager);
-            _bonusShopInterface = new BonusShopInterface(_bonusShop, GraphicsDevice, _debugTexture, _font);
 
             // Оружие будет инициализировано после выбора в StartMenu
             CurrentEnemies = _enemies;
+
+            // GameOverScreen и VictoryScreen будут инициализированы в LoadContent
+            // где будут доступны необходимые ресурсы
 
             base.Initialize();
         }
@@ -337,6 +363,12 @@ namespace Survive_the_night
 
             // Инициализация экрана загрузки
             _loadingScreen = new LoadingScreen(GraphicsDevice, _debugTexture, _font);
+
+            // Инициализация экранов Game Over и Victory (если не были инициализированы в Initialize)
+            if (_gameOverScreen == null)
+                _gameOverScreen = new GameOverScreen(GraphicsDevice, _debugTexture, _font);
+            if (_victoryScreen == null)
+                _victoryScreen = new VictoryScreen(GraphicsDevice, _debugTexture, _font);
         }
 
         // Метод для инициализации выбранного оружия
@@ -471,13 +503,27 @@ namespace Survive_the_night
                     _gameHUD.UpdateGameStats(_survivalTime, _killCount);
                     _gameHUD.Update(gameTime);
 
+                    // ОТЛАДКА: проверяем состояние игрока
+                    System.Diagnostics.Debug.WriteLine($"Состояние игрока: Alive={_player.IsAlive}, Health={_player.CurrentHealth}");
+
                     // Воспроизводим музыку текущего уровня
                     _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
+
+                    if (currentKs.IsKeyDown(Keys.F8) && !_previousKeyboardState.IsKeyDown(Keys.F8))
+                    {
+                        // Принудительная победа для тестирования
+                        Game1.CurrentState = GameState.Victory;
+                        _victoryScreen.Show();
+                        System.Diagnostics.Debug.WriteLine("🎉 Тестовый переход к победе по F8");
+                        break;
+                    }
 
                     // Проверки состояния
                     if (!_player.IsAlive)
                     {
+                        System.Diagnostics.Debug.WriteLine("Переход в состояние GameOver!");
                         Game1.CurrentState = GameState.GameOver;
+                        _gameOverScreen.Show();
                         _musicManager.StopMusic();
                         break;
                     }
@@ -541,6 +587,16 @@ namespace Survive_the_night
                                 if (_levelManager.CurrentLevel != oldLevel)
                                 {
                                     UpdateFloorTexture();
+                                    _gameHUD.ShowStageAnnouncement(_levelManager.CurrentLevel);
+                                }
+
+                                // Проверка победы (8 этап + 2 элитных врага убито)
+                                if (_levelManager.CurrentLevel == 8 && _levelManager.ElitesKilled >= 2)
+                                {
+                                    Game1.CurrentState = GameState.Victory;
+                                    _victoryScreen.Show();
+                                    System.Diagnostics.Debug.WriteLine("УСЛОВИЕ ПОБЕДЫ ВЫПОЛНЕНО! Активируем экран победы.");
+                                    break;
                                 }
 
                                 // Элитные враги дропают 5 монет
@@ -651,6 +707,8 @@ namespace Survive_the_night
                 case GameState.Paused:
                     _pauseMenu.Update();
 
+                    _musicManager.PauseMusic();
+
                     // Проверяем, не изменилось ли состояние игры через меню паузы
                     if (Game1.CurrentState == GameState.MainMenu)
                     {
@@ -715,6 +773,41 @@ namespace Survive_the_night
 
                 case GameState.GameOver:
                     _musicManager.StopMusic();
+                    _gameOverScreen.Update();
+
+                    // Если экран скрылся (после нажатия кнопки), сбрасываем игру
+                    if (!_gameOverScreen.IsVisible)
+                    {
+                        // Сбрасываем игру при выходе из Game Over
+                        _enemies.Clear();
+                        _weapons.Clear();
+                        _levelManager.Reset();
+                        _itemManager.Clear();
+                        _survivalTime = 0f;
+                        _killCount = 0;
+
+                        // Состояние уже изменено кнопками в GameOverScreen
+                        System.Diagnostics.Debug.WriteLine("Игра сброшена после Game Over");
+                    }
+                    break;
+                case GameState.Victory:
+                    _musicManager.StopMusic();
+                    _victoryScreen.Update();
+
+                    // Если экран скрылся (после нажатия кнопки), сбрасываем игру
+                    if (!_victoryScreen.IsVisible)
+                    {
+                        // Сбрасываем игру при выходе из Victory
+                        _enemies.Clear();
+                        _weapons.Clear();
+                        _levelManager.Reset();
+                        _itemManager.Clear();
+                        _survivalTime = 0f;
+                        _killCount = 0;
+
+                        // Состояние уже изменено кнопками в VictoryScreen
+                        System.Diagnostics.Debug.WriteLine("Игра сброшена после победы");
+                    }
                     break;
             }
 
@@ -773,51 +866,10 @@ namespace Survive_the_night
 
                 case GameState.Playing:
                 case GameState.LevelUp:
-                case GameState.GameOver:
                 case GameState.Roulette:
                 case GameState.BonusShop:
+                case GameState.Paused:
                     // Отрисовка игрового мира (с камерой)
-                    _spriteBatch.Begin(transformMatrix: _camera.Transform);
-                    DrawWorldObjects();
-                    _spriteBatch.End();
-
-                    // Отрисовка HUD и UI (без камеры)
-                    _spriteBatch.Begin();
-
-                    // Используем новый HUD для отрисовки интерфейса
-                    if (_currentGameState == GameState.Playing)
-                    {
-                        _gameHUD.Draw(_spriteBatch);
-                        _gameHUD.DrawStageAnnouncement(_spriteBatch);
-                    }
-
-                    if (_currentGameState == GameState.LevelUp)
-                    {
-                        DrawLevelUpPendingScreen(_spriteBatch);
-                        _levelUpMenuRenderer.Draw(_spriteBatch);
-                    }
-
-                    if (_currentGameState == GameState.Roulette)
-                    {
-                        DrawLevelUpPendingScreen(_spriteBatch);
-                        _rouletteMenu.Draw(_spriteBatch);
-                    }
-
-                    if (_currentGameState == GameState.BonusShop)
-                    {
-                        DrawLevelUpPendingScreen(_spriteBatch);
-                        _bonusShopInterface.Draw(_spriteBatch);
-                    }
-
-                    if (_currentGameState == GameState.GameOver)
-                    {
-                        DrawGameOverScreen(_spriteBatch);
-                    }
-
-                    _spriteBatch.End();
-                    break;
-                case GameState.Paused:  // Добавляем Paused
-                                        // Отрисовка игрового мира (с камерой)
                     _spriteBatch.Begin(transformMatrix: _camera.Transform);
                     DrawWorldObjects();
                     _spriteBatch.End();
@@ -852,15 +904,24 @@ namespace Survive_the_night
 
                     if (_currentGameState == GameState.Paused)
                     {
-                        DrawLevelUpPendingScreen(_spriteBatch); // Затемняем фон
+                        DrawLevelUpPendingScreen(_spriteBatch);
                         _pauseMenu.Draw(_spriteBatch);
                     }
 
-                    if (_currentGameState == GameState.GameOver)
-                    {
-                        DrawGameOverScreen(_spriteBatch);
-                    }
+                    _spriteBatch.End();
+                    break;
 
+                case GameState.GameOver:
+                    // Отрисовываем только экран Game Over
+                    _spriteBatch.Begin();
+                    _gameOverScreen.Draw(_spriteBatch);
+                    _spriteBatch.End();
+                    break;
+
+                case GameState.Victory:
+                    // Отрисовываем только экран Victory
+                    _spriteBatch.Begin();
+                    _victoryScreen.Draw(_spriteBatch);
                     _spriteBatch.End();
                     break;
             }

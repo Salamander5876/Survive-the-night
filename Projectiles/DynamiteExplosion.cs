@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Audio;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Survive_the_night.Entities;
+using Survive_the_night.Entities.Enemies.Elite;
 
 namespace Survive_the_night.Projectiles
 {

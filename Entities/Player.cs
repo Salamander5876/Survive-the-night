@@ -9,7 +9,7 @@ namespace Survive_the_night.Entities
         // === СВОЙСТВА ЗДОРОВЬЯ ===
         public int MaxHealth { get; set; } = 100;
         public int CurrentHealth { get; private set; }
-        public bool IsAlive => CurrentHealth > 0;
+        public bool IsAlive { get; set; } = true;
 
         // Прокачка: отдельные уровни для здоровья и бонуса хила сердец
         public int HealthLevel { get; private set; } = 0;
@@ -43,6 +43,8 @@ namespace Survive_the_night.Entities
         public override void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            IsAlive = true;
 
             // Обновляем таймер неуязвимости
             if (_invulnerabilityTimer > 0f)
@@ -86,7 +88,12 @@ namespace Survive_the_night.Entities
                 if (CurrentHealth <= 0)
                 {
                     CurrentHealth = 0;
-                    System.Diagnostics.Debug.WriteLine("ИГРА ОКОНЧЕНА: Здоровье игрока исчерпано.");
+                    IsAlive = false; // ДОБАВЬТЕ ЭТУ СТРОЧКУ!
+                    System.Diagnostics.Debug.WriteLine("💀 ИГРОК УМЕР: Здоровье игрока исчерпано.");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚡ Игрок получил урон: {damage}. Осталось здоровья: {CurrentHealth}");
                 }
             }
         }

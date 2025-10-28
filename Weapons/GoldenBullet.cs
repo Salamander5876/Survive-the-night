@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
+using Survive_the_night.Entities.Enemies.Elite;
 
 namespace Survive_the_night.Weapons
 {
