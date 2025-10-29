@@ -16,30 +16,27 @@ namespace Survive_the_night.Managers
             _floorTexture = floorTexture;
             _camera = camera;
             _viewport = viewport;
-            _tileSize = floorTexture.Width; // Используем реальный размер текстуры
+            _tileSize = floorTexture.Width;
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            // Получаем позицию камеры через свойство Position
-            Vector2 cameraPosition = _camera.Position;
+            // Получаем позицию игрока (центр камеры)
+            Vector2 playerPosition = _camera.Position;
 
-            // Рассчитываем видимую область
-            float visibleLeft = cameraPosition.X;
-            float visibleTop = cameraPosition.Y;
-            float visibleRight = cameraPosition.X + _viewport.Width;
-            float visibleBottom = cameraPosition.Y + _viewport.Height;
+            // Рассчитываем область отрисовки относительно игрока
+            // Используем большой радиус для бесконечного пола
+            int tilesInViewX = (_viewport.Width / _tileSize) + 10; // +10 для запаса
+            int tilesInViewY = (_viewport.Height / _tileSize) + 10;
 
-            // Определяем начальные и конечные тайлы для отрисовки
-            int startTileX = (int)(visibleLeft / _tileSize) - 1;
-            int startTileY = (int)(visibleTop / _tileSize) - 1;
-            int endTileX = (int)(visibleRight / _tileSize) + 1;
-            int endTileY = (int)(visibleBottom / _tileSize) + 1;
+            // Центр отрисовки - позиция игрока
+            int centerTileX = (int)(playerPosition.X / _tileSize);
+            int centerTileY = (int)(playerPosition.Y / _tileSize);
 
-            // Отрисовываем только видимые тайлы
-            for (int x = startTileX; x <= endTileX; x++)
+            // Отрисовываем тайлы в большом радиусе вокруг игрока
+            for (int x = centerTileX - tilesInViewX; x <= centerTileX + tilesInViewX; x++)
             {
-                for (int y = startTileY; y <= endTileY; y++)
+                for (int y = centerTileY - tilesInViewY; y <= centerTileY + tilesInViewY; y++)
                 {
                     Vector2 tilePosition = new Vector2(
                         x * _tileSize,
@@ -53,7 +50,7 @@ namespace Survive_the_night.Managers
                         Color.White,
                         0f,
                         Vector2.Zero,
-                        1f, // Используем реальный масштаб текстуры
+                        1f,
                         SpriteEffects.None,
                         0f
                     );
@@ -61,17 +58,15 @@ namespace Survive_the_night.Managers
             }
         }
 
-        // Метод для обновления viewport (если изменился размер окна)
         public void UpdateViewport(Viewport viewport)
         {
             _viewport = viewport;
         }
 
-        // Метод для изменения текстуры
         public void ChangeFloorTexture(Texture2D newTexture)
         {
             _floorTexture = newTexture;
-            _tileSize = newTexture.Width; // Обновляем размер тайла
+            _tileSize = newTexture.Width;
         }
     }
 }

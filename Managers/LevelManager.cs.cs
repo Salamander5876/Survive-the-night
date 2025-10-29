@@ -73,6 +73,7 @@ namespace Survive_the_night.Managers
         {
             _currentLevel = 1;
             _elitesKilled = 0;
+            System.Diagnostics.Debug.WriteLine($"🔄 LevelManager сброшен: уровень={_currentLevel}, элитных убито={_elitesKilled}");
         }
     }
 }

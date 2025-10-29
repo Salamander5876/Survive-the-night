@@ -12,7 +12,7 @@ namespace Survive_the_night.Interfaces
 
         // Прогресс загрузки
         private float _loadingProgress = 0f;
-        private const float LOADING_DURATION = 10f; // 10 секунд
+        private const float LOADING_DURATION = 5f; // 5 секунд
         private float _loadingTimer = 0f;
 
         // Полоска загрузки

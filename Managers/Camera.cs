@@ -38,5 +38,15 @@ namespace Survive_the_night.Managers
                 _target.Position.Y + (_target.Size / 2) - _viewport.Height / 2
             );
         }
+
+        public Vector2 ScreenToWorld(Vector2 screenPosition)
+        {
+            return screenPosition + Position;
+        }
+
+        public Vector2 WorldToScreen(Vector2 worldPosition)
+        {
+            return worldPosition - Position;
+        }
     }
 }

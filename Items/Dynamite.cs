@@ -9,7 +9,7 @@ namespace Survive_the_night.Items
     public class Dynamite : Item
     {
         private const float AttractionSpeed = 400f;
-        private const float AttractionRadius = 80f;
+        private const float AttractionRadius = 50f;
         private static Texture2D _texture;
         private static SoundEffect _explosionSound;
 

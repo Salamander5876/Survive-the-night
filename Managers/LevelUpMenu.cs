@@ -232,100 +232,100 @@ namespace Survive_the_night.Managers
                             ApplyUpgrade = () => rb.UpgradeDamage()
                         });
                     }
-                    // В методе GenerateOptions() добавить после секции RouletteBall:
+                }
+                // В методе GenerateOptions() добавить после секции RouletteBall:
 
-                    // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
-                    else if (weapon is GoldenSword gs)
+                // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
+                else if (weapon is GoldenSword gs)
+                {
+                    if (gs.CountLevel < 5)
                     {
-                        if (gs.CountLevel < 5)
+                        pool.Add(new UpgradeOption
                         {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel + 1}/5)",
-                                Description = $"Текущее количество: {gs.NumSwords}",
-                                ApplyUpgrade = () => gs.UpgradeCount()
-                            });
-                        }
-                        if (gs.DamageLevel < 5)
-                        {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +3 (Ур. {gs.DamageLevel + 1}/5)",
-                                Description = $"Текущий урон: {gs.Damage}",
-                                ApplyUpgrade = () => gs.UpgradeDamage()
-                            });
-                        }
-                        // НОВОЕ: прокачка количества целей вместо скорости
-                        if (gs.TargetsLevel < 5)
-                        {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Целей +5 (Ур. {gs.TargetsLevel + 1}/5)",
-                                Description = $"Текущее количество целей: {gs.MaxTargets}",
-                                ApplyUpgrade = () => gs.UpgradeTargets()
-                            });
-                        }
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel + 1}/5)",
+                            Description = $"Текущее количество: {gs.NumSwords}",
+                            ApplyUpgrade = () => gs.UpgradeCount()
+                        });
                     }
-                    else if (weapon is MolotovCocktail mc)
+                    if (gs.DamageLevel < 5)
                     {
-                        if (mc.CountLevel < 5)
+                        pool.Add(new UpgradeOption
                         {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel + 1}/5)",
-                                Description = $"Текущее количество: {mc.NumBottles}",
-                                ApplyUpgrade = () => mc.UpgradeBottleCount()
-                            });
-                        }
-                        if (mc.DurationLevel < 5)
-                        {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel + 1}/5)",
-                                Description = $"Текущее время: {mc.BurnDuration:0} сек",
-                                ApplyUpgrade = () => mc.UpgradeBurnDuration()
-                            });
-                        }
-                        // ИЗМЕНЕНО: прокачка урона вместо скорости атаки
-                        if (mc.DamageLevel < 5)
-                        {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Урон огня +1 (Ур. {mc.DamageLevel + 1}/5)",
-                                Description = $"Текущий урон: {mc.Damage}",
-                                ApplyUpgrade = () => mc.UpgradeDamage()
-                            });
-                        }
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +3 (Ур. {gs.DamageLevel + 1}/5)",
+                            Description = $"Текущий урон: {gs.Damage}",
+                            ApplyUpgrade = () => gs.UpgradeDamage()
+                        });
                     }
-                    else if (weapon is BigLaser bl)
+                    // НОВОЕ: прокачка количества целей вместо скорости
+                    if (gs.TargetsLevel < 5)
                     {
-                        if (bl.DurationLevel < 5)
+                        pool.Add(new UpgradeOption
                         {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel + 1}/5)",
-                                Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
-                                ApplyUpgrade = () => bl.UpgradeDuration()
-                            });
-                        }
-                        if (bl.DamageLevel < 5)
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Целей +5 (Ур. {gs.TargetsLevel + 1}/5)",
+                            Description = $"Текущее количество целей: {gs.MaxTargets}",
+                            ApplyUpgrade = () => gs.UpgradeTargets()
+                        });
+                    }
+                }
+                else if (weapon is MolotovCocktail mc)
+                {
+                    if (mc.CountLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
                         {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel + 1}/5)",
-                                Description = $"Текущий урон: {bl.Damage}",
-                                ApplyUpgrade = () => bl.UpgradeDamage()
-                            });
-                        }
-                        if (bl.CooldownLevel < 5)
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel + 1}/5)",
+                            Description = $"Текущее количество: {mc.NumBottles}",
+                            ApplyUpgrade = () => mc.UpgradeBottleCount()
+                        });
+                    }
+                    if (mc.DurationLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
                         {
-                            pool.Add(new UpgradeOption
-                            {
-                                Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel + 1}/5)",
-                                Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
-                                ApplyUpgrade = () => bl.UpgradeCooldown()
-                            });
-                        }
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel + 1}/5)",
+                            Description = $"Текущее время: {mc.BurnDuration:0} сек",
+                            ApplyUpgrade = () => mc.UpgradeBurnDuration()
+                        });
+                    }
+                    // ИЗМЕНЕНО: прокачка урона вместо скорости атаки
+                    if (mc.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Урон огня +1 (Ур. {mc.DamageLevel + 1}/5)",
+                            Description = $"Текущий урон: {mc.Damage}",
+                            ApplyUpgrade = () => mc.UpgradeDamage()
+                        });
+                    }
+                }
+                else if (weapon is BigLaser bl)
+                {
+                    if (bl.DurationLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel + 1}/5)",
+                            Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
+                            ApplyUpgrade = () => bl.UpgradeDuration()
+                        });
+                    }
+                    if (bl.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel + 1}/5)",
+                            Description = $"Текущий урон: {bl.Damage}",
+                            ApplyUpgrade = () => bl.UpgradeDamage()
+                        });
+                    }
+                    if (bl.CooldownLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel + 1}/5)",
+                            Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
+                            ApplyUpgrade = () => bl.UpgradeCooldown()
+                        });
                     }
                 }
             }

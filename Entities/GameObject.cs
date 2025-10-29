@@ -1,6 +1,7 @@
 ﻿// Entities/GameObject.cs
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Survive_the_night.Entities
 {
@@ -10,10 +11,19 @@ namespace Survive_the_night.Entities
         public int Size { get; protected set; }
         public Color Color { get; protected set; }
 
+        // Конструктор с 3 параметрами (старый)
         public GameObject(Vector2 position, int size, Color color)
         {
             Position = position;
             Size = size;
+            Color = color;
+        }
+
+        // Конструктор с 4 параметрами (новый - для ширины и высоты)
+        public GameObject(Vector2 position, int width, int height, Color color)
+        {
+            Position = position;
+            Size = Math.Max(width, height); // Используем максимальный размер
             Color = color;
         }
 

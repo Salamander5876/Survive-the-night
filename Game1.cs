@@ -144,10 +144,6 @@ namespace Survive_the_night
             _debugTexture = new Texture2D(GraphicsDevice, 1, 1);
             _debugTexture.SetData(new[] { Color.White });
 
-            // Загружаем шрифт (нужно создать временный SpriteBatch)
-            var tempSpriteBatch = new SpriteBatch(GraphicsDevice);
-            // Шрифт будет загружен в LoadContent, но для инициализации можно использовать временный
-
             // Синхронизация локального и статического состояния
             _currentGameState = GameState.MainMenu;
             Game1.CurrentState = GameState.MainMenu;
@@ -167,17 +163,11 @@ namespace Survive_the_night
             // ПОТОМ создаем SpawnManager и передаем LevelManager
             _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager);
 
-            // Новая система предметов
             _itemManager = new ItemManager(_player);
-
-            // Магазин бонусов
             _bonusShop = new BonusShopMenu(_player, _itemManager);
 
             // Оружие будет инициализировано после выбора в StartMenu
             CurrentEnemies = _enemies;
-
-            // GameOverScreen и VictoryScreen будут инициализированы в LoadContent
-            // где будут доступны необходимые ресурсы
 
             base.Initialize();
         }
@@ -201,7 +191,7 @@ namespace Survive_the_night
             // Загрузка музыки
             _musicManager.LoadContent(Content);
 
-            // --- ЗАГРУЗКА ТЕКСТУР И ЗВУКОВ ДЛЯ ОРУЖИЙ ЧЕРЕЗ WEAPON MANAGER ---
+            // --- ЗАГРУЗКА ТЕКСТУР И ЗВУКОВ ДЛЯ ОРУЖИЙ ЧЕРЕПРЕДЕЛАННЫЙ WEAPON MANAGER ---
 
             // Игральные карты
             var cardTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Card1");
@@ -258,26 +248,20 @@ namespace Survive_the_night
             _heartTexture = Content.Load<Texture2D>("Sprites/Items/Heart");
             _goldenHeartTexture = Content.Load<Texture2D>("Sprites/Items/GoldenHeart");
             Texture2D coinTexture = Content.Load<Texture2D>("Sprites/Items/GoldMoney");
-            Texture2D experienceOrbTexture = Content.Load<Texture2D>("Sprites/Items/ExperienceOrb"); // Новая текстура
+            Texture2D experienceOrbTexture = Content.Load<Texture2D>("Sprites/Items/ExperienceOrb");
+            Texture2D dynamiteTexture = Content.Load<Texture2D>("Sprites/Items/Dynamite");
+            Texture2D magnetTexture = Content.Load<Texture2D>("Sprites/Items/Magnet");
 
-            // Установка текстур для рендереров предметов
-            HealthOrbRenderer.SetTexture(_heartTexture);
-            GoldenHealthOrbRenderer.SetTexture(_goldenHeartTexture);
-            _itemManager.SetCoinTexture(coinTexture);
-            _itemManager.SetExperienceOrbTexture(experienceOrbTexture); // Устанавливаем текстуру эссенции
+            // Устанавливаем ВСЕ текстуры для ItemManager через один метод
+            _itemManager.SetTextures(coinTexture, experienceOrbTexture, dynamiteTexture, magnetTexture, _heartTexture, _goldenHeartTexture);
+            _itemManager.SetDebugTexture(_debugTexture);
 
-            // Динамит
-            var dynamiteTexture = Content.Load<Texture2D>("Sprites/Items/Dynamite");
             var dynamiteExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/DynamiteExplosion");
             var dynamiteExplosionSound = Content.Load<SoundEffect>("Sounds/Items/SFXDynamiteExplosion");
-
-            _itemManager.SetDynamiteTexture(dynamiteTexture);
             Dynamite.SetExplosionSound(dynamiteExplosionSound);
             DynamiteExplosion.SetTexture(dynamiteExplosionTexture);
 
-            // Магнит
-            var magnetTexture = Content.Load<Texture2D>("Sprites/Items/Magnet");
-            _itemManager.SetMagnetTexture(magnetTexture);
+            System.Diagnostics.Debug.WriteLine($"Текстуры загружены: Heart={_heartTexture != null}, GoldenHeart={_goldenHeartTexture != null}, Coin={coinTexture != null}, ExperienceOrb={experienceOrbTexture != null}");
 
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
@@ -340,7 +324,6 @@ namespace Survive_the_night
             _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
             _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
 
-
             // Загрузка текстур для кнопок HUD
             var pauseButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonPause");
             var shopButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonShop");
@@ -349,7 +332,6 @@ namespace Survive_the_night
 
             // Передаем текстуры в HUD
             _gameHUD.LoadButtonTextures(pauseButtonTexture, shopButtonTexture);
-            
 
             // Инициализация рулетки
             _rouletteManager = new RouletteManager(_player, _weapons, GraphicsDevice, _debugTexture, _font);
@@ -364,11 +346,9 @@ namespace Survive_the_night
             // Инициализация экрана загрузки
             _loadingScreen = new LoadingScreen(GraphicsDevice, _debugTexture, _font);
 
-            // Инициализация экранов Game Over и Victory (если не были инициализированы в Initialize)
-            if (_gameOverScreen == null)
-                _gameOverScreen = new GameOverScreen(GraphicsDevice, _debugTexture, _font);
-            if (_victoryScreen == null)
-                _victoryScreen = new VictoryScreen(GraphicsDevice, _debugTexture, _font);
+            // Инициализация экранов Game Over и Victory
+            _gameOverScreen = new GameOverScreen(GraphicsDevice, _debugTexture, _font);
+            _victoryScreen = new VictoryScreen(GraphicsDevice, _debugTexture, _font);
         }
 
         // Метод для инициализации выбранного оружия
@@ -377,12 +357,13 @@ namespace Survive_the_night
             _weapons.Clear();
             var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
             _weapons.Add(selectedWeapon);
+            System.Diagnostics.Debug.WriteLine($"Инициализировано стартовое оружие: {_selectedStartingWeapon}");
         }
 
         protected override void Update(GameTime gameTime)
         {
             KeyboardState currentKs = Keyboard.GetState();
-            MouseState currentMs = Mouse.GetState(); // Добавляем получение состояния мыши
+            MouseState currentMs = Mouse.GetState();
 
             // Обработка ESC - новое поведение
             if (currentKs.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
@@ -460,13 +441,13 @@ namespace Survive_the_night
                     }
                     else if (menuState == GameState.ExitGame)
                     {
-                        Exit(); // Выход из игры
+                        Exit();
                     }
                     break;
 
                 case GameState.StartMenu:
                     var newState = _startMenu.Update(gameTime);
-                    if (newState == GameState.Loading) // Меняем проверку
+                    if (newState == GameState.Loading)
                     {
                         // Сохраняем выбранное оружие
                         _selectedStartingWeapon = _startMenu.SelectedWeapon;
@@ -479,20 +460,21 @@ namespace Survive_the_night
 
                     if (startGame)
                     {
+                        // ПОЛНЫЙ СБРОС ВСЕХ ПАРАМЕТРОВ ПЕРЕД НАЧАЛОМ НОВОЙ ИГРЫ
+                        ResetGameToInitialState();
+
                         // Останавливаем музыку меню перед началом игры
                         _musicManager.StopMusicForGameStart();
 
                         // Инициализируем игрока с выбранным оружием
                         InitializePlayerWeapon();
 
-                        // Сбрасываем менеджеры при начале новой игры
-                        _levelManager.Reset();
-                        _itemManager.Clear();
-                        _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
+                        // Запускаем музыку первого уровня
+                        _musicManager.PlayLevelMusic(1);
 
                         Game1.CurrentState = GameState.Playing;
                         _loadingScreen.Reset();
-                        System.Diagnostics.Debug.WriteLine("Игра начата по нажатию кнопки");
+                        System.Diagnostics.Debug.WriteLine("НОВАЯ ИГРА НАЧАТА С ПОЛНЫМ СБРОСОМ");
                     }
                     break;
 
@@ -503,25 +485,44 @@ namespace Survive_the_night
                     _gameHUD.UpdateGameStats(_survivalTime, _killCount);
                     _gameHUD.Update(gameTime);
 
-                    // ОТЛАДКА: проверяем состояние игрока
-                    System.Diagnostics.Debug.WriteLine($"Состояние игрока: Alive={_player.IsAlive}, Health={_player.CurrentHealth}");
+                    _itemManager.Update(gameTime);
 
                     // Воспроизводим музыку текущего уровня
                     _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
+
+                    // Временный тест - создание предметов по клавише F9 рядом с игроком
+                    if (currentKs.IsKeyDown(Keys.F9) && !_previousKeyboardState.IsKeyDown(Keys.F9))
+                    {
+                        // Создаем тестовые предметы рядом с игроком
+                        Vector2 playerPos = _player.Position;
+                        _itemManager.AddExperienceOrb(playerPos + new Vector2(50, 0), 25);
+                        _itemManager.AddCoin(playerPos + new Vector2(-50, 0), 1);
+                        _itemManager.AddHealthOrb(playerPos + new Vector2(0, 50), 0.25f);
+                        _itemManager.AddDynamite(playerPos + new Vector2(0, -50));
+
+                        System.Diagnostics.Debug.WriteLine($"=== ТЕСТ: Созданы предметы рядом с игроком ===");
+                        System.Diagnostics.Debug.WriteLine($"Позиция игрока: {playerPos}");
+                        System.Diagnostics.Debug.WriteLine($"Созданы: опыт, монета, здоровье");
+                    }
+
+                    // Тест состояния игрока по клавише F10
+                    if (currentKs.IsKeyDown(Keys.F10) && !_previousKeyboardState.IsKeyDown(Keys.F10))
+                    {
+                        _spawnManager.SpawnEliteEnemy();
+                    }
 
                     if (currentKs.IsKeyDown(Keys.F8) && !_previousKeyboardState.IsKeyDown(Keys.F8))
                     {
                         // Принудительная победа для тестирования
                         Game1.CurrentState = GameState.Victory;
                         _victoryScreen.Show();
-                        System.Diagnostics.Debug.WriteLine("🎉 Тестовый переход к победе по F8");
+                        System.Diagnostics.Debug.WriteLine("Тестовый переход к победе по F8");
                         break;
                     }
 
                     // Проверки состояния
                     if (!_player.IsAlive)
                     {
-                        System.Diagnostics.Debug.WriteLine("Переход в состояние GameOver!");
                         Game1.CurrentState = GameState.GameOver;
                         _gameOverScreen.Show();
                         _musicManager.StopMusic();
@@ -533,6 +534,28 @@ namespace Survive_the_night
                     {
                         Game1.CurrentState = GameState.LevelUp;
                         break;
+                    }
+
+                    // ДЕБАГ: проверяем позиции каждые 3 секунды
+                    if (_survivalTime % 3f < 0.1f) // Каждые 3 секунды
+                    {
+                        System.Diagnostics.Debug.WriteLine($"=== ДЕБАГ ПОЗИЦИЙ ===");
+                        System.Diagnostics.Debug.WriteLine($"Камера: {_camera.Position}, Игрок: {_player.Position}");
+
+                        // Проверяем предметы
+                        if (_itemManager.ActiveItems.Count > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Активных предметов: {_itemManager.ActiveItems.Count}");
+                            foreach (var item in _itemManager.ActiveItems)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Предмет {item.GetType().Name} на позиции: {item.Position}");
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Нет активных предметов");
+                        }
+                        System.Diagnostics.Debug.WriteLine($"=== КОНЕЦ ДЕБАГА ===");
                     }
 
                     // Игровая логика
@@ -555,7 +578,6 @@ namespace Survive_the_night
 
                         if (_gameHUD.IsPauseButtonClicked(mousePos))
                         {
-                            // TODO: Реализовать функционал паузы
                             System.Diagnostics.Debug.WriteLine("Кнопка паузы нажата");
                         }
                         else if (_gameHUD.IsShopButtonClicked(mousePos))
@@ -579,23 +601,34 @@ namespace Survive_the_night
                             // Дроп элитного врага
                             if (enemy is EliteEnemy)
                             {
+                                // Сохраняем состояние ДО обработки
+                                int elitesBefore = _levelManager.ElitesKilled;
+                                int levelBefore = _levelManager.CurrentLevel;
+
                                 // РЕГИСТРИРУЕМ УБИЙСТВО ЭЛИТНОГО ВРАГА
-                                int oldLevel = _levelManager.CurrentLevel;
                                 _levelManager.EliteKilled();
 
+                                int elitesAfter = _levelManager.ElitesKilled;
+                                int levelAfter = _levelManager.CurrentLevel;
+
+                                System.Diagnostics.Debug.WriteLine($"Элитный враг убит! Уровень: {levelBefore}->{levelAfter}, Элитных: {elitesBefore}->{elitesAfter}");
+
                                 // ОБНОВЛЯЕМ ТЕКСТУРУ ПОЛА ЕСЛИ УРОВЕНЬ ИЗМЕНИЛСЯ
-                                if (_levelManager.CurrentLevel != oldLevel)
+                                if (levelAfter != levelBefore)
                                 {
                                     UpdateFloorTexture();
-                                    _gameHUD.ShowStageAnnouncement(_levelManager.CurrentLevel);
+                                    _gameHUD.ShowStageAnnouncement(levelAfter);
                                 }
 
-                                // Проверка победы (8 этап + 2 элитных врага убито)
-                                if (_levelManager.CurrentLevel == 8 && _levelManager.ElitesKilled >= 2)
+                                // ПРОВЕРКА ПОБЕДЫ: только если мы УЖЕ БЫЛИ на 8 уровне И это был второй элитный враг
+                                bool isVictoryCondition = (levelBefore == 8 && elitesAfter > 15);
+
+                                if (isVictoryCondition)
                                 {
                                     Game1.CurrentState = GameState.Victory;
                                     _victoryScreen.Show();
-                                    System.Diagnostics.Debug.WriteLine("УСЛОВИЕ ПОБЕДЫ ВЫПОЛНЕНО! Активируем экран победы.");
+                                    _musicManager.StopMusic();
+                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesAfter}");
                                     break;
                                 }
 
@@ -620,7 +653,9 @@ namespace Survive_the_night
                             else
                             {
                                 // Обычный дроп опыта через менеджер предметов
-                                _itemManager.AddExperienceOrb(enemy.Position, 1);
+                                Vector2 worldPosition = enemy.Position; // Это мировые координаты
+                                _itemManager.AddExperienceOrb(worldPosition, 1);
+                                System.Diagnostics.Debug.WriteLine($"Создан опыт в мировых координатах: {worldPosition}");
 
                                 // Шанс дропа сердца 2%
                                 if (Game1.Random.NextDouble() < 0.02)
@@ -646,7 +681,7 @@ namespace Survive_the_night
                                     _itemManager.AddMagnet(enemy.Position);
                                 }
 
-                                // НОВЫЙ: Шанс дропа динамита 2% от обычных врагов
+                                // Шанс дропа динамита 2% от обычных врагов
                                 if (Game1.Random.NextDouble() < 0.02)
                                 {
                                     _itemManager.AddDynamite(enemy.Position);
@@ -693,7 +728,7 @@ namespace Survive_the_night
                             );
 
                             // Обновляем границы для ВСЕХ активных шариков
-                            foreach (var ball in rouletteBall.ActiveBalls) // ИСПОЛЬЗУЕМ ActiveBalls вместо ActiveBall
+                            foreach (var ball in rouletteBall.ActiveBalls)
                             {
                                 if (ball.IsActive)
                                 {
@@ -702,7 +737,7 @@ namespace Survive_the_night
                             }
                         }
                     }
-                    break; // ДОБАВЬТЕ break В КОНЦЕ case
+                    break;
 
                 case GameState.Paused:
                     _pauseMenu.Update();
@@ -775,54 +810,29 @@ namespace Survive_the_night
                     _musicManager.StopMusic();
                     _gameOverScreen.Update();
 
-                    // Если экран скрылся (после нажатия кнопки), сбрасываем игру
                     if (!_gameOverScreen.IsVisible)
                     {
-                        // Сбрасываем игру при выходе из Game Over
-                        _enemies.Clear();
-                        _weapons.Clear();
-                        _levelManager.Reset();
-                        _itemManager.Clear();
-                        _survivalTime = 0f;
-                        _killCount = 0;
-
-                        // Состояние уже изменено кнопками в GameOverScreen
-                        System.Diagnostics.Debug.WriteLine("Игра сброшена после Game Over");
+                        // Не сбрасываем здесь - полный сброс будет при загрузке новой игры
+                        System.Diagnostics.Debug.WriteLine("Переход к загрузке новой игры после поражения");
                     }
                     break;
+
                 case GameState.Victory:
                     _musicManager.StopMusic();
                     _victoryScreen.Update();
 
-                    // Если экран скрылся (после нажатия кнопки), сбрасываем игру
                     if (!_victoryScreen.IsVisible)
                     {
-                        // Сбрасываем игру при выходе из Victory
-                        _enemies.Clear();
-                        _weapons.Clear();
-                        _levelManager.Reset();
-                        _itemManager.Clear();
-                        _survivalTime = 0f;
-                        _killCount = 0;
-
-                        // Состояние уже изменено кнопками в VictoryScreen
-                        System.Diagnostics.Debug.WriteLine("Игра сброшена после победы");
+                        // Не сбрасываем здесь - полный сброс будет при загрузке новой игры
+                        System.Diagnostics.Debug.WriteLine("Переход к загрузке новой игры после победы");
                     }
                     break;
             }
 
             // В конце метода Update обновляем предыдущее состояние
             _previousKeyboardState = currentKs;
-            _previousMouseState = currentMs; // Добавляем это
+            _previousMouseState = currentMs;
             base.Update(gameTime);
-        }
-
-        // Статический метод для активации магнита из других классов
-        public static void ActivateMagnet(float duration, float speed)
-        {
-            // Получаем доступ к ItemManager через существующий экземпляр
-            // Этот метод будет вызван из Magnet.ApplyEffect()
-            // Временное решение - нужно передать ссылку на ItemManager в Magnet
         }
 
         // Метод для обновления текстуры пола
@@ -830,13 +840,37 @@ namespace Survive_the_night
         {
             try
             {
-                Texture2D newFloorTexture = _levelManager.LoadCurrentLevelFloorTexture(Content);
-                _worldGeneration.ChangeFloorTexture(newFloorTexture);
-                Debug.WriteLine($"🔄 Обновлена текстура пола для уровня {_levelManager.CurrentLevel}");
+                if (_levelManager != null && Content != null)
+                {
+                    Texture2D newFloorTexture = _levelManager.LoadCurrentLevelFloorTexture(Content);
+                    if (_worldGeneration != null)
+                    {
+                        _worldGeneration.ChangeFloorTexture(newFloorTexture);
+                        Debug.WriteLine($"Обновлена текстура пола для уровня {_levelManager.CurrentLevel}");
+
+                        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: выводим информацию о текстуре
+                        if (newFloorTexture != null)
+                        {
+                            Debug.WriteLine($"Текстура пола: {newFloorTexture.Width}x{newFloorTexture.Height}, Уровень: {_levelManager.CurrentLevel}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine("ОШИБКА: Текстура пола не загружена!");
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("ОШИБКА: WorldGeneration не инициализирован!");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("ОШИБКА: LevelManager или Content не доступны!");
+                }
             }
             catch (System.Exception ex)
             {
-                Debug.WriteLine($"❌ Ошибка обновления текстуры пола: {ex.Message}");
+                Debug.WriteLine($"ОШИБКА обновления текстуры пола: {ex.Message}");
             }
         }
 
@@ -936,22 +970,25 @@ namespace Survive_the_night
             // Отрисовка фона мира
             _worldGeneration.Draw(_spriteBatch);
 
-            // Визуализация зоны спавна (для отладки)
-            Vector2 screenCenter = _player.Position;
-            float screenLeft = screenCenter.X - GraphicsDevice.Viewport.Width / 2;
-            float screenRight = screenCenter.X + GraphicsDevice.Viewport.Width / 2;
-            float screenTop = screenCenter.Y - GraphicsDevice.Viewport.Height / 2;
-            float screenBottom = screenCenter.Y + GraphicsDevice.Viewport.Height / 2;
+            
 
-            // Рисуем границы экрана
-            Rectangle screenBounds = new Rectangle(
-                (int)screenLeft, (int)screenTop,
-                GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height
-            );
-            _spriteBatch.Draw(_debugTexture, screenBounds, Color.Green * 0.1f);
+            // ОТЛАДКА: проверяем состояние WorldGeneration
+            if (_worldGeneration == null)
+            {
+                Debug.WriteLine("ОШИБКА: WorldGeneration is NULL в DrawWorldObjects!");
+                return;
+            }
 
-            // Отрисовка предметов через менеджер
-            _itemManager.Draw(_spriteBatch, _debugTexture);
+            // Отрисовка фона мира
+            try
+            {
+                _worldGeneration.Draw(_spriteBatch);
+                Debug.WriteLine("WorldGeneration отрисован успешно");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ОШИБКА отрисовки WorldGeneration: {ex.Message}");
+            }
 
             // Отрисовка огненных областей первыми (под всеми)
             foreach (var weapon in _weapons)
@@ -983,6 +1020,14 @@ namespace Survive_the_night
                 }
             }
             _player.Draw(_spriteBatch, _debugTexture, playerTint);
+
+            // Отрисовка предметов через менеджер
+            _itemManager.Draw(_spriteBatch, _debugTexture);
+
+            if (_survivalTime % 5f < 0.1f) // Каждые 5 секунд
+            {
+                Debug.WriteLine($"Камера: {_camera.Position}, Игрок: {_player.Position}");
+            }
 
             // Отрисовка остального оружия (НАД ВСЕМИ)
             foreach (var weapon in _weapons)
@@ -1070,7 +1115,7 @@ namespace Survive_the_night
                         }
                     }
 
-                    // Отрисовываем ВСЕ шарики (ActiveBalls вместо ActiveBall)
+                    // Отрисовываем ВСЕ шарики
                     foreach (var ball in roulette.ActiveBalls)
                     {
                         if (ball.IsActive)
@@ -1078,45 +1123,8 @@ namespace Survive_the_night
                             ball.Draw(_spriteBatch, _debugTexture);
                         }
                     }
-
-                    // ОТЛАДКА: рисуем границы отскока (только если есть активные шарики)
-                    if (roulette.ActiveBalls.Count > 0)
-                    {
-                        // Используем актуальные границы из первого шарика
-                        Rectangle bounds = roulette.ActiveBalls[0].ScreenBounds;
-                        DrawDebugRectangle(_spriteBatch, bounds, Color.Red * 0.2f);
-                    }
                 }
             }
-        }
-
-        private void DrawDebugRectangle(SpriteBatch spriteBatch, Rectangle rect, Color color)
-        {
-            // Верхняя линия
-            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, rect.Width, 2), color);
-            // Нижняя линия
-            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y + rect.Height - 2, rect.Width, 2), color);
-            // Левая линия
-            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X, rect.Y, 2, rect.Height), color);
-            // Правая линия
-            spriteBatch.Draw(_debugTexture, new Rectangle(rect.X + rect.Width - 2, rect.Y, 2, rect.Height), color);
-        }
-
-        private void DrawGameOverScreen(SpriteBatch spriteBatch)
-        {
-            spriteBatch.Draw(
-                _debugTexture,
-                new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
-                Color.DarkRed * 0.8f
-            );
-
-            string text = "ИГРА ОКОНЧЕНА";
-            Vector2 size = _font.MeasureString(text);
-            Vector2 position = new Vector2(
-                (GraphicsDevice.Viewport.Width - size.X) / 2,
-                (GraphicsDevice.Viewport.Height - size.Y) / 2
-            );
-            spriteBatch.DrawString(_font, text, position, Color.White);
         }
 
         private void DrawLevelUpPendingScreen(SpriteBatch spriteBatch)
@@ -1154,17 +1162,6 @@ namespace Survive_the_night
             );
         }
 
-        // ДОБАВЬТЕ: фиксированные границы экрана для отскоков
-        public static Rectangle GetScreenBounds(Camera camera, Viewport viewport)
-        {
-            return new Rectangle(
-                (int)camera.Position.X,
-                (int)camera.Position.Y,
-                viewport.Width,
-                viewport.Height
-            );
-        }
-
         protected override void UnloadContent()
         {
             _musicManager?.Dispose();
@@ -1197,6 +1194,116 @@ namespace Survive_the_night
                     // В GameOver можно остановить музыку или переключить на другую
                     _musicManager.StopMusic();
                     break;
+            }
+        }
+
+        /// <summary>
+        /// Полный сброс всех параметров игры к начальным значениям
+        /// </summary>
+        private void ResetGameToInitialState()
+        {
+            System.Diagnostics.Debug.WriteLine("ПОЛНЫЙ СБРОС ИГРЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");
+
+            // ВОССТАНАВЛИВАЕМ СУЩЕСТВУЮЩЕГО ИГРОКА
+            Vector2 initialPlayerPosition = new Vector2(
+                _graphics.PreferredBackBufferWidth / 2,
+                _graphics.PreferredBackBufferHeight / 2
+            );
+
+            // Полное восстановление игрока
+            _player.SetPosition(initialPlayerPosition);
+
+            // ВАЖНО: Сбрасываем опыт и характеристики игрока
+            _player.ResetExperienceRequirements();
+
+            System.Diagnostics.Debug.WriteLine("Игрок восстановлен, опыт сброшен");
+
+            // Сбрасываем камеру
+            if (_camera != null)
+            {
+                _camera = new Camera(_player, GraphicsDevice.Viewport);
+                UpdateWorldGenerationCamera();
+            }
+
+            // Сбрасываем менеджеры
+            if (_levelManager != null)
+            {
+                _levelManager.Reset();
+                System.Diagnostics.Debug.WriteLine($"LevelManager сброшен. Текущий уровень: {_levelManager.CurrentLevel}");
+            }
+
+            if (_spawnManager != null)
+            {
+                // Пересоздаем SpawnManager с обновленным игроком
+                _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager);
+                System.Diagnostics.Debug.WriteLine("SpawnManager сброшен");
+            }
+
+            // ВАЖНО: Не пересоздаем ItemManager, а только очищаем его и обновляем ссылку на игрока
+            if (_itemManager != null)
+            {
+                _itemManager.Clear();
+                _itemManager.UpdatePlayerReference(_player); // ОБНОВЛЯЕМ ССЫЛКУ НА ИГРОКА
+                System.Diagnostics.Debug.WriteLine("ItemManager очищен и обновлен");
+            }
+
+            // ВАЖНО: Сбрасываем магазин бонусов
+            if (_bonusShop != null)
+            {
+                _bonusShop.ResetPrices();
+                System.Diagnostics.Debug.WriteLine("Магазин бонусов сброшен, цены восстановлены");
+            }
+
+            // Сбрасываем коллекции
+            _enemies.Clear();
+            _weapons.Clear();
+
+            // Сбрасываем статистику
+            _survivalTime = 0f;
+            _killCount = 0;
+
+            // Сбрасываем меню прокачки
+            if (_levelUpMenu != null)
+            {
+                _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
+                _levelUpMenuRenderer = new LevelUpMenuRenderer(_levelUpMenu, GraphicsDevice, _debugTexture, _font);
+                System.Diagnostics.Debug.WriteLine("Меню прокачки сброшено");
+            }
+
+            // Сбрасываем рулетку
+            if (_rouletteManager != null)
+            {
+                _rouletteManager = new RouletteManager(_player, _weapons, GraphicsDevice, _debugTexture, _font);
+                _rouletteMenu = new RouletteMenu(_rouletteManager, GraphicsDevice, _debugTexture, _font);
+                System.Diagnostics.Debug.WriteLine("Рулетка сброшена");
+            }
+
+            // Обновляем текстуру пола для первого уровня
+            UpdateFloorTexture();
+
+            // Устанавливаем музыку первого уровня
+            _musicManager.PlayLevelMusic(1);
+
+            System.Diagnostics.Debug.WriteLine("ВСЕ ПАРАМЕТРЫ ИГРЫ СБРОШЕНЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");
+        }
+
+        // Обновляет камеру в WorldGeneration после сброса игры
+        private void UpdateWorldGenerationCamera()
+        {
+            if (_worldGeneration != null && _camera != null)
+            {
+                // Получаем тип WorldGeneration через рефлексию и устанавливаем камеру
+                var field = _worldGeneration.GetType().GetField("_camera",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                {
+                    field.SetValue(_worldGeneration, _camera);
+                    Debug.WriteLine("Камера в WorldGeneration обновлена");
+                }
+                else
+                {
+                    Debug.WriteLine("ОШИБКА: Не найден поле _camera в WorldGeneration");
+                }
             }
         }
     }

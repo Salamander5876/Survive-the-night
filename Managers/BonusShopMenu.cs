@@ -35,6 +35,11 @@ namespace Survive_the_night.Managers
         private bool _canPurchaseBonus = true;
         private bool _canPurchaseSkill = true;
 
+        // Константы для начальных цен
+        private const int INITIAL_BONUS_PRICE = 50;
+        private const int INITIAL_SKILL_PRICE = 100;
+
+
         public BonusShopMenu(Player player, ItemManager itemManager)
         {
             _player = player;
@@ -307,7 +312,24 @@ namespace Survive_the_night.Managers
         public Dictionary<string, BonusData> PlayerBonuses => _playerBonuses;
         public int PlayerCoins => _player.Coins;
         public bool CanPurchaseBonus => _canPurchaseBonus;
+
+        public void ResetPrices()
+        {
+            // Сбрасываем цены к начальным значениям
+            CurrentBonusPrice = INITIAL_BONUS_PRICE;
+            CurrentSkillPrice = INITIAL_SKILL_PRICE;
+
+            // Сбрасываем счетчики покупок
+            _bonusPurchaseCount = 0;
+            _skillPurchaseCount = 0;
+
+            // Сбрасываем все бонусы
+            InitializeBonuses();
+
+            System.Diagnostics.Debug.WriteLine($"Цены в магазине сброшены: бонусы={CurrentBonusPrice}, навыки={CurrentSkillPrice}");
+        }
     }
+}
 
     public class BonusData
     {
@@ -331,4 +353,3 @@ namespace Survive_the_night.Managers
         public string LevelText => $"{CurrentLevel}/{MaxLevel}";
         public bool IsMaxLevel => CurrentLevel >= MaxLevel;
     }
-}

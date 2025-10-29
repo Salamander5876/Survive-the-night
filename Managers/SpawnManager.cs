@@ -53,7 +53,7 @@ namespace Survive_the_night.Managers
             _camera = camera;
             _levelManager = levelManager;
             _boundaries = new GameBoundaries(camera, viewport);
-            _levelManager.EliteKilled();
+            //_levelManager.EliteKilled();
 
             // Проверка условия победы
             if (_levelManager.CurrentLevel == 8 && _levelManager.ElitesKilled >= 2)
@@ -116,8 +116,9 @@ namespace Survive_the_night.Managers
                 if (CanSpawnEliteEnemy())
                 {
                     SpawnEliteEnemy();
+                    _eliteSpawnTimer = 0f;
                 }
-                _eliteSpawnTimer = 0f;
+                
             }
 
             // Очистка мертвых врагов (опционально, для производительности)
@@ -356,7 +357,7 @@ namespace Survive_the_night.Managers
             }
         }
 
-        private void SpawnEliteEnemy()
+        public void SpawnEliteEnemy()
         {
             Vector2 spawnPos = CalculateSpawnPosition();
 

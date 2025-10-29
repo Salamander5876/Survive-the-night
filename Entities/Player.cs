@@ -8,7 +8,7 @@ namespace Survive_the_night.Entities
     {
         // === СВОЙСТВА ЗДОРОВЬЯ ===
         public int MaxHealth { get; set; } = 100;
-        public int CurrentHealth { get; private set; }
+        public int CurrentHealth { get; set; } // ИЗМЕНИЛОСЬ: set стал публичным
         public bool IsAlive { get; set; } = true;
 
         // Прокачка: отдельные уровни для здоровья и бонуса хила сердец
@@ -22,8 +22,8 @@ namespace Survive_the_night.Entities
         public bool IsInvulnerable => _invulnerabilityTimer > 0f;
 
         // === СИСТЕМА ОПЫТА И УРОВНЕЙ ===
-        public int Level { get; private set; } = 1;
-        public int CurrentExperience { get; private set; } = 0;
+        public int Level { get; set; } = 1; // ИЗМЕНИЛОСЬ: добавлен set
+        public int CurrentExperience { get; set; } = 0; // ИЗМЕНИЛОСЬ: добавлен set
         public int ExperienceToNextLevel { get; private set; } = 10;
         public bool IsLevelUpPending { get; set; } = false;
 
@@ -32,7 +32,7 @@ namespace Survive_the_night.Entities
         public float MovementSpeed => BaseSpeed;
 
         // === ВАЛЮТА ===
-        public int Coins { get; private set; } = 0;
+        public int Coins { get; set; } = 0; // ИЗМЕНИЛОСЬ: добавлен set
 
         public Player(Vector2 initialPosition)
             : base(initialPosition, 24, Color.Blue)
@@ -78,6 +78,7 @@ namespace Survive_the_night.Entities
             Move(direction * speed * deltaTime);
         }
 
+
         public void TakeDamage(int damage)
         {
             if (!IsInvulnerable)
@@ -88,7 +89,7 @@ namespace Survive_the_night.Entities
                 if (CurrentHealth <= 0)
                 {
                     CurrentHealth = 0;
-                    IsAlive = false; // ДОБАВЬТЕ ЭТУ СТРОЧКУ!
+                    IsAlive = false;
                     System.Diagnostics.Debug.WriteLine("💀 ИГРОК УМЕР: Здоровье игрока исчерпано.");
                 }
                 else
@@ -113,9 +114,15 @@ namespace Survive_the_night.Entities
 
         public void GainExperience(int amount)
         {
-            if (IsLevelUpPending) return;
+            if (IsLevelUpPending)
+            {
+                System.Diagnostics.Debug.WriteLine($"⏸️ Опыт не начисляется - ожидание выбора улучшения");
+                return;
+            }
 
+            int oldExp = CurrentExperience;
             CurrentExperience += amount;
+            System.Diagnostics.Debug.WriteLine($"🎯 Игрок получил {amount} опыта. Было: {oldExp}, Стало: {CurrentExperience}/{ExperienceToNextLevel}");
 
             if (CurrentExperience >= ExperienceToNextLevel)
             {
@@ -172,7 +179,7 @@ namespace Survive_the_night.Entities
         public void AddCoins(int amount)
         {
             Coins += amount;
-            System.Diagnostics.Debug.WriteLine($"Получено монет: +{amount}. Всего: {Coins}");
+            System.Diagnostics.Debug.WriteLine($"💰 Игрок получил {amount} монет. Всего: {Coins}");
         }
 
         public bool SpendCoins(int amount)
@@ -209,5 +216,26 @@ namespace Survive_the_night.Entities
                     // УБИРАЕМ case 4 для золотых сердец
             }
         }
+
+        public void ResetExperienceRequirements()
+        {
+            // Сбрасываем опыт к начальным значениям
+            CurrentExperience = 0;
+            ExperienceToNextLevel = 10;
+            Level = 1;
+            IsLevelUpPending = false;
+
+            // Сбрасываем уровни улучшений здоровья
+            HealthLevel = 0;
+            HeartHealBonusLevel = 0;
+
+            // Восстанавливаем базовые характеристики
+            MaxHealth = 100;
+            CurrentHealth = MaxHealth;
+            BaseSpeed = 250f;
+
+            System.Diagnostics.Debug.WriteLine($"Опыт игрока сброшен: уровень={Level}, опыт={CurrentExperience}/{ExperienceToNextLevel}");
+        }
+
     }
 }
