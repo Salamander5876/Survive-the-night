@@ -1,6 +1,6 @@
-// EliteEnemy.cs
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Managers;
 
 namespace Survive_the_night.Entities.Enemies.Elite
 {
@@ -14,26 +14,32 @@ namespace Survive_the_night.Entities.Enemies.Elite
 
         public EliteType Type { get; private set; }
 
-        // Награда за убийство
         public const int ExperienceOrbCount = 10;
         public const int ChestDropCount = 1;
 
-        // Конструктор для новой системы
-        public EliteEnemy(Vector2 initialPosition, Player playerTarget, int stage, EliteType type)
-            : base(initialPosition, playerTarget, GetBaseHealth(type), 80f, Color.Blue, 15, stage)
+        public EliteEnemy(Vector2 initialPosition, Player playerTarget, int stage, EliteType type, DifficultyManager difficultyManager)
+            : base(initialPosition, playerTarget, GetBaseHealth(type), 80f, Color.Blue, 15, stage, difficultyManager)
         {
             Type = type;
+            Damage = CalculateDamageForStage(15, stage);
+            speed = CalculateSpeedForStage(80f, stage);
         }
 
-        // Старый конструктор для совместимости
         public EliteEnemy(Vector2 initialPosition, Player playerTarget)
-            : this(initialPosition, playerTarget, 1, EliteType.Type1)
+            : this(initialPosition, playerTarget, 1, EliteType.Type1, null)
         {
         }
 
         protected override int CalculateHealthForStage(int baseHealth, int stage)
         {
-            return baseHealth + (stage - 1) * 100;
+            int stageHealth = baseHealth + (stage - 1) * 100;
+
+            if (_difficultyManager != null)
+            {
+                stageHealth = (int)(stageHealth * _difficultyManager.EnemyHealthMultiplier);
+            }
+
+            return stageHealth;
         }
 
         private static int GetBaseHealth(EliteType type)
@@ -43,9 +49,8 @@ namespace Survive_the_night.Entities.Enemies.Elite
 
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
         {
-            // Увеличиваем размер в 2 раза для элитных врагов
             Color drawColor = color ?? Color;
-            int size = 48; // В 2 раза больше обычных
+            int size = 48;
 
             spriteBatch.Draw(debugTexture,
                 new Rectangle((int)(Position.X - size / 2), (int)(Position.Y - size / 2), size, size),

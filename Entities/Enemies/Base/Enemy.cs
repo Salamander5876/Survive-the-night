@@ -1,6 +1,6 @@
-// Enemy.cs
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Managers;
 
 namespace Survive_the_night.Entities
 {
@@ -16,40 +16,67 @@ namespace Survive_the_night.Entities
 
         public bool IsAlive => Health > 0;
 
-        // Новые свойства для механик врагов
         public float DamageResistance { get; protected set; } = 0f;
         public float Vampirism { get; protected set; } = 0f;
         public bool HasUndying { get; protected set; } = false;
 
-        // Для отталкивания
         private Vector2 _knockbackVelocity = Vector2.Zero;
         private float _knockbackDecay = 0.9f;
 
-        // Основной конструктор
-        public Enemy(Vector2 initialPosition, Player playerTarget, int baseHealth, float speed, Color color, int baseDamage, int stage)
+        protected DifficultyManager _difficultyManager;
+
+        public Enemy(Vector2 initialPosition, Player playerTarget, int baseHealth, float speed, Color color, int baseDamage, int stage, DifficultyManager difficultyManager)
             : base(initialPosition, 24, color)
         {
             _target = playerTarget;
             this.speed = speed;
             CurrentStage = stage;
+            _difficultyManager = difficultyManager;
 
-            // Расчет характеристик по этапу
             MaxHealth = CalculateHealthForStage(baseHealth, stage);
             Health = MaxHealth;
             Damage = baseDamage;
         }
 
-        // Конструктор для обычных врагов (совместимость)
         public Enemy(Vector2 initialPosition, Player playerTarget)
-            : this(initialPosition, playerTarget, 3, 100f, Color.Red, 5, 1)
+            : this(initialPosition, playerTarget, 3, 100f, Color.Red, 5, 1, null)
         {
         }
 
         protected virtual int CalculateHealthForStage(int baseHealth, int stage)
         {
-            // Для обычных врагов: 5 HP на 1 этапе, +5 за каждый этап
-            // Этап 1: 5, Этап 2: 10, Этап 3: 15 и т.д.
-            return baseHealth + (stage - 1) * 5;
+            int stageHealth = baseHealth + (stage - 1) * 5;
+
+            if (_difficultyManager != null)
+            {
+                stageHealth = (int)(stageHealth * _difficultyManager.EnemyHealthMultiplier);
+            }
+
+            return stageHealth;
+        }
+
+        protected virtual int CalculateDamageForStage(int baseDamage, int stage)
+        {
+            int stageDamage = baseDamage;
+
+            if (_difficultyManager != null)
+            {
+                stageDamage = (int)(stageDamage * _difficultyManager.EnemyDamageMultiplier);
+            }
+
+            return stageDamage;
+        }
+
+        protected virtual float CalculateSpeedForStage(float baseSpeed, int stage)
+        {
+            float stageSpeed = baseSpeed;
+
+            if (_difficultyManager != null)
+            {
+                stageSpeed = stageSpeed * _difficultyManager.EnemySpeedMultiplier;
+            }
+
+            return stageSpeed;
         }
 
         public override void Update(GameTime gameTime)
@@ -58,7 +85,6 @@ namespace Survive_the_night.Entities
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Обработка отталкивания
             if (_knockbackVelocity != Vector2.Zero)
             {
                 Position += _knockbackVelocity * deltaTime;
@@ -71,7 +97,6 @@ namespace Survive_the_night.Entities
             }
             else
             {
-                // Движение к игроку
                 Vector2 direction = _target.Position - Position;
                 if (direction != Vector2.Zero)
                 {

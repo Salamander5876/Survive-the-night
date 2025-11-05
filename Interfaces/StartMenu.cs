@@ -35,6 +35,14 @@ namespace Survive_the_night.Interfaces
         private Rectangle _scrollBarRect;
         private Rectangle _scrollThumbRect;
 
+        // Новые элементы для выбора режима игры
+        private Rectangle _gameModeDropdownRect;
+        private Rectangle _gameModeDescriptionRect;
+        private Rectangle _gameModeScrollBarRect;
+        private Rectangle _gameModeScrollThumbRect;
+        private bool _isDropdownOpen = false;
+        private Rectangle[] _gameModeOptionRects;
+
         // Данные меню
         private List<WeaponName> _availableWeapons;
         private int _selectedWeaponIndex = 0;
@@ -42,17 +50,39 @@ namespace Survive_the_night.Interfaces
         private float _maxScroll = 0f;
         private bool _isScrolling = false;
 
+        // Данные для прокрутки описания режима
+        private float _gameModeScrollPosition = 0f;
+        private float _gameModeMaxScroll = 0f;
+        private bool _isGameModeScrolling = false;
+
+        // Данные режимов игры
+        public enum GameMode
+        {
+            Easy,
+            Hard,
+            Insane,
+            Endless
+        }
+
+        private GameMode _selectedGameMode = GameMode.Easy;
+        private Dictionary<GameMode, string> _gameModeDescriptions;
+
         // Константы
         private const int ButtonWidth = 200;
         private const int ButtonHeight = 50;
-        private const int WeaponCellSize = 150; // Увеличил размер для лучшего отображения спрайтов
+        private const int WeaponCellSize = 150;
         private const int ArrowButtonSize = 40;
         private const int DescriptionWidth = 400;
-        private const int DescriptionHeight = 300;
+        private const int DescriptionHeight = 400;
         private const int ScrollBarWidth = 15;
         private const int ScrollThumbMinHeight = 30;
+        private const int GameModeDropdownWidth = 400;
+        private const int GameModeDropdownHeight = 40;
+        private const int GameModeOptionHeight = 35;
+        private const int GameModeDescriptionHeight = 330;
 
         public WeaponName SelectedWeapon => _availableWeapons[_selectedWeaponIndex];
+        public GameMode SelectedGameMode => _selectedGameMode;
 
         // Описания оружий с использованием \n для переносов
         private Dictionary<WeaponName, string> _weaponDescriptions = new Dictionary<WeaponName, string>
@@ -134,6 +164,61 @@ namespace Survive_the_night.Interfaces
                 WeaponName.GoldenSword
             };
 
+            // Инициализация описаний режимов игры
+            _gameModeDescriptions = new Dictionary<GameMode, string>
+            {
+                {
+                    GameMode.Easy,
+                    "ЛЕГКИЙ РЕЖИМ\n\n" +
+                    "Идеально для новичков и обучения механике игры.\n\n" +
+                    "Особенности:\n" +
+                    "Характеристики врагов: стандартные\n" +
+                    "Элитные враги: только 1 тип\n" +
+                    "Для перехода на этап: 1 элитный враг\n" +
+                    "Спаун врагов: стандартная скорость\n" +
+                    "Победа: 8 этап, 1 элитный враг\n\n" +
+                    "Рекомендуется для первого знакомства с игрой."
+                },
+                {
+                    GameMode.Hard,
+                    "СЛОЖНЫЙ РЕЖИМ\n\n" +
+                    "Для опытных игроков. Баланс сложности и удовольствия.\n\n" +
+                    "Особенности:\n" +
+                    "Характеристики врагов: +50% к HP и урону\n" +
+                    "Элитные враги: 2 типа (стандартный и усиленный)\n" +
+                    "Для перехода на этап: 2 элитных врага\n" +
+                    "Спаун врагов: в 2 раза чаще\n" +
+                    "Победа: 8 этап, 2 элитных врага\n\n" +
+                    "Стандартный игровой опыт для любителей вызова."
+                },
+                {
+                    GameMode.Insane,
+                    "БЕЗУМНЫЙ РЕЖИМ\n\n" +
+                    "Экстремальная сложность для настоящих мастеров.\n\n" +
+                    "Особенности:\n" +
+                    "Характеристики врагов: +100% к HP и урону\n" +
+                    "Элитные враги: 2 типа (стандартный и усиленный)\n" +
+                    "Для перехода на этап: 2 элитных врага\n" +
+                    "Спаун врагов: в 4 раза чаще\n" +
+                    "Победа: 8 этап, 2 элитных врага\n\n" +
+                    "Только для экспертов, готовых к настоящему испытанию."
+                },
+                {
+                    GameMode.Endless,
+                    "БЕСКОНЕЧНЫЙ РЕЖИМ\n\n" +
+                    "Сражайтесь так долго, как сможете!\n\n" +
+                    "Особенности:\n" +
+                    "Начальная сложность: как в Лёгком режиме\n" +
+                    "После 8 этапа: цикл повторяется с усилением\n" +
+                    "Цикл 2: сложность как в Сложном режиме\n" +
+                    "Цикл 3: сложность как в Безумном режиме\n" +
+                    "Элитные враги: 2 типа\n" +
+                    "Для перехода на этап: 2 элитных врага\n" +
+                    "Победа: 8 этап в 3 цикле\n\n" +
+                    "Проверьте свой предел выживания!"
+                }
+            };
+
             CalculateLayout();
         }
 
@@ -194,15 +279,15 @@ namespace Survive_the_night.Interfaces
                 ArrowButtonSize
             );
 
-            // Область описания (правая часть)
+            // Область описания оружия (правая часть) - уменьшила ширину чтобы освободить место
             _descriptionRect = new Rectangle(
                 screenWidth - DescriptionWidth - 50,
                 180,
-                DescriptionWidth,
+                DescriptionWidth - 50, // Уменьшил ширину на 50
                 DescriptionHeight
             );
 
-            // Полоса прокрутки
+            // Полоса прокрутки для оружия
             _scrollBarRect = new Rectangle(
                 _descriptionRect.X + _descriptionRect.Width - ScrollBarWidth,
                 _descriptionRect.Y,
@@ -210,7 +295,43 @@ namespace Survive_the_night.Interfaces
                 _descriptionRect.Height
             );
 
+            // Новые элементы: выбор режима игры (левая часть) - УВЕЛИЧЕННАЯ ШИРИНА
+            _gameModeDropdownRect = new Rectangle(
+                50,
+                180,
+                GameModeDropdownWidth, // Теперь 400 вместо 250
+                GameModeDropdownHeight
+            );
+
+            _gameModeDescriptionRect = new Rectangle(
+                50,
+                _gameModeDropdownRect.Y + GameModeDropdownHeight + 20,
+                GameModeDropdownWidth, // Такая же ширина как у выпадающего списка
+                GameModeDescriptionHeight
+            );
+
+            // Полоса прокрутки для описания режима
+            _gameModeScrollBarRect = new Rectangle(
+                _gameModeDescriptionRect.X + _gameModeDescriptionRect.Width - ScrollBarWidth,
+                _gameModeDescriptionRect.Y,
+                ScrollBarWidth,
+                _gameModeDescriptionRect.Height
+            );
+
+            // Инициализация прямоугольников для опций выпадающего списка - ТАКАЯ ЖЕ ШИРИНА
+            _gameModeOptionRects = new Rectangle[4];
+            for (int i = 0; i < 4; i++)
+            {
+                _gameModeOptionRects[i] = new Rectangle(
+                    _gameModeDropdownRect.X,
+                    _gameModeDropdownRect.Y + GameModeDropdownHeight + (i * GameModeOptionHeight),
+                    GameModeDropdownWidth, // Такая же ширина
+                    GameModeOptionHeight
+                );
+            }
+
             UpdateScrollThumb();
+            UpdateGameModeScrollThumb();
 
             // Кнопка старта (правый нижний угол)
             _startButtonRect = new Rectangle(
@@ -279,6 +400,35 @@ namespace Survive_the_night.Interfaces
             );
         }
 
+        private void UpdateGameModeScrollThumb()
+        {
+            float contentHeight = GetGameModeDescriptionTextHeight();
+            float visibleRatio = _gameModeDescriptionRect.Height / contentHeight;
+
+            if (visibleRatio >= 1f)
+            {
+                _gameModeMaxScroll = 0f;
+                _gameModeScrollPosition = 0f;
+                _gameModeScrollThumbRect = Rectangle.Empty;
+                return;
+            }
+
+            _gameModeMaxScroll = contentHeight - _gameModeDescriptionRect.Height;
+
+            int thumbHeight = (int)(_gameModeDescriptionRect.Height * visibleRatio);
+            thumbHeight = Math.Max(thumbHeight, ScrollThumbMinHeight);
+
+            float scrollRatio = _gameModeScrollPosition / _gameModeMaxScroll;
+            int thumbY = _gameModeScrollBarRect.Y + (int)((_gameModeDescriptionRect.Height - thumbHeight) * scrollRatio);
+
+            _gameModeScrollThumbRect = new Rectangle(
+                _gameModeScrollBarRect.X,
+                thumbY,
+                ScrollBarWidth,
+                thumbHeight
+            );
+        }
+
         private float GetDescriptionTextHeight()
         {
             WeaponName currentWeapon = _availableWeapons[_selectedWeaponIndex];
@@ -287,6 +437,12 @@ namespace Survive_the_night.Interfaces
                 : "Описание отсутствует.";
 
             return MeasureTextHeight(description, _descriptionRect.Width - ScrollBarWidth - 20);
+        }
+
+        private float GetGameModeDescriptionTextHeight()
+        {
+            string description = _gameModeDescriptions[_selectedGameMode];
+            return MeasureTextHeight(description, _gameModeDescriptionRect.Width - ScrollBarWidth - 20);
         }
 
         private float MeasureTextHeight(string text, float maxWidth)
@@ -350,7 +506,7 @@ namespace Survive_the_night.Interfaces
         {
             _currentMouseState = Mouse.GetState();
 
-            // Обработка прокрутки колесиком мыши
+            // Обработка прокрутки колесиком мыши для описания оружия
             if (_descriptionRect.Contains(_currentMouseState.Position))
             {
                 _scrollPosition -= (_currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue) / 10f;
@@ -358,17 +514,30 @@ namespace Survive_the_night.Interfaces
                 UpdateScrollThumb();
             }
 
-            // Обработка перетаскивания ползунка
+            // Обработка прокрутки колесиком мыши для описания режима
+            if (_gameModeDescriptionRect.Contains(_currentMouseState.Position) && !_isDropdownOpen)
+            {
+                _gameModeScrollPosition -= (_currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue) / 10f;
+                _gameModeScrollPosition = MathHelper.Clamp(_gameModeScrollPosition, 0, _gameModeMaxScroll);
+                UpdateGameModeScrollThumb();
+            }
+
+            // Обработка перетаскивания ползунка для оружия
             if (_currentMouseState.LeftButton == ButtonState.Pressed)
             {
                 if (_scrollThumbRect.Contains(_currentMouseState.Position) && !_isScrolling)
                 {
                     _isScrolling = true;
                 }
+                else if (_gameModeScrollThumbRect.Contains(_currentMouseState.Position) && !_isGameModeScrolling && !_isDropdownOpen)
+                {
+                    _isGameModeScrolling = true;
+                }
             }
             else
             {
                 _isScrolling = false;
+                _isGameModeScrolling = false;
             }
 
             if (_isScrolling)
@@ -379,10 +548,45 @@ namespace Survive_the_night.Interfaces
                 UpdateScrollThumb();
             }
 
+            if (_isGameModeScrolling)
+            {
+                float relativeY = _currentMouseState.Y - _gameModeScrollBarRect.Y;
+                float scrollRatio = MathHelper.Clamp(relativeY / (_gameModeScrollBarRect.Height - _gameModeScrollThumbRect.Height), 0, 1);
+                _gameModeScrollPosition = scrollRatio * _gameModeMaxScroll;
+                UpdateGameModeScrollThumb();
+            }
+
             // Обработка кликов по кнопкам
             if (_currentMouseState.LeftButton == ButtonState.Released &&
                 _previousMouseState.LeftButton == ButtonState.Pressed)
             {
+                // Обработка выбора режима игры
+                if (_gameModeDropdownRect.Contains(_currentMouseState.Position))
+                {
+                    _isDropdownOpen = !_isDropdownOpen;
+                }
+                else if (_isDropdownOpen)
+                {
+                    // Проверяем клик по опциям выпадающего списка
+                    for (int i = 0; i < _gameModeOptionRects.Length; i++)
+                    {
+                        if (_gameModeOptionRects[i].Contains(_currentMouseState.Position))
+                        {
+                            _selectedGameMode = (GameMode)i;
+                            _isDropdownOpen = false;
+                            _gameModeScrollPosition = 0f; // Сброс прокрутки при смене режима
+                            UpdateGameModeScrollThumb();
+                            break;
+                        }
+                    }
+
+                    // Если кликнули вне выпадающего списка, закрываем его
+                    if (!IsMouseOverGameModeDropdownArea())
+                    {
+                        _isDropdownOpen = false;
+                    }
+                }
+
                 // Кнопка Вверх
                 if (_upButtonRect.Contains(_currentMouseState.Position))
                 {
@@ -420,6 +624,39 @@ namespace Survive_the_night.Interfaces
             return GameState.StartMenu;
         }
 
+        private bool IsMouseOverGameModeDropdownArea()
+        {
+            Point mousePos = _currentMouseState.Position;
+
+            // Проверяем основную кнопку выбора режима
+            if (_gameModeDropdownRect.Contains(mousePos))
+                return true;
+
+            // Если выпадающий список открыт, проверяем все опции
+            if (_isDropdownOpen)
+            {
+                foreach (var optionRect in _gameModeOptionRects)
+                {
+                    if (optionRect.Contains(mousePos))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string GetGameModeDisplayName(GameMode mode)
+        {
+            switch (mode)
+            {
+                case GameMode.Easy: return "ЛЕГКИЙ";
+                case GameMode.Hard: return "СЛОЖНЫЙ";
+                case GameMode.Insane: return "БЕЗУМНЫЙ";
+                case GameMode.Endless: return "БЕСКОНЕЧНЫЙ";
+                default: return "НЕИЗВЕСТНО";
+            }
+        }
+
         public void Draw(SpriteBatch spriteBatch)
         {
             int screenWidth = _graphicsDevice.Viewport.Width;
@@ -449,9 +686,148 @@ namespace Survive_the_night.Interfaces
             // Отрисовка описания оружия
             DrawWeaponDescription(spriteBatch);
 
+            // Отрисовка выбора режима игры (ВСЕГДА ПЕРВЫМ - под выпадающим списком)
+            DrawGameModeSelection(spriteBatch);
+
+            // Отрисовка выпадающего списка поверх всего (ЕСЛИ ОТКРЫТ)
+            if (_isDropdownOpen)
+            {
+                DrawGameModeDropdown(spriteBatch);
+            }
+
             // Кнопки
             DrawButton(spriteBatch, _startButtonRect, "НАЧАТЬ ИГРУ", Color.Green);
             DrawButton(spriteBatch, _backButtonRect, "НАЗАД", Color.Gray);
+        }
+
+        private void DrawGameModeSelection(SpriteBatch spriteBatch)
+        {
+            // Заголовок выбора режима
+            string modeTitle = "ВЫБОР РЕЖИМА ИГРЫ";
+            Vector2 modeTitleSize = _font.MeasureString(modeTitle);
+            Vector2 modeTitlePos = new Vector2(
+                _gameModeDropdownRect.Center.X - modeTitleSize.X / 2,
+                _gameModeDropdownRect.Y - modeTitleSize.Y - 10
+            );
+            spriteBatch.DrawString(_font, modeTitle, modeTitlePos, Color.Yellow);
+
+            // Основная кнопка выбора режима
+            Color dropdownColor = _gameModeDropdownRect.Contains(_currentMouseState.Position) ?
+                Color.LightGray : Color.Gray;
+
+            spriteBatch.Draw(_debugTexture, _gameModeDropdownRect, dropdownColor);
+
+            // Текст выбранного режима
+            string selectedModeText = GetGameModeDisplayName(_selectedGameMode);
+            Vector2 textSize = _font.MeasureString(selectedModeText);
+            Vector2 textPos = new Vector2(
+                _gameModeDropdownRect.Center.X - textSize.X / 2,
+                _gameModeDropdownRect.Center.Y - textSize.Y / 2
+            );
+            spriteBatch.DrawString(_font, selectedModeText, textPos, Color.White);
+
+            // Стрелка вниз (индикатор выпадающего списка)
+            int arrowSize = 10;
+            Rectangle arrowRect = new Rectangle(
+                _gameModeDropdownRect.Right - arrowSize - 5,
+                _gameModeDropdownRect.Center.Y - arrowSize / 2,
+                arrowSize,
+                arrowSize
+            );
+            DrawTriangle(spriteBatch, arrowRect, Color.White, _isDropdownOpen);
+
+            // Описание выбранного режима (ПОД выпадающим списком)
+            DrawGameModeDescription(spriteBatch);
+        }
+
+        private void DrawGameModeDropdown(SpriteBatch spriteBatch)
+        {
+            // Фон для всего выпадающего списка (полупрозрачный)
+            Rectangle dropdownBackground = new Rectangle(
+                _gameModeDropdownRect.X,
+                _gameModeDropdownRect.Y + _gameModeDropdownRect.Height,
+                _gameModeDropdownRect.Width,
+                GameModeOptionHeight * 4
+            );
+
+            spriteBatch.Draw(_debugTexture, dropdownBackground, Color.Black * 0.9f);
+
+            for (int i = 0; i < 4; i++)
+            {
+                GameMode mode = (GameMode)i;
+                Rectangle optionRect = _gameModeOptionRects[i];
+
+                Color optionColor = optionRect.Contains(_currentMouseState.Position) ?
+                    Color.LightBlue : Color.DarkGray;
+
+                spriteBatch.Draw(_debugTexture, optionRect, optionColor);
+
+                string modeText = GetGameModeDisplayName(mode);
+                Vector2 modeTextSize = _font.MeasureString(modeText);
+                Vector2 modeTextPos = new Vector2(
+                    optionRect.Center.X - modeTextSize.X / 2,
+                    optionRect.Center.Y - modeTextSize.Y / 2
+                );
+
+                Color textColor = mode == _selectedGameMode ? Color.Yellow : Color.White;
+                spriteBatch.DrawString(_font, modeText, modeTextPos, textColor);
+
+                // Рамка для опции
+                DrawRectangle(spriteBatch, optionRect, Color.White);
+            }
+        }
+
+        private void DrawGameModeDescription(SpriteBatch spriteBatch)
+        {
+            // Фон области описания режима
+            spriteBatch.Draw(_debugTexture, _gameModeDescriptionRect, Color.DarkSlateBlue * 0.8f);
+
+            // Рамка
+            DrawRectangle(spriteBatch, _gameModeDescriptionRect, Color.White);
+
+            // Полоса прокрутки (если нужно)
+            if (_gameModeMaxScroll > 0)
+            {
+                spriteBatch.Draw(_debugTexture, _gameModeScrollBarRect, Color.Gray);
+                spriteBatch.Draw(_debugTexture, _gameModeScrollThumbRect, Color.LightGray);
+            }
+
+            // Текст описания режима с учетом прокрутки
+            string description = _gameModeDescriptions[_selectedGameMode];
+            Rectangle textArea = new Rectangle(
+                _gameModeDescriptionRect.X + 10,
+                _gameModeDescriptionRect.Y + 10,
+                _gameModeDescriptionRect.Width - (_gameModeMaxScroll > 0 ? ScrollBarWidth + 5 : 20),
+                _gameModeDescriptionRect.Height - 20
+            );
+
+            DrawTextWithNewlines(spriteBatch, description, textArea, _gameModeScrollPosition);
+        }
+
+        private void DrawTriangle(SpriteBatch spriteBatch, Rectangle rect, Color color, bool pointingDown)
+        {
+            // Простая реализация треугольника через линии
+            Vector2 top, left, right;
+
+            if (pointingDown)
+            {
+                // Стрелка вверх (когда список открыт)
+                top = new Vector2(rect.Center.X, rect.Top);
+                left = new Vector2(rect.Left, rect.Bottom);
+                right = new Vector2(rect.Right, rect.Bottom);
+            }
+            else
+            {
+                // Стрелка вниз (когда список закрыт)
+                top = new Vector2(rect.Center.X, rect.Bottom);
+                left = new Vector2(rect.Left, rect.Top);
+                right = new Vector2(rect.Right, rect.Top);
+            }
+
+            // Рисуем треугольник с помощью debug texture
+            spriteBatch.Draw(_debugTexture, new Rectangle((int)top.X, (int)top.Y, 1, 1), color);
+            spriteBatch.Draw(_debugTexture, new Rectangle((int)left.X, (int)left.Y, 1, 1), color);
+            spriteBatch.Draw(_debugTexture, new Rectangle((int)right.X, (int)right.Y, 1, 1), color);
         }
 
         private void DrawWeaponSelection(SpriteBatch spriteBatch)
@@ -505,10 +881,10 @@ namespace Survive_the_night.Interfaces
 
             // Увеличиваем отступы для лучшего вида
             Rectangle textArea = new Rectangle(
-                _descriptionRect.X + 15,  // Увеличил отступ слева
-                _descriptionRect.Y + 15,  // Увеличил отступ сверху
-                _descriptionRect.Width - ScrollBarWidth - 25, // Увеличил отступ справа
-                _descriptionRect.Height - 30  // Увеличил отступ снизу
+                _descriptionRect.X + 15,
+                _descriptionRect.Y + 15,
+                _descriptionRect.Width - ScrollBarWidth - 25,
+                _descriptionRect.Height - 30
             );
 
             DrawTextWithNewlines(spriteBatch, description, textArea, _scrollPosition);
@@ -646,7 +1022,6 @@ namespace Survive_the_night.Interfaces
             return remainingWord; // Возвращаем оставшуюся часть (обычно пустую)
         }
 
-        // Отрисовка очень длинных слов посимвольно
         // Отрисовка очень длинных слов посимвольно с проверкой границ
         private string DrawLongWord(SpriteBatch spriteBatch, string word, Rectangle textArea, ref Vector2 currentPos, float lineHeight, float minY, float maxY)
         {
@@ -675,7 +1050,7 @@ namespace Survive_the_night.Interfaces
 
                 string linePart = remainingWord.Substring(0, charsToTake);
 
-                // Рисуем часть слова только если она видима
+                // Рисуем часть слова если она видима
                 if (currentPos.Y >= minY && currentPos.Y + lineHeight <= maxY)
                 {
                     spriteBatch.DrawString(_font, linePart, new Vector2(textArea.X, currentPos.Y), Color.White);
@@ -687,7 +1062,7 @@ namespace Survive_the_night.Interfaces
                 remainingWord = remainingWord.Substring(charsToTake);
             }
 
-            return "";
+            return remainingWord;
         }
     }
 }

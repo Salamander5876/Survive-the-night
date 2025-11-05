@@ -69,6 +69,7 @@ namespace Survive_the_night
         private MusicsManager _musicManager;
         private LevelManager _levelManager;
         private GameHUD _gameHUD;
+        private DifficultyManager _difficultyManager;
 
         // Game World Entities
         private Player _player;
@@ -140,11 +141,9 @@ namespace Survive_the_night
 
         protected override void Initialize()
         {
-            // Сначала создаем debugTexture
             _debugTexture = new Texture2D(GraphicsDevice, 1, 1);
             _debugTexture.SetData(new[] { Color.White });
 
-            // Синхронизация локального и статического состояния
             _currentGameState = GameState.MainMenu;
             Game1.CurrentState = GameState.MainMenu;
 
@@ -156,17 +155,19 @@ namespace Survive_the_night
             _player = new Player(initialPlayerPosition);
             _camera = new Camera(_player, GraphicsDevice.Viewport);
 
-            // СНАЧАЛА инициализируем менеджеры
-            _musicManager = new MusicsManager();
-            _levelManager = new LevelManager();
+            // Создаем DifficultyManager
+            _difficultyManager = new DifficultyManager();
 
-            // ПОТОМ создаем SpawnManager и передаем LevelManager
-            _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager);
+            _musicManager = new MusicsManager();
+            _levelManager = new LevelManager(_difficultyManager);
+
+            _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager, _difficultyManager);
 
             _itemManager = new ItemManager(_player);
             _bonusShop = new BonusShopMenu(_player, _itemManager);
 
-            // Оружие будет инициализировано после выбора в StartMenu
+            Window.Title = "Casino Survivors";
+
             CurrentEnemies = _enemies;
 
             base.Initialize();
@@ -463,6 +464,9 @@ namespace Survive_the_night
                         // ПОЛНЫЙ СБРОС ВСЕХ ПАРАМЕТРОВ ПЕРЕД НАЧАЛОМ НОВОЙ ИГРЫ
                         ResetGameToInitialState();
 
+                        // Устанавливаем выбранный режим сложности
+                        _difficultyManager.SetDifficulty(_startMenu.SelectedGameMode);
+
                         // Останавливаем музыку меню перед началом игры
                         _musicManager.StopMusicForGameStart();
 
@@ -474,7 +478,7 @@ namespace Survive_the_night
 
                         Game1.CurrentState = GameState.Playing;
                         _loadingScreen.Reset();
-                        System.Diagnostics.Debug.WriteLine("НОВАЯ ИГРА НАЧАТА С ПОЛНЫМ СБРОСОМ");
+                        System.Diagnostics.Debug.WriteLine($"НОВАЯ ИГРА НАЧАТА С РЕЖИМОМ: {_startMenu.SelectedGameMode}");
                     }
                     break;
 
@@ -620,15 +624,16 @@ namespace Survive_the_night
                                     _gameHUD.ShowStageAnnouncement(levelAfter);
                                 }
 
-                                // ПРОВЕРКА ПОБЕДЫ: только если мы УЖЕ БЫЛИ на 8 уровне И это был второй элитный враг
-                                bool isVictoryCondition = (levelBefore == 8 && elitesAfter > 15);
+                                // ПРОВЕРКА ПОБЕДЫ: проверяем уровень ДО убийства и количество ДО убийства
+                                // Победа наступает когда мы УЖЕ БЫЛИ на 8 уровне и убили достаточно элитных врагов
+                                bool isVictoryCondition = _difficultyManager.CheckVictoryCondition(levelBefore, elitesBefore + 1);
 
                                 if (isVictoryCondition)
                                 {
                                     Game1.CurrentState = GameState.Victory;
                                     _victoryScreen.Show();
                                     _musicManager.StopMusic();
-                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesAfter}");
+                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesBefore + 1}, Цикл: {_difficultyManager.CurrentCycle}");
                                     break;
                                 }
 
@@ -1204,65 +1209,59 @@ namespace Survive_the_night
         {
             System.Diagnostics.Debug.WriteLine("ПОЛНЫЙ СБРОС ИГРЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");
 
-            // ВОССТАНАВЛИВАЕМ СУЩЕСТВУЮЩЕГО ИГРОКА
             Vector2 initialPlayerPosition = new Vector2(
                 _graphics.PreferredBackBufferWidth / 2,
                 _graphics.PreferredBackBufferHeight / 2
             );
 
-            // Полное восстановление игрока
             _player.SetPosition(initialPlayerPosition);
-
-            // ВАЖНО: Сбрасываем опыт и характеристики игрока
             _player.ResetExperienceRequirements();
 
             System.Diagnostics.Debug.WriteLine("Игрок восстановлен, опыт сброшен");
 
-            // Сбрасываем камеру
             if (_camera != null)
             {
                 _camera = new Camera(_player, GraphicsDevice.Viewport);
                 UpdateWorldGenerationCamera();
             }
 
-            // Сбрасываем менеджеры
             if (_levelManager != null)
             {
                 _levelManager.Reset();
                 System.Diagnostics.Debug.WriteLine($"LevelManager сброшен. Текущий уровень: {_levelManager.CurrentLevel}");
             }
 
+            if (_difficultyManager != null)
+            {
+                _difficultyManager.Reset();
+                System.Diagnostics.Debug.WriteLine($"DifficultyManager сброшен. Режим: {_difficultyManager.CurrentDifficulty}");
+            }
+
             if (_spawnManager != null)
             {
-                // Пересоздаем SpawnManager с обновленным игроком
-                _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager);
+                _spawnManager = new SpawnManager(_enemies, _player, _camera, GraphicsDevice.Viewport, _levelManager, _difficultyManager);
                 System.Diagnostics.Debug.WriteLine("SpawnManager сброшен");
             }
 
-            // ВАЖНО: Не пересоздаем ItemManager, а только очищаем его и обновляем ссылку на игрока
             if (_itemManager != null)
             {
                 _itemManager.Clear();
-                _itemManager.UpdatePlayerReference(_player); // ОБНОВЛЯЕМ ССЫЛКУ НА ИГРОКА
+                _itemManager.UpdatePlayerReference(_player);
                 System.Diagnostics.Debug.WriteLine("ItemManager очищен и обновлен");
             }
 
-            // ВАЖНО: Сбрасываем магазин бонусов
             if (_bonusShop != null)
             {
                 _bonusShop.ResetPrices();
                 System.Diagnostics.Debug.WriteLine("Магазин бонусов сброшен, цены восстановлены");
             }
 
-            // Сбрасываем коллекции
             _enemies.Clear();
             _weapons.Clear();
 
-            // Сбрасываем статистику
             _survivalTime = 0f;
             _killCount = 0;
 
-            // Сбрасываем меню прокачки
             if (_levelUpMenu != null)
             {
                 _levelUpMenu = new LevelUpMenu(_player, _weapons, GraphicsDevice, _debugTexture, _font);
@@ -1270,7 +1269,6 @@ namespace Survive_the_night
                 System.Diagnostics.Debug.WriteLine("Меню прокачки сброшено");
             }
 
-            // Сбрасываем рулетку
             if (_rouletteManager != null)
             {
                 _rouletteManager = new RouletteManager(_player, _weapons, GraphicsDevice, _debugTexture, _font);
@@ -1278,10 +1276,8 @@ namespace Survive_the_night
                 System.Diagnostics.Debug.WriteLine("Рулетка сброшена");
             }
 
-            // Обновляем текстуру пола для первого уровня
             UpdateFloorTexture();
 
-            // Устанавливаем музыку первого уровня
             _musicManager.PlayLevelMusic(1);
 
             System.Diagnostics.Debug.WriteLine("ВСЕ ПАРАМЕТРЫ ИГРЫ СБРОШЕНЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Interfaces;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -9,37 +10,65 @@ namespace Survive_the_night.Managers
         private int _currentLevel = 1;
         private int _elitesKilled = 0;
         private Dictionary<int, string> _levelFloorTextures;
+        private DifficultyManager _difficultyManager;
 
         public int CurrentLevel => _currentLevel;
         public int ElitesKilled => _elitesKilled;
 
-        public LevelManager()
+        public LevelManager(DifficultyManager difficultyManager)
         {
+            _difficultyManager = difficultyManager;
             _levelFloorTextures = new Dictionary<int, string>();
 
-            // Инициализируем текстуры пола для каждого уровня
             for (int i = 1; i <= 8; i++)
             {
                 _levelFloorTextures[i] = $"Sprites/HardCasinoFloor{i}";
             }
         }
 
-        // В LevelManager.cs добавьте отладочный вывод
         public void EliteKilled()
         {
             _elitesKilled++;
 
             Debug.WriteLine($"Элитный враг убит! Всего: {_elitesKilled}");
 
-            // Каждые 2 убитых элитных врага повышаем уровень (максимум 8)
-            if (_elitesKilled % 2 == 0 && _currentLevel < 8)
+            int requiredElites = _difficultyManager?.ElitesRequiredForStage ?? 2;
+
+            // Не повышаем уровень если уже на 8 уровне (кроме бесконечного режима)
+            if (_elitesKilled % requiredElites == 0)
             {
-                _currentLevel++;
-                Debug.WriteLine($"Уровень повышен до {_currentLevel}!");
+                if (_difficultyManager?.CurrentDifficulty == StartMenu.GameMode.Endless)
+                {
+                    AdvanceStageInEndless();
+                }
+                else if (_currentLevel < 8)
+                {
+                    _currentLevel++;
+                    Debug.WriteLine($"Уровень повышен до {_currentLevel}! Требовалось элитных: {requiredElites}");
+                }
+                else
+                {
+                    Debug.WriteLine($"Достигнут максимальный уровень {_currentLevel}. Элитных убито: {_elitesKilled}");
+                }
             }
             else
             {
-                Debug.WriteLine($"Текущий уровень: {_currentLevel}, элитных убито: {_elitesKilled}");
+                Debug.WriteLine($"Текущий уровень: {_currentLevel}, элитных убито: {_elitesKilled}/{requiredElites}");
+            }
+        }
+
+        public void AdvanceStageInEndless()
+        {
+            _currentLevel++;
+            if (_currentLevel > 8)
+            {
+                _currentLevel = 1;
+                _difficultyManager?.AdvanceCycle();
+                Debug.WriteLine($"Бесконечный режим: цикл {_difficultyManager?.CurrentCycle}");
+            }
+            else
+            {
+                Debug.WriteLine($"Бесконечный режим: уровень повышен до {_currentLevel}");
             }
         }
 
@@ -73,7 +102,12 @@ namespace Survive_the_night.Managers
         {
             _currentLevel = 1;
             _elitesKilled = 0;
-            System.Diagnostics.Debug.WriteLine($"🔄 LevelManager сброшен: уровень={_currentLevel}, элитных убито={_elitesKilled}");
+            System.Diagnostics.Debug.WriteLine($"LevelManager сброшен: уровень={_currentLevel}, элитных убито={_elitesKilled}");
+        }
+
+        public bool ShouldSpawnBothEliteTypes()
+        {
+            return _difficultyManager?.SpawnBothEliteTypes ?? true;
         }
     }
 }
