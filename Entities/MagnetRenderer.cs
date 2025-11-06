@@ -19,7 +19,6 @@ namespace Survive_the_night.Entities
         public override void Update(GameTime gameTime)
         {
             Position = _magnet.Position;
-            // УБРАЛИ вращение - магнит не крутится пока не подобран
         }
 
         public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)

@@ -17,15 +17,11 @@ namespace Survive_the_night.Entities
             _texture = texture;
 
             // Отладочная информация
-            System.Diagnostics.Debug.WriteLine($"ExperienceOrbRenderer создан: texture={texture != null}, size={texture?.Width}x{texture?.Height}");
         }
 
         public override void Update(GameTime gameTime)
         {
             Position = _orb.Position; // Это мировые координаты
-
-            // ДЕБАГ: выводим информацию о позиции рендерера
-            System.Diagnostics.Debug.WriteLine($"Рендерер опыта обновлен: мировые координаты = {Position}, активен = {_orb.IsActive}");
         }
 
         // ПЕРЕОПРЕДЕЛЯЕМ метод Draw с вращением
@@ -46,12 +42,9 @@ namespace Survive_the_night.Entities
                     SpriteEffects.None,
                     0f
                 );
-
-                System.Diagnostics.Debug.WriteLine($"Отрисовка опыта: позиция={Position}, текстура={_texture.Width}x{_texture.Height}");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"ОШИБКА отрисовки опыта: текстура={_texture != null}, активен={_orb.IsActive}");
                 // Резервная отрисовка через код (без вращения)
                 base.Draw(spriteBatch, debugTexture, Color.Yellow);
             }

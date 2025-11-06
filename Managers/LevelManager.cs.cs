@@ -34,15 +34,29 @@ namespace Survive_the_night.Managers
 
             int requiredElites = _difficultyManager?.ElitesRequiredForStage ?? 2;
 
-            // Не повышаем уровень если уже на 8 уровне (кроме бесконечного режима)
+            // Проверяем, достигли ли мы нужного количества элитных врагов для перехода
             if (_elitesKilled % requiredElites == 0)
             {
-                if (_difficultyManager?.CurrentDifficulty == StartMenu.GameMode.Endless)
+                if (_difficultyManager?.CurrentDifficulty == StartMenu.GameMode.Survival)
                 {
-                    AdvanceStageInEndless();
+                    // В режиме Survival всегда переходим на следующий уровень
+                    _currentLevel++;
+
+                    // Если достигли 9 уровня - сбрасываем на 1 и увеличиваем цикл
+                    if (_currentLevel > 8)
+                    {
+                        _currentLevel = 1;
+                        _difficultyManager?.AdvanceCycle();
+                        Debug.WriteLine($"Режим выживания: переход на цикл {_difficultyManager?.CurrentCycle}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Режим выживания: уровень повышен до {_currentLevel}");
+                    }
                 }
                 else if (_currentLevel < 8)
                 {
+                    // В обычных режимах повышаем уровень только до 8
                     _currentLevel++;
                     Debug.WriteLine($"Уровень повышен до {_currentLevel}! Требовалось элитных: {requiredElites}");
                 }
@@ -64,11 +78,11 @@ namespace Survive_the_night.Managers
             {
                 _currentLevel = 1;
                 _difficultyManager?.AdvanceCycle();
-                Debug.WriteLine($"Бесконечный режим: цикл {_difficultyManager?.CurrentCycle}");
+                Debug.WriteLine($"Режим выживания: цикл {_difficultyManager?.CurrentCycle}");
             }
             else
             {
-                Debug.WriteLine($"Бесконечный режим: уровень повышен до {_currentLevel}");
+                Debug.WriteLine($"Режим выживания: уровень повышен до {_currentLevel}");
             }
         }
 

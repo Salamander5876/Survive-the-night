@@ -13,7 +13,6 @@ namespace Survive_the_night.Items
         public Coin(Vector2 position, int value = 1) : base(position)
         {
             Value = value;
-            System.Diagnostics.Debug.WriteLine($"Монета создана: {value} на позиции {position}");
         }
 
         public static void SetTexture(Texture2D texture)
@@ -35,20 +34,15 @@ namespace Survive_the_night.Items
                 direction.Normalize();
                 Vector2 oldPosition = Position;
                 Position += direction * AttractionSpeed * deltaTime;
-
-                System.Diagnostics.Debug.WriteLine($"Монета движется: {oldPosition} -> {Position}, расстояние до игрока: {distance}");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Монета слишком далеко: расстояние {distance}, радиус притяжения {AttractionRadius}");
             }
         }
 
         public override void ApplyEffect(Player player)
         {
-            System.Diagnostics.Debug.WriteLine($"Применение эффекта монеты: {Value}");
             player.AddCoins(Value);
-            System.Diagnostics.Debug.WriteLine($"Монеты переданы игроку: {Value}");
         }
     }
 }

@@ -67,7 +67,6 @@ namespace Survive_the_night.Managers
             var magnet = new Magnet(position);
             _activeItems.Add(magnet);
             _itemRenderers.Add(new MagnetRenderer(magnet, _magnetTexture));
-            Debug.WriteLine($"Магнит создан на позиции {position}, текстура: {_magnetTexture != null}");
         }
 
         public void UpdatePlayerReference(Player newPlayer)
@@ -83,8 +82,6 @@ namespace Survive_the_night.Managers
             _magnetDuration = duration;
             _magnetSpeed = speed;
             _currentRotation = 0f;
-
-            Debug.WriteLine($"Магнит активирован! Длительность: {duration}сек, Скорость: {speed}");
         }
 
         // Обновление магнитного эффекта
@@ -102,7 +99,6 @@ namespace Survive_the_night.Managers
                 {
                     _magnetTimer = 0f;
                     _currentRotation = 0f;
-                    Debug.WriteLine("Магнит закончил работу");
                 }
             }
         }
@@ -137,7 +133,6 @@ namespace Survive_the_night.Managers
             var dynamite = new Dynamite(position);
             _activeItems.Add(dynamite);
             _itemRenderers.Add(new DynamiteRenderer(dynamite, _dynamiteTexture));
-            Debug.WriteLine($"Динамит создан на позиции {position}, текстура: {_dynamiteTexture != null}");
         }
 
         public void AddExperienceOrb(Vector2 position, int value)
@@ -150,11 +145,9 @@ namespace Survive_the_night.Managers
             if (_experienceOrbTexture != null)
             {
                 _itemRenderers.Add(new ExperienceOrbRenderer(orb, _experienceOrbTexture));
-                Debug.WriteLine($"Опыт создан: {finalValue} на позиции {position}, текстура: {_experienceOrbTexture.Width}x{_experienceOrbTexture.Height}, всего предметов: {_activeItems.Count}, рендереров: {_itemRenderers.Count}");
             }
             else
             {
-                Debug.WriteLine($"ОШИБКА: Текстура опыта не загружена!");
                 // Создаем рендерер с debug текстурой
                 _itemRenderers.Add(new ExperienceOrbRenderer(orb, _debugTexture));
             }
@@ -168,7 +161,6 @@ namespace Survive_the_night.Managers
             // Убедитесь, что рендерер создается правильно
             var renderer = new HealthOrbRenderer(orb);
             _itemRenderers.Add(renderer);
-            Debug.WriteLine($"HealthOrb создан на позиции {position}, текстура сердца: {_heartTexture != null}, всего предметов: {_activeItems.Count}, рендереров: {_itemRenderers.Count}");
         }
 
         public void AddGoldenHealthOrb(Vector2 position, float healPercentage)
@@ -177,7 +169,6 @@ namespace Survive_the_night.Managers
             _activeItems.Add(orb);
             var renderer = new GoldenHealthOrbRenderer(orb);
             _itemRenderers.Add(renderer);
-            Debug.WriteLine($"GoldenHealthOrb создан на позиции {position}, текстура: {_goldenHeartTexture != null}");
         }
 
         public void AddCoin(Vector2 position, int value = 1)
@@ -189,12 +180,9 @@ namespace Survive_the_night.Managers
             // Убедитесь, что рендерер создается правильно
             if (_coinTexture != null)
             {
-                _itemRenderers.Add(new CoinRenderer(coin, _coinTexture));
-                Debug.WriteLine($"Монета создана: {value} на позиции {position}, текстура: {_coinTexture.Width}x{_coinTexture.Height}, всего предметов: {_activeItems.Count}, рендереров: {_itemRenderers.Count}");
-            }
+                _itemRenderers.Add(new CoinRenderer(coin, _coinTexture));            }
             else
             {
-                Debug.WriteLine($"ОШИБКА: Текстура монеты не загружена!");
                 // Создаем рендерер с debug текстурой
                 _itemRenderers.Add(new CoinRenderer(coin, _debugTexture));
             }
@@ -212,7 +200,6 @@ namespace Survive_the_night.Managers
 
         public void Update(GameTime gameTime)
         {
-            Debug.WriteLine($"Обновление ItemManager: активных предметов={_activeItems.Count}, рендереров={_itemRenderers.Count}");
             // Обновление магнитного эффекта
             UpdateMagnet(gameTime);
             UpdateMagnetAttraction(gameTime, _player);
@@ -242,51 +229,40 @@ namespace Survive_the_night.Managers
                 bool isColliding = item.CheckCollision(_player);
                 if (isColliding)
                 {
-                    Debug.WriteLine($"Коллизия с предметом: {item.GetType().Name} на позиции {item.Position}");
-
                     // Особый случай для магнита
                     if (item is Magnet)
                     {
-                        ActivateMagnet(10f, Magnet.TotalAttractionSpeed);
-                        Debug.WriteLine($"Магнит активирован!");
-                    }
+                        ActivateMagnet(10f, Magnet.TotalAttractionSpeed);                    }
                     else
                     {
                         // Применяем эффект предмета
-                        Debug.WriteLine($"Применение эффекта предмета {item.GetType().Name}");
                         item.ApplyEffect(_player);
 
                         // Считаем статистику
                         if (item is ExperienceOrb)
                         {
                             expCollected++;
-                            Debug.WriteLine($"Опыт подобран! Всего в этом кадре: {expCollected}");
                         }
                         else if (item is Coin)
                         {
                             coinsCollected++;
-                            Debug.WriteLine($"Монета подобрана! Всего в этом кадре: {coinsCollected}");
                         }
                         else if (item is HealthOrb || item is GoldenHealthOrb)
                         {
                             healthCollected++;
-                            Debug.WriteLine($"Здоровье подобрано! Всего в этом кадре: {healthCollected}");
                         }
                         else if (item is Dynamite)
                         {
-                            Debug.WriteLine($"Динамит поднят!");
                         }
                     }
 
                     item.IsActive = false;
-                    Debug.WriteLine($"Предмет {item.GetType().Name} деактивирован");
                 }
             }
 
             // Вывод итоговой статистики за кадр
             if (expCollected > 0 || coinsCollected > 0 || healthCollected > 0)
             {
-                Debug.WriteLine($"Итог кадра: опыт={expCollected}, монеты={coinsCollected}, здоровье={healthCollected}");
             }
 
             foreach (var renderer in _itemRenderers)
@@ -297,8 +273,6 @@ namespace Survive_the_night.Managers
 
         public void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)
         {
-            Debug.WriteLine($"Отрисовка предметов: активных предметов={_activeItems.Count}, рендереров={_itemRenderers.Count}");
-
             foreach (var renderer in _itemRenderers)
             {
                 try
@@ -317,7 +291,6 @@ namespace Survive_the_night.Managers
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.WriteLine($"Ошибка отрисовки рендерера {renderer.GetType().Name}: {ex.Message}");
                 }
             }
         }

@@ -262,8 +262,6 @@ namespace Survive_the_night
             Dynamite.SetExplosionSound(dynamiteExplosionSound);
             DynamiteExplosion.SetTexture(dynamiteExplosionTexture);
 
-            System.Diagnostics.Debug.WriteLine($"Текстуры загружены: Heart={_heartTexture != null}, GoldenHeart={_goldenHeartTexture != null}, Coin={coinTexture != null}, ExperienceOrb={experienceOrbTexture != null}");
-
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
             var bombExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/BombExplosion");
@@ -329,8 +327,6 @@ namespace Survive_the_night
             var pauseButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonPause");
             var shopButtonTexture = Content.Load<Texture2D>("Sprites/GUI/ButtonShop");
 
-            System.Diagnostics.Debug.WriteLine($"Загружены текстуры кнопок: Пауза={pauseButtonTexture != null} ({pauseButtonTexture?.Width}x{pauseButtonTexture?.Height}), Магазин={shopButtonTexture != null} ({shopButtonTexture?.Width}x{shopButtonTexture?.Height})");
-
             // Передаем текстуры в HUD
             _gameHUD.LoadButtonTextures(pauseButtonTexture, shopButtonTexture);
 
@@ -358,7 +354,6 @@ namespace Survive_the_night
             _weapons.Clear();
             var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
             _weapons.Add(selectedWeapon);
-            System.Diagnostics.Debug.WriteLine($"Инициализировано стартовое оружие: {_selectedStartingWeapon}");
         }
 
         protected override void Update(GameTime gameTime)
@@ -400,7 +395,6 @@ namespace Survive_the_night
             {
                 _bonusShop.Show();
                 Game1.CurrentState = GameState.BonusShop;
-                System.Diagnostics.Debug.WriteLine("Магазин открыт по клавише B");
             }
 
             // Обработка кликов по кнопкам HUD
@@ -414,14 +408,12 @@ namespace Survive_the_night
                     // Открываем меню паузы по кнопке
                     _pauseMenu.Show();
                     Game1.CurrentState = GameState.Paused;
-                    System.Diagnostics.Debug.WriteLine("Меню паузы открыто по кнопке");
                 }
                 else if (_gameHUD.IsShopButtonClicked(mousePos) && _currentGameState == GameState.Playing)
                 {
                     // Открываем магазин бонусов
                     _bonusShop.Show();
                     Game1.CurrentState = GameState.BonusShop;
-                    System.Diagnostics.Debug.WriteLine("Магазин бонусов открыт");
                 }
             }
 
@@ -461,24 +453,29 @@ namespace Survive_the_night
 
                     if (startGame)
                     {
-                        // ПОЛНЫЙ СБРОС ВСЕХ ПАРАМЕТРОВ ПЕРЕД НАЧАЛОМ НОВОЙ ИГРЫ
                         ResetGameToInitialState();
 
                         // Устанавливаем выбранный режим сложности
                         _difficultyManager.SetDifficulty(_startMenu.SelectedGameMode);
 
-                        // Останавливаем музыку меню перед началом игры
-                        _musicManager.StopMusicForGameStart();
+                        // Устанавливаем режим в MusicManager
+                        _musicManager.SetGameMode(_startMenu.SelectedGameMode);
 
-                        // Инициализируем игрока с выбранным оружием
+                        _musicManager.StopMusicForGameStart();
                         InitializePlayerWeapon();
 
-                        // Запускаем музыку первого уровня
-                        _musicManager.PlayLevelMusic(1);
+                        // Запускаем соответствующую музыку - УПРОЩАЕМ ЛОГИКУ
+                        if (_startMenu.SelectedGameMode == StartMenu.GameMode.Survival)
+                        {
+                            _musicManager.ForcePlaySurvivalCycleMusic(1);
+                        }
+                        else
+                        {
+                            _musicManager.PlayLevelMusic(1);
+                        }
 
                         Game1.CurrentState = GameState.Playing;
                         _loadingScreen.Reset();
-                        System.Diagnostics.Debug.WriteLine($"НОВАЯ ИГРА НАЧАТА С РЕЖИМОМ: {_startMenu.SelectedGameMode}");
                     }
                     break;
 
@@ -491,9 +488,6 @@ namespace Survive_the_night
 
                     _itemManager.Update(gameTime);
 
-                    // Воспроизводим музыку текущего уровня
-                    _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
-
                     // Временный тест - создание предметов по клавише F9 рядом с игроком
                     if (currentKs.IsKeyDown(Keys.F9) && !_previousKeyboardState.IsKeyDown(Keys.F9))
                     {
@@ -503,10 +497,6 @@ namespace Survive_the_night
                         _itemManager.AddCoin(playerPos + new Vector2(-50, 0), 1);
                         _itemManager.AddHealthOrb(playerPos + new Vector2(0, 50), 0.25f);
                         _itemManager.AddDynamite(playerPos + new Vector2(0, -50));
-
-                        System.Diagnostics.Debug.WriteLine($"=== ТЕСТ: Созданы предметы рядом с игроком ===");
-                        System.Diagnostics.Debug.WriteLine($"Позиция игрока: {playerPos}");
-                        System.Diagnostics.Debug.WriteLine($"Созданы: опыт, монета, здоровье");
                     }
 
                     // Тест состояния игрока по клавише F10
@@ -520,8 +510,13 @@ namespace Survive_the_night
                         // Принудительная победа для тестирования
                         Game1.CurrentState = GameState.Victory;
                         _victoryScreen.Show();
-                        System.Diagnostics.Debug.WriteLine("Тестовый переход к победе по F8");
                         break;
+                    }
+
+                    // В Survival режиме музыка управляется автоматически при смене циклов
+                    if (_difficultyManager.CurrentDifficulty != StartMenu.GameMode.Survival)
+                    {
+                        _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
                     }
 
                     // Проверки состояния
@@ -538,28 +533,6 @@ namespace Survive_the_night
                     {
                         Game1.CurrentState = GameState.LevelUp;
                         break;
-                    }
-
-                    // ДЕБАГ: проверяем позиции каждые 3 секунды
-                    if (_survivalTime % 3f < 0.1f) // Каждые 3 секунды
-                    {
-                        System.Diagnostics.Debug.WriteLine($"=== ДЕБАГ ПОЗИЦИЙ ===");
-                        System.Diagnostics.Debug.WriteLine($"Камера: {_camera.Position}, Игрок: {_player.Position}");
-
-                        // Проверяем предметы
-                        if (_itemManager.ActiveItems.Count > 0)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Активных предметов: {_itemManager.ActiveItems.Count}");
-                            foreach (var item in _itemManager.ActiveItems)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Предмет {item.GetType().Name} на позиции: {item.Position}");
-                            }
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Нет активных предметов");
-                        }
-                        System.Diagnostics.Debug.WriteLine($"=== КОНЕЦ ДЕБАГА ===");
                     }
 
                     // Игровая логика
@@ -582,14 +555,12 @@ namespace Survive_the_night
 
                         if (_gameHUD.IsPauseButtonClicked(mousePos))
                         {
-                            System.Diagnostics.Debug.WriteLine("Кнопка паузы нажата");
                         }
                         else if (_gameHUD.IsShopButtonClicked(mousePos))
                         {
                             // Открываем магазин бонусов
                             _bonusShop.Show();
                             Game1.CurrentState = GameState.BonusShop;
-                            System.Diagnostics.Debug.WriteLine("Магазин бонусов открыт");
                         }
                     }
 
@@ -608,14 +579,16 @@ namespace Survive_the_night
                                 // Сохраняем состояние ДО обработки
                                 int elitesBefore = _levelManager.ElitesKilled;
                                 int levelBefore = _levelManager.CurrentLevel;
+                                int cycleBefore = _difficultyManager.CurrentCycle;
 
                                 // РЕГИСТРИРУЕМ УБИЙСТВО ЭЛИТНОГО ВРАГА
                                 _levelManager.EliteKilled();
 
                                 int elitesAfter = _levelManager.ElitesKilled;
                                 int levelAfter = _levelManager.CurrentLevel;
+                                int cycleAfter = _difficultyManager.CurrentCycle;
 
-                                System.Diagnostics.Debug.WriteLine($"Элитный враг убит! Уровень: {levelBefore}->{levelAfter}, Элитных: {elitesBefore}->{elitesAfter}");
+                                System.Diagnostics.Debug.WriteLine($"Элитный враг убит! Уровень: {levelBefore}->{levelAfter}, Элитных: {elitesBefore}->{elitesAfter}, Цикл: {cycleBefore}->{cycleAfter}");
 
                                 // ОБНОВЛЯЕМ ТЕКСТУРУ ПОЛА ЕСЛИ УРОВЕНЬ ИЗМЕНИЛСЯ
                                 if (levelAfter != levelBefore)
@@ -624,8 +597,18 @@ namespace Survive_the_night
                                     _gameHUD.ShowStageAnnouncement(levelAfter);
                                 }
 
+                                // В режиме Survival обновляем музыку цикла при смене цикла
+                                if (_difficultyManager.CurrentDifficulty == StartMenu.GameMode.Survival && cycleAfter != cycleBefore)
+                                {
+                                    _difficultyManager.UpdateSurvivalBaseHealth(cycleAfter);
+
+                                    // Используем принудительное переключение музыки
+                                    _musicManager.ForcePlaySurvivalCycleMusic(cycleAfter);
+
+                                    System.Diagnostics.Debug.WriteLine($"Survival: переход на цикл {cycleAfter}, HP и музыка обновлены");
+                                }
+
                                 // ПРОВЕРКА ПОБЕДЫ: проверяем уровень ДО убийства и количество ДО убийства
-                                // Победа наступает когда мы УЖЕ БЫЛИ на 8 уровне и убили достаточно элитных врагов
                                 bool isVictoryCondition = _difficultyManager.CheckVictoryCondition(levelBefore, elitesBefore + 1);
 
                                 if (isVictoryCondition)
@@ -633,7 +616,7 @@ namespace Survive_the_night
                                     Game1.CurrentState = GameState.Victory;
                                     _victoryScreen.Show();
                                     _musicManager.StopMusic();
-                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesBefore + 1}, Цикл: {_difficultyManager.CurrentCycle}");
+                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesBefore + 1}, Цикл: {cycleBefore}");
                                     break;
                                 }
 
@@ -660,7 +643,6 @@ namespace Survive_the_night
                                 // Обычный дроп опыта через менеджер предметов
                                 Vector2 worldPosition = enemy.Position; // Это мировые координаты
                                 _itemManager.AddExperienceOrb(worldPosition, 1);
-                                System.Diagnostics.Debug.WriteLine($"Создан опыт в мировых координатах: {worldPosition}");
 
                                 // Шанс дропа сердца 2%
                                 if (Game1.Random.NextDouble() < 0.02)
@@ -769,6 +751,7 @@ namespace Survive_the_night
                     else if (!_pauseMenu.IsVisible)
                     {
                         // Если меню паузы скрылось, возвращаемся в игру
+                        _musicManager.ResumeMusic();
                         Game1.CurrentState = GameState.Playing;
                     }
                     break;
@@ -988,7 +971,6 @@ namespace Survive_the_night
             try
             {
                 _worldGeneration.Draw(_spriteBatch);
-                Debug.WriteLine("WorldGeneration отрисован успешно");
             }
             catch (Exception ex)
             {
@@ -1031,7 +1013,7 @@ namespace Survive_the_night
 
             if (_survivalTime % 5f < 0.1f) // Каждые 5 секунд
             {
-                Debug.WriteLine($"Камера: {_camera.Position}, Игрок: {_player.Position}");
+                //Debug.WriteLine($"Камера: {_camera.Position}, Игрок: {_player.Position}");
             }
 
             // Отрисовка остального оружия (НАД ВСЕМИ)
@@ -1202,9 +1184,7 @@ namespace Survive_the_night
             }
         }
 
-        /// <summary>
-        /// Полный сброс всех параметров игры к начальным значениям
-        /// </summary>
+        //Полный сброс всех параметров игры к начальным значениям
         private void ResetGameToInitialState()
         {
             System.Diagnostics.Debug.WriteLine("ПОЛНЫЙ СБРОС ИГРЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");

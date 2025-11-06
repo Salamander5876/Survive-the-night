@@ -61,6 +61,8 @@ namespace Survive_the_night.Interfaces
             Easy,
             Hard,
             Insane,
+            Survival,
+            Custom,
             Endless
         }
 
@@ -195,17 +197,26 @@ namespace Survive_the_night.Interfaces
                     "Только для экспертов, готовых к настоящему испытанию."
                 },
                 {
-                    GameMode.Endless,
+                    GameMode.Survival,
                     "Сражайтесь так долго, как сможете!\n\n" +
                     "Особенности:\n" +
                     "Начальная сложность: как в Лёгком режиме\n" +
                     "После 8 этапа: цикл повторяется с усилением\n" +
                     "Цикл 2: сложность как в Сложном режиме\n" +
-                    "Цикл 3: сложность как в Безумном режиме\n" +
+                    "Цикл 3-4: сложность как в Безумном режиме\n" +
                     "Элитные враги: 2 типа\n" +
                     "Для перехода на этап: 2 элитных врага\n" +
-                    "Победа: 8 этап в 3 цикле\n\n" +
+                    "Победа: 8 этап в 4 цикле\n" +
+                    "Уникальная музыка для каждого цикла!\n\n" +
                     "Проверьте свой предел выживания!"
+                },
+                {
+                    GameMode.Custom,
+                    "Режим в разработке. Скоро будет доступен!"
+                },
+                {
+                    GameMode.Endless,
+                    "Режим в разработке. Скоро будет доступен!"
                 }
             };
 
@@ -309,13 +320,13 @@ namespace Survive_the_night.Interfaces
             );
 
             // Инициализация прямоугольников для опций выпадающего списка - ТАКАЯ ЖЕ ШИРИНА
-            _gameModeOptionRects = new Rectangle[4];
-            for (int i = 0; i < 4; i++)
+            _gameModeOptionRects = new Rectangle[6]; // Было 4, теперь 6
+            for (int i = 0; i < 6; i++) // Было 4, теперь 6
             {
                 _gameModeOptionRects[i] = new Rectangle(
                     _gameModeDropdownRect.X,
                     _gameModeDropdownRect.Y + GameModeDropdownHeight + (i * GameModeOptionHeight),
-                    GameModeDropdownWidth, // Такая же ширина
+                    GameModeDropdownWidth,
                     GameModeOptionHeight
                 );
             }
@@ -642,6 +653,8 @@ namespace Survive_the_night.Interfaces
                 case GameMode.Easy: return "ЛЕГКИЙ";
                 case GameMode.Hard: return "СЛОЖНЫЙ";
                 case GameMode.Insane: return "БЕЗУМНЫЙ";
+                case GameMode.Survival: return "ВЫЖИВАНИЕ";
+                case GameMode.Custom: return "СВОЙ РЕЖИМ";
                 case GameMode.Endless: return "БЕСКОНЕЧНЫЙ";
                 default: return "НЕИЗВЕСТНО";
             }
@@ -737,12 +750,12 @@ namespace Survive_the_night.Interfaces
                 _gameModeDropdownRect.X,
                 _gameModeDropdownRect.Y + _gameModeDropdownRect.Height,
                 _gameModeDropdownRect.Width,
-                GameModeOptionHeight * 4
+                GameModeOptionHeight * 6 // Было 4, теперь 6
             );
 
             spriteBatch.Draw(_debugTexture, dropdownBackground, Color.Black * 0.9f);
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 6; i++) // Было 4, теперь 6
             {
                 GameMode mode = (GameMode)i;
                 Rectangle optionRect = _gameModeOptionRects[i];
@@ -760,6 +773,13 @@ namespace Survive_the_night.Interfaces
                 );
 
                 Color textColor = mode == _selectedGameMode ? Color.Yellow : Color.White;
+
+                // Для режимов в разработке делаем текст серым
+                if (mode == GameMode.Custom || mode == GameMode.Endless)
+                {
+                    textColor = Color.Gray;
+                }
+
                 spriteBatch.DrawString(_font, modeText, modeTextPos, textColor);
 
                 // Рамка для опции

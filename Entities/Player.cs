@@ -94,7 +94,6 @@ namespace Survive_the_night.Entities
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"⚡ Игрок получил урон: {damage}. Осталось здоровья: {CurrentHealth}");
                 }
             }
         }
@@ -116,13 +115,13 @@ namespace Survive_the_night.Entities
         {
             if (IsLevelUpPending)
             {
-                System.Diagnostics.Debug.WriteLine($"⏸️ Опыт не начисляется - ожидание выбора улучшения");
+                System.Diagnostics.Debug.WriteLine($"Опыт не начисляется - ожидание выбора улучшения");
                 return;
             }
 
             int oldExp = CurrentExperience;
             CurrentExperience += amount;
-            System.Diagnostics.Debug.WriteLine($"🎯 Игрок получил {amount} опыта. Было: {oldExp}, Стало: {CurrentExperience}/{ExperienceToNextLevel}");
+            System.Diagnostics.Debug.WriteLine($"Игрок получил {amount} опыта. Было: {oldExp}, Стало: {CurrentExperience}/{ExperienceToNextLevel}");
 
             if (CurrentExperience >= ExperienceToNextLevel)
             {
@@ -179,7 +178,7 @@ namespace Survive_the_night.Entities
         public void AddCoins(int amount)
         {
             Coins += amount;
-            System.Diagnostics.Debug.WriteLine($"💰 Игрок получил {amount} монет. Всего: {Coins}");
+            System.Diagnostics.Debug.WriteLine($"Игрок получил {amount} монет. Всего: {Coins}");
         }
 
         public bool SpendCoins(int amount)

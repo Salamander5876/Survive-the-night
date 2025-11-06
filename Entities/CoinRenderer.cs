@@ -14,17 +14,11 @@ public class CoinRenderer : GameObject
     {
         _coin = coin;
         _texture = texture;
-
-        // Отладочная информация
-        System.Diagnostics.Debug.WriteLine($"CoinRenderer создан: texture={texture != null}, size={texture?.Width}x{texture?.Height}");
     }
 
     public override void Update(GameTime gameTime)
     {
         Position = _coin.Position; // Это мировые координаты
-
-        // ДЕБАГ: выводим информацию о позиции рендерера
-        System.Diagnostics.Debug.WriteLine($"Рендерер монеты обновлен: мировые координаты = {Position}, активен = {_coin.IsActive}");
     }
 
     public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture, Color? color = null)
@@ -44,12 +38,9 @@ public class CoinRenderer : GameObject
                 SpriteEffects.None,
                 0f
             );
-
-            System.Diagnostics.Debug.WriteLine($"Отрисовка монеты: позиция={Position}, текстура={_texture.Width}x{_texture.Height}");
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine($"ОШИБКА отрисовки монеты: текстура={_texture != null}, активна={_coin.IsActive}");
             // Резервная отрисовка
             base.Draw(spriteBatch, debugTexture, Color.Gold);
         }

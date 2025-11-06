@@ -909,6 +909,26 @@
 /processor:SongProcessor
 /build:Musics/HardLevel8.mp3
 
+#begin Musics/SurvivalCycle1.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Musics/SurvivalCycle1.mp3
+
+#begin Musics/SurvivalCycle2.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Musics/SurvivalCycle2.mp3
+
+#begin Musics/SurvivalCycle3.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Musics/SurvivalCycle3.mp3
+
+#begin Musics/SurvivalCycle4.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/build:Musics/SurvivalCycle4.mp3
+
 #begin Musics/MainMusic.mp3
 /importer:Mp3Importer
 /processor:SongProcessor

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Survive_the_night.Interfaces;
 using Survive_the_night.Managers;
 
 namespace Survive_the_night.Entities
@@ -45,14 +46,53 @@ namespace Survive_the_night.Entities
 
         protected virtual int CalculateHealthForStage(int baseHealth, int stage)
         {
-            int stageHealth = baseHealth + (stage - 1) * 5;
-
-            if (_difficultyManager != null)
+            if (_difficultyManager != null && _difficultyManager.CurrentDifficulty == StartMenu.GameMode.Survival)
             {
-                stageHealth = (int)(stageHealth * _difficultyManager.EnemyHealthMultiplier);
+                // Для режима выживания используем прогрессивную систему
+                return CalculateSurvivalHealth(stage);
             }
+            else
+            {
+                // Стандартная логика для обычных режимов
+                int stageHealth = baseHealth + (stage - 1) * 5;
+                if (_difficultyManager != null)
+                {
+                    stageHealth = (int)(stageHealth * _difficultyManager.EnemyHealthMultiplier);
+                }
+                return stageHealth;
+            }
+        }
 
-            return stageHealth;
+        // Новая логика для режима выживания
+        protected virtual int CalculateSurvivalHealth(int stage)
+        {
+            if (_difficultyManager == null) return 5;
+
+            // Получаем базовое HP из DifficultyManager
+            int survivalBaseHealth = _difficultyManager.GetSurvivalBaseHealth();
+
+            // Добавляем бонус за этапы (как в обычной системе)
+            int stageBonus = (stage - 1) * 5;
+
+            // Применяем множитель текущего цикла
+            float cycleMultiplier = GetCurrentCycleMultiplier();
+
+            return (int)((survivalBaseHealth + stageBonus) * cycleMultiplier);
+        }
+
+        // Получение множителя текущего цикла
+        private float GetCurrentCycleMultiplier()
+        {
+            if (_difficultyManager == null) return 1.0f;
+
+            switch (_difficultyManager.CurrentCycle)
+            {
+                case 1: return 1.0f;
+                case 2: return 1.5f;
+                case 3: return 2.0f;
+                case 4: return 2.0f;
+                default: return 2.0f;
+            }
         }
 
         protected virtual int CalculateDamageForStage(int baseDamage, int stage)

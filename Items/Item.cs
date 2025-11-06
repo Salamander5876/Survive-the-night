@@ -32,7 +32,6 @@ namespace Survive_the_night.Items
 
             if (isColliding)
             {
-                System.Diagnostics.Debug.WriteLine($"Коллизия предмета {GetType().Name} с игроком. Расстояние: {Vector2.Distance(Position, player.Position)}");
             }
 
             return isColliding;
