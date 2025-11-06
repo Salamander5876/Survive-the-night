@@ -58,7 +58,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Количество карт +1 (Ур. {pc.CountLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Количество карт +1 (Ур. {pc.CountLevel}/10)",
                             Description = $"Текущее количество: {pc.NumCards}",
                             ApplyUpgrade = () => pc.UpgradeCount()
                         });
@@ -67,7 +67,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +2 (Ур. {pc.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +2 (Ур. {pc.DamageLevel}/10)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
@@ -76,7 +76,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Скорость перезарядки (Ур. {pc.ReloadSpeedLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Скорость перезарядки (Ур. {pc.ReloadSpeedLevel}/10)",
                             Description = $"Текущая перезарядка: {pc.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => pc.UpgradeReloadSpeed()
                         });
@@ -88,7 +88,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Количество пуль +1 (Ур. {gb.CountLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Количество пуль +1 (Ур. {gb.CountLevel}/10)",
                             Description = $"Текущее количество: {gb.NumBullets}",
                             ApplyUpgrade = () => gb.UpgradeCount()
                         });
@@ -97,17 +97,16 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Урон +2 (Ур. {gb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Урон +2 (Ур. {gb.DamageLevel}/10)",
                             Description = $"Текущий урон: {gb.Damage}",
                             ApplyUpgrade = () => gb.UpgradeDamage()
                         });
                     }
-                    // ЗАМЕНА: Вместо скорости - отталкивание
                     if (gb.KnockbackLevel < 10)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Отталкивание +5px (Ур. {gb.KnockbackLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenBullet)}: Отталкивание +5px (Ур. {gb.KnockbackLevel}/10)",
                             Description = $"Текущее отталкивание: {gb.GetKnockbackForce()}px",
                             ApplyUpgrade = () => gb.UpgradeKnockback()
                         });
@@ -119,7 +118,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Урон +2 (Ур. {cc.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Урон +2 (Ур. {cc.DamageLevel}/10)",
                             Description = $"Текущий урон: {cc.Damage}",
                             ApplyUpgrade = () => cc.UpgradeDamage()
                         });
@@ -128,7 +127,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Скорость перезарядки -0.2с (Ур. {cc.ReloadSpeedLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Скорость перезарядки -0.2с (Ур. {cc.ReloadSpeedLevel}/10)",
                             Description = $"Текущая перезарядка: {cc.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => cc.UpgradeReloadSpeed()
                         });
@@ -137,7 +136,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Отскоки +1 (Ур. {cc.BounceLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.CasinoChips)}: Отскоки +1 (Ур. {cc.BounceLevel}/10)",
                             Description = $"Текущее количество отскоков: {cc.BounceLevel + 1}",
                             ApplyUpgrade = () => cc.UpgradeBounceCount()
                         });
@@ -149,7 +148,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Урон +3 (Ур. {sb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Урон +3 (Ур. {sb.DamageLevel}/10)",
                             Description = $"Текущий урон: {sb.Damage}",
                             ApplyUpgrade = () => sb.UpgradeDamage()
                         });
@@ -158,7 +157,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Количество +1 (Ур. {sb.CountLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Количество +1 (Ур. {sb.CountLevel}/10)",
                             Description = $"Текущее количество: {sb.NumBombs}",
                             ApplyUpgrade = () => sb.UpgradeCount()
                         });
@@ -167,7 +166,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Время взрыва -1сек (Ур. {sb.ExplosionTimeLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.StickyBomb)}: Время взрыва -1сек (Ур. {sb.ExplosionTimeLevel}/10)",
                             Description = $"Текущее время: {sb.ExplosionTime:0} сек",
                             ApplyUpgrade = () => sb.UpgradeExplosionTime()
                         });
@@ -179,7 +178,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительный урон +1 (Ур. {dw.DamageBonusLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительный урон +1 (Ур. {dw.DamageBonusLevel}/10)",
                             Description = $"Текущий бонус урона: +{dw.DamageBonusLevel}",
                             ApplyUpgrade = () => dw.UpgradeDamage()
                         });
@@ -188,7 +187,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительное пробитие +1 (Ур. {dw.PierceBonusLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Дополнительное пробитие +1 (Ур. {dw.PierceBonusLevel}/10)",
                             Description = $"Текущий бонус пробития: +{dw.PierceBonusLevel}",
                             ApplyUpgrade = () => dw.UpgradePierce()
                         });
@@ -197,7 +196,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Перезарядка -0.5с (Ур. {dw.CooldownLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Dice)}: Перезарядка -0.5с (Ур. {dw.CooldownLevel}/10)",
                             Description = $"Текущая перезарядка: {dw.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => dw.UpgradeCooldown()
                         });
@@ -209,7 +208,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Скорость +50 (Ур. {rb.SpeedLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Скорость +50 (Ур. {rb.SpeedLevel}/10)",
                             Description = $"Текущая скорость: {rb.ProjectileSpeed:0}",
                             ApplyUpgrade = () => rb.UpgradeSpeed()
                         });
@@ -218,7 +217,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Время частичек +0.5с (Ур. {rb.LifetimeLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Время частичек +0.5с (Ур. {rb.LifetimeLevel}/10)",
                             Description = $"Текущее время: {rb.ParticleLifetime:0.0}с",
                             ApplyUpgrade = () => rb.UpgradeLifetime()
                         });
@@ -227,13 +226,12 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Урон частичек +2 (Ур. {rb.DamageLevel + 1}/10)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.RouletteBall)}: Урон частичек +2 (Ур. {rb.DamageLevel}/10)",
                             Description = $"Текущий урон: {rb.ParticleDamage}",
                             ApplyUpgrade = () => rb.UpgradeDamage()
                         });
                     }
                 }
-                // В методе GenerateOptions() добавить после секции RouletteBall:
 
                 // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
                 else if (weapon is GoldenSword gs)
@@ -242,7 +240,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Количество мечей +1 (Ур. {gs.CountLevel}/5)",
                             Description = $"Текущее количество: {gs.NumSwords}",
                             ApplyUpgrade = () => gs.UpgradeCount()
                         });
@@ -251,17 +249,16 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +3 (Ур. {gs.DamageLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Урон +3 (Ур. {gs.DamageLevel}/5)",
                             Description = $"Текущий урон: {gs.Damage}",
                             ApplyUpgrade = () => gs.UpgradeDamage()
                         });
                     }
-                    // НОВОЕ: прокачка количества целей вместо скорости
                     if (gs.TargetsLevel < 5)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Целей +5 (Ур. {gs.TargetsLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenSword)}: Целей +5 (Ур. {gs.TargetsLevel}/5)",
                             Description = $"Текущее количество целей: {gs.MaxTargets}",
                             ApplyUpgrade = () => gs.UpgradeTargets()
                         });
@@ -273,7 +270,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Количество бутылок +1 (Ур. {mc.CountLevel}/5)",
                             Description = $"Текущее количество: {mc.NumBottles}",
                             ApplyUpgrade = () => mc.UpgradeBottleCount()
                         });
@@ -282,17 +279,16 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Время горения +5 сек (Ур. {mc.DurationLevel}/5)",
                             Description = $"Текущее время: {mc.BurnDuration:0} сек",
                             ApplyUpgrade = () => mc.UpgradeBurnDuration()
                         });
                     }
-                    // ИЗМЕНЕНО: прокачка урона вместо скорости атаки
                     if (mc.DamageLevel < 5)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Урон огня +1 (Ур. {mc.DamageLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.MolotovCocktail)}: Урон огня +1 (Ур. {mc.DamageLevel}/5)",
                             Description = $"Текущий урон: {mc.Damage}",
                             ApplyUpgrade = () => mc.UpgradeDamage()
                         });
@@ -304,7 +300,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Длительность +10с (Ур. {bl.DurationLevel}/5)",
                             Description = $"Текущая длительность: {bl.CurrentDuration:0}с",
                             ApplyUpgrade = () => bl.UpgradeDuration()
                         });
@@ -313,7 +309,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Урон +2 (Ур. {bl.DamageLevel}/5)",
                             Description = $"Текущий урон: {bl.Damage}",
                             ApplyUpgrade = () => bl.UpgradeDamage()
                         });
@@ -322,7 +318,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BigLaser)}: Перезарядка -5с (Ур. {bl.CooldownLevel}/5)",
                             Description = $"Текущая перезарядка: {bl.CurrentCooldown:0}с",
                             ApplyUpgrade = () => bl.UpgradeCooldown()
                         });
