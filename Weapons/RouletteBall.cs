@@ -1,7 +1,8 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
+using Survive_the_night.Managers;
 using Survive_the_night.Projectiles;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,9 +34,22 @@ namespace Survive_the_night.Weapons
         private float _particleTimer = 0f;
         private const float PARTICLE_INTERVAL = 0.1f;
 
+        // Ссылка на камеру для определения границ экрана
+        private Camera _camera;
+        private Viewport _viewport;
+
         public RouletteBall(Player player) : base(player, WeaponType.Regular, WeaponName.RouletteBall, 4f, 2)
         {
-            Damage = 2; // Устанавливаем базовый урон
+            Damage = 2;
+            // Получаем камеру и вьюпорт из игрового контекста
+            // Это временное решение - в реальной игре нужно передать камеру извне
+        }
+
+        // Метод для установки камеры и вьюпорта
+        public void SetCamera(Camera camera, Viewport viewport)
+        {
+            _camera = camera;
+            _viewport = viewport;
         }
 
         public override void LevelUp()
@@ -78,6 +92,17 @@ namespace Survive_the_night.Weapons
                 var ball = ActiveBalls[i];
                 if (ball.IsActive)
                 {
+                    // Обновляем границы экрана для шарика на основе камеры
+                    if (_camera != null)
+                    {
+                        ball.ScreenBounds = new Rectangle(
+                            (int)_camera.Position.X,
+                            (int)_camera.Position.Y,
+                            _viewport.Width,
+                            _viewport.Height
+                        );
+                    }
+
                     ball.Update(gameTime);
 
                     // Создаем частички следа с интервалом 0.1 секунды
@@ -121,43 +146,42 @@ namespace Survive_the_night.Weapons
 
         public override void Attack(GameTime gameTime, List<Enemy> enemies)
         {
-            // НОВЫЕ ШАРИКИ ТОЛЬКО КОГДА НЕТ АКТИВНЫХ
+            // НОВЫЕ ШАРИКИ ТОЛЬКО КОГДА НЕТ АКТИВНЫХ И ЕСТЬ ВРАГИ НА ЭКРАНЕ
             if (_cooldownTimer > 0f || ActiveBalls.Count > 0) return;
 
-            // НАХОДИМ БЛИЖАЙШЕГО ВРАГА К ИГРОКУ
-            Enemy closestEnemy = FindClosestEnemyToPlayer(enemies);
+            // ПРОВЕРЯЕМ, ЕСТЬ ЛИ ВРАГИ В ПРЕДЕЛАХ ЭКРАНА
+            Enemy closestEnemy = FindClosestEnemyOnScreen(enemies);
             if (closestEnemy == null)
             {
-                // Если врагов нет, используем случайное направление
-                Vector2 randomDirection = new Vector2(
-                    (float)(Game1.Random.NextDouble() * 2 - 1),
-                    (float)(Game1.Random.NextDouble() * 2 - 1)
-                );
-                randomDirection.Normalize();
+                // Если врагов на экране нет, не создаем шарик
+                Debug.WriteLine("Нет врагов на экране - шарик не создается");
+                return;
+            }
 
-                CreateBall(Player.Position, randomDirection);
-            }
-            else
-            {
-                // Летим к ближайшему врагу (к игроку)
-                Vector2 direction = Vector2.Normalize(closestEnemy.Position - Player.Position);
-                CreateBall(Player.Position, direction);
-            }
+            // Летим к ближайшему врагу на экране
+            Vector2 direction = Vector2.Normalize(closestEnemy.Position - Player.Position);
+            CreateBall(Player.Position, direction);
 
             _cooldownTimer = _baseCooldown;
         }
 
-        // ИЩЕМ ВРАГА БЛИЖАЙШЕГО К ИГРОКУ
-        private Enemy FindClosestEnemyToPlayer(List<Enemy> enemies)
+        // ИЩЕМ ВРАГА БЛИЖАЙШЕГО К ИГРОКУ, НАХОДЯЩЕГОСЯ НА ЭКРАНЕ
+        private Enemy FindClosestEnemyOnScreen(List<Enemy> enemies)
         {
             if (enemies == null || enemies.Count == 0) return null;
 
             Enemy closestEnemy = null;
             float minDistance = float.MaxValue;
 
+            // Получаем текущие границы экрана
+            Rectangle screenBounds = GetCurrentScreenBounds();
+
             foreach (var enemy in enemies)
             {
                 if (!enemy.IsAlive) continue;
+
+                // Проверяем, находится ли враг в пределах экрана
+                if (!IsEnemyOnScreen(enemy, screenBounds)) continue;
 
                 float distance = Vector2.DistanceSquared(Player.Position, enemy.Position);
                 if (distance < minDistance)
@@ -170,6 +194,32 @@ namespace Survive_the_night.Weapons
             return closestEnemy;
         }
 
+        // Получаем текущие границы экрана на основе камеры
+        private Rectangle GetCurrentScreenBounds()
+        {
+            if (_camera != null)
+            {
+                return new Rectangle(
+                    (int)_camera.Position.X,
+                    (int)_camera.Position.Y,
+                    _viewport.Width,
+                    _viewport.Height
+                );
+            }
+            else
+            {
+                // Fallback: статические границы
+                return new Rectangle(0, 0, 1280, 720);
+            }
+        }
+
+        // Проверяем, находится ли враг в пределах экрана
+        private bool IsEnemyOnScreen(Enemy enemy, Rectangle screenBounds)
+        {
+            Rectangle enemyBounds = enemy.GetBounds();
+            return screenBounds.Intersects(enemyBounds);
+        }
+
         private void CreateBall(Vector2 position, Vector2 direction)
         {
             var newBall = new RouletteBallProjectile(
@@ -179,21 +229,30 @@ namespace Survive_the_night.Weapons
                 ProjectileSpeed,
                 direction,
                 MaxBounces,
-                BallDamage // Теперь урон 2 (базовый)
+                BallDamage
             );
 
             // УСТАНАВЛИВАЕМ ССЫЛКУ НА ОРУЖИЕ
             newBall.SetWeapon(this);
 
+            // Устанавливаем начальные границы экрана
+            newBall.ScreenBounds = GetCurrentScreenBounds();
+
             ActiveBalls.Add(newBall);
             Debug.WriteLine($"Создан новый шарик. Урон: {BallDamage}, Скорость: {ProjectileSpeed}, Отскоков: {MaxBounces}");
         }
 
-        // Метод для поиска нового врага после отскока - ИЩЕМ БЛИЖАЙШЕГО К ИГРОКУ
+        // Метод для поиска нового врага после отскока - ИЩЕМ БЛИЖАЙШЕГО К ИГРОКУ НА ЭКРАНЕ
         public Vector2? FindNextTarget(Vector2 currentPosition, List<Enemy> enemies)
         {
-            Enemy closestEnemy = FindClosestEnemyToPlayer(enemies);
-            return closestEnemy?.Position;
+            Enemy closestEnemy = FindClosestEnemyOnScreen(enemies);
+            if (closestEnemy != null)
+            {
+                return closestEnemy.Position;
+            }
+
+            // Если врагов на экране нет, возвращаем null - шарик отскочит в случайную сторону
+            return null;
         }
 
         // НОВЫЙ МЕТОД: воспроизведение звука отскока (будет вызываться из RouletteBallProjectile)
@@ -217,7 +276,6 @@ namespace Survive_the_night.Weapons
                     // ШАРИК НАНОСИТ УРОН, НО НЕ УНИЧТОЖАЕТСЯ
                     enemy.TakeDamage(ball.Damage);
 
-                    // УБРАЛИ ЗВУК - звук только при отскоках от стен
                     Debug.WriteLine($"Шарик нанес урон {ball.Damage} врагу");
                     // НЕ break - шарик может поразить нескольких врагов за один кадр
                 }
@@ -230,7 +288,7 @@ namespace Survive_the_night.Weapons
                 position,
                 0,
                 Color.White,
-                ParticleDamage, // Теперь урон 2 (базовый)
+                ParticleDamage,
                 ParticleLifetime
             );
             ActiveParticles.Add(particle);
@@ -253,7 +311,6 @@ namespace Survive_the_night.Weapons
                         enemy.TakeDamage(particle.Damage);
                         particle.IsActive = false; // Уничтожаем частичку
 
-                        // УБРАЛИ ЗВУК - звук только при отскоках от стен
                         Debug.WriteLine($"Частичка нанесла урон {particle.Damage} врагу");
                         break;
                     }

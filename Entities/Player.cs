@@ -236,5 +236,33 @@ namespace Survive_the_night.Entities
             System.Diagnostics.Debug.WriteLine($"Опыт игрока сброшен: уровень={Level}, опыт={CurrentExperience}/{ExperienceToNextLevel}");
         }
 
+        public void ResetToInitialState()
+        {
+            // Сброс здоровья и жизненного состояния
+            MaxHealth = 100;
+            CurrentHealth = MaxHealth;
+            IsAlive = true;
+
+            // Сброс опыта и уровней
+            Level = 1;
+            CurrentExperience = 0;
+            ExperienceToNextLevel = 10;
+            IsLevelUpPending = false;
+
+            // Сброс улучшений
+            HealthLevel = 0;
+            HeartHealBonusLevel = 0;
+
+            // Сброс скорости
+            BaseSpeed = 250f;
+
+            // Сброс валюты
+            Coins = 0;
+
+            // Сброс таймера неуязвимости
+            _invulnerabilityTimer = 0f;
+
+            System.Diagnostics.Debug.WriteLine("Игрок полностью сброшен к начальному состоянию");
+        }
     }
 }

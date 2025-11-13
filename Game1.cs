@@ -703,10 +703,19 @@ namespace Survive_the_night
                         weapon.Update(gameTime);
                         weapon.Attack(gameTime, _enemies);
 
-                        // Особый случай для RouletteBall - обновляем границы шариков
+                        // Особый случай для RouletteBall - обновляем камеру и границы
                         if (weapon is RouletteBall rouletteBall)
                         {
-                            // Создаем актуальные границы экрана
+                            // Устанавливаем камеру и вьюпорт если они еще не установлены
+                            var rouletteField = weapon.GetType().GetField("_camera",
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (rouletteField != null && rouletteField.GetValue(weapon) == null)
+                            {
+                                weapon.GetType().GetMethod("SetCamera")?.Invoke(weapon,
+                                    new object[] { _camera, GraphicsDevice.Viewport });
+                            }
+
+                            // Создаем актуальные границы экрана для ВСЕХ активных шариков
                             Rectangle screenBounds = new Rectangle(
                                 (int)_camera.Position.X,
                                 (int)_camera.Position.Y,
@@ -1189,15 +1198,38 @@ namespace Survive_the_night
         {
             System.Diagnostics.Debug.WriteLine("ПОЛНЫЙ СБРОС ИГРЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");
 
+            // СБРОС ЭКРАНОВ СМЕРТИ И ПОБЕДЫ - ДОБАВЛЕНО ДЛЯ ИСПРАВЛЕНИЯ БАГА
+            if (_gameOverScreen != null && _gameOverScreen.IsVisible)
+            {
+                _gameOverScreen.Hide();
+                _gameOverScreen.Reset();
+                System.Diagnostics.Debug.WriteLine("Экран Game Over сброшен");
+            }
+
+            if (_victoryScreen != null && _victoryScreen.IsVisible)
+            {
+                _victoryScreen.Hide();
+                System.Diagnostics.Debug.WriteLine("Экран Victory сброшен");
+            }
+
             Vector2 initialPlayerPosition = new Vector2(
                 _graphics.PreferredBackBufferWidth / 2,
                 _graphics.PreferredBackBufferHeight / 2
             );
 
-            _player.SetPosition(initialPlayerPosition);
-            _player.ResetExperienceRequirements();
+            // ПОЛНЫЙ СБРОС СОСТОЯНИЯ ИГРОКА - КРИТИЧЕСКИ ВАЖНО!
+            if (_player != null)
+            {
+                _player.SetPosition(initialPlayerPosition);
+                _player.ResetExperienceRequirements();
+                _player.ResetToInitialState();
 
-            System.Diagnostics.Debug.WriteLine("Игрок восстановлен, опыт сброшен");
+                // ЯВНЫЙ СБРОС ЖИЗНЕННЫХ ПАРАМЕТРОВ
+                _player.IsAlive = true; // ГАРАНТИРУЕМ, ЧТО ИГРОК ЖИВ
+                _player.CurrentHealth = _player.MaxHealth; // ПОЛНОЕ ЗДОРОВЬЕ
+
+                System.Diagnostics.Debug.WriteLine($"Игрок восстановлен: HP={_player.CurrentHealth}/{_player.MaxHealth}, IsAlive={_player.IsAlive}");
+            }
 
             if (_camera != null)
             {
@@ -1257,6 +1289,10 @@ namespace Survive_the_night
             }
 
             UpdateFloorTexture();
+
+            // СБРАСЫВАЕМ СОСТОЯНИЕ ИГРЫ
+            Game1.CurrentState = GameState.Playing;
+            _currentGameState = GameState.Playing;
 
             _musicManager.PlayLevelMusic(1);
 

@@ -87,32 +87,32 @@ namespace Survive_the_night.Projectiles
 
             if (Position.X - Size / 2 < ScreenBounds.Left)
             {
-                HandleBoundaryBounce();
+                HandleBoundaryBounce(true, false);
                 Position = new Vector2(ScreenBounds.Left + Size / 2 + 1, Position.Y);
                 bounced = true;
             }
             else if (Position.X + Size / 2 > ScreenBounds.Right)
             {
-                HandleBoundaryBounce();
+                HandleBoundaryBounce(true, false);
                 Position = new Vector2(ScreenBounds.Right - Size / 2 - 1, Position.Y);
                 bounced = true;
             }
 
             if (Position.Y - Size / 2 < ScreenBounds.Top)
             {
-                HandleBoundaryBounce();
+                HandleBoundaryBounce(false, true);
                 Position = new Vector2(Position.X, ScreenBounds.Top + Size / 2 + 1);
                 bounced = true;
             }
             else if (Position.Y + Size / 2 > ScreenBounds.Bottom)
             {
-                HandleBoundaryBounce();
+                HandleBoundaryBounce(false, true);
                 Position = new Vector2(Position.X, ScreenBounds.Bottom - Size / 2 - 1);
                 bounced = true;
             }
         }
 
-        private void HandleBoundaryBounce()
+        private void HandleBoundaryBounce(bool horizontal, bool vertical)
         {
             BouncesLeft--;
             _totalBounces++;
@@ -132,23 +132,33 @@ namespace Survive_the_night.Projectiles
                 return;
             }
 
-            // ПОСЛЕ ОТСКОКА ОТ СТЕНЫ - ЛЕТИМ К НОВОМУ ВРАГУ
+            // Отражаем направление от стены
+            if (horizontal)
+            {
+                Direction = new Vector2(-Direction.X, Direction.Y);
+            }
+            if (vertical)
+            {
+                Direction = new Vector2(Direction.X, -Direction.Y);
+            }
+
+            // Нормализуем направление
+            Direction = Vector2.Normalize(Direction);
+
+            // ПОСЛЕ ОТСКОКА ОТ СТЕНЫ - ПЫТАЕМСЯ НАЙТИ НОВОГО ВРАГА
             if (_weapon != null)
             {
                 var nextTarget = _weapon.FindNextTarget(Position, Game1.CurrentEnemies);
                 if (nextTarget.HasValue)
                 {
+                    // Летим к врагу, если он есть на экране
                     Direction = Vector2.Normalize(nextTarget.Value - Position);
                     Debug.WriteLine($"Новое направление к врагу: {Direction}");
                 }
                 else
                 {
-                    Direction = new Vector2(
-                        (float)(Game1.Random.NextDouble() * 2 - 1),
-                        (float)(Game1.Random.NextDouble() * 2 - 1)
-                    );
-                    Direction.Normalize();
-                    Debug.WriteLine($"Новое случайное направление: {Direction}");
+                    // Если врагов нет, продолжаем лететь в отраженном направлении
+                    Debug.WriteLine($"Врагов нет, продолжаем в отраженном направлении: {Direction}");
                 }
             }
         }

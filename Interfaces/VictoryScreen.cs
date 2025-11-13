@@ -28,6 +28,12 @@ namespace Survive_the_night.Interfaces
             CalculateLayout();
         }
 
+        public void Reset()
+        {
+            // Сброс состояния кнопок
+            _isRestartButtonHovered = false;
+            _isMainMenuButtonHovered = false;
+        }
         private void CalculateLayout()
         {
             int screenWidth = _graphicsDevice.Viewport.Width;

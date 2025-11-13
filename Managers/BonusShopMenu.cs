@@ -24,8 +24,8 @@ namespace Survive_the_night.Managers
         private SkillData _currentSkill;
 
         // Прогрессирующие цены
-        public int CurrentBonusPrice { get; private set; } = 50; // ИЗМЕНЕНО: было 25, стало 50
-        public int CurrentSkillPrice { get; private set; } = 100; // ИЗМЕНЕНО: было 50, стало 100
+        public int CurrentBonusPrice { get; private set; } = 50;
+        public int CurrentSkillPrice { get; private set; } = 100;
 
         // Счетчики покупок для прогрессии цен
         private int _bonusPurchaseCount = 0;
