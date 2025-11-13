@@ -10,8 +10,8 @@ namespace Survive_the_night.Weapons
 {
     public class MolotovCocktail : Weapon
     {
-        public int NumBottles { get; private set; } = 1;
-        public float BurnDuration { get; private set; } = 5f;
+        public int NumBottles { get; private set; } = 2;
+        public float BurnDuration { get; private set; } = 10f;
         public float DamageInterval { get; private set; } = 0.2f; // ФИКСИРОВАННЫЙ интервал
 
         public List<MolotovProjectile> ActiveBottles { get; private set; } = new List<MolotovProjectile>();
@@ -42,22 +42,22 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeBottleCount()
         {
-            if (CountLevel >= 5) return;
-            NumBottles += 1;
+            if (CountLevel >= 3) return;
+            NumBottles += 2;
             CountLevel++;
         }
 
         public void UpgradeBurnDuration()
         {
-            if (DurationLevel >= 5) return;
-            BurnDuration += 5f;
+            if (DurationLevel >= 3) return;
+            BurnDuration += 10f;
             DurationLevel++;
         }
 
-        public void UpgradeDamage() // НОВЫЙ МЕТОД: улучшение урона вместо скорости атаки
+        public void UpgradeDamage()
         {
-            if (DamageLevel >= 5) return;
-            Damage += 1; // +1 урон за уровень
+            if (DamageLevel >= 3) return;
+            Damage += 1;
             DamageLevel++;
         }
 

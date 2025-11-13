@@ -11,9 +11,9 @@ namespace Survive_the_night.Weapons
     public class StickyBomb : Weapon
     {
         public int NumBombs { get; private set; } = 1;
-        public float ExplosionTime { get; private set; } = 15f; // ”ћ≈Ќ№Ў≈Ќќ с 60 до 15 секунд
+        public float ExplosionTime { get; private set; } = 10f;
         public List<StickyBombProjectile> ActiveBombs { get; private set; } = new List<StickyBombProjectile>();
-        public float ProjectileSpeed { get; private set; } = 200f;
+        public float ProjectileSpeed { get; private set; } = 400f;
 
         private float _throwCooldown = 0.2f;
         private float _throwTimer = 0f;
@@ -30,7 +30,7 @@ namespace Survive_the_night.Weapons
         private static SoundEffect _throwSound;
         private static SoundEffect _explosionSound;
 
-        public StickyBomb(Player player) : base(player, WeaponType.Regular, WeaponName.StickyBomb, 0f, 5)
+        public StickyBomb(Player player) : base(player, WeaponType.Regular, WeaponName.StickyBomb, 0f, 10)
         {
         }
 
@@ -44,22 +44,22 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 10) return;
-            Damage += 3; // ”¬≈Ћ»„≈Ќќ с +1 до +3 за уровень
+            if (DamageLevel >= 5) return;
+            Damage += 4;
             DamageLevel++;
         }
 
         public void UpgradeCount()
         {
-            if (CountLevel >= 10) return;
+            if (CountLevel >= 5) return;
             NumBombs += 1;
             CountLevel++;
         }
 
         public void UpgradeExplosionTime()
         {
-            if (ExplosionTimeLevel >= 10) return;
-            ExplosionTime -= 1f; // ”ћ≈Ќ№Ў≈Ќќ с -5с до -1с за уровень
+            if (ExplosionTimeLevel >= 5) return;
+            ExplosionTime -= 1.5f;
             ExplosionTimeLevel++;
         }
 

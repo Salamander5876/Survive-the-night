@@ -11,10 +11,10 @@ namespace Survive_the_night.Weapons
         public int NumChips { get; private set; } = 1;
         public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
-        public float ProjectileSpeed { get; private set; } = 500f;
+        public float ProjectileSpeed { get; private set; } = 700f;
 
         private float _baseCooldown = 2.5f;
-        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.02f);
+        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.3f);
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
@@ -30,7 +30,7 @@ namespace Survive_the_night.Weapons
 
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public CasinoChips(Player player) : base(player, WeaponType.Regular, WeaponName.CasinoChips, 2.0f, 2) // ÓÐÎÍ ÓÂÅËÈ×ÅÍ ñ 1 äî 2
+        public CasinoChips(Player player) : base(player, WeaponType.Regular, WeaponName.CasinoChips, 2.0f, 2)
         {
         }
 
@@ -38,20 +38,20 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 10) return;
-            Damage += 2; // ÓÂÅËÈ×ÅÍÎ ñ +1 äî +2 çà óðîâåíü
+            if (DamageLevel >= 5) return;
+            Damage += 2;
             DamageLevel++;
         }
 
         public void UpgradeReloadSpeed()
         {
-            if (ReloadSpeedLevel >= 10) return;
+            if (ReloadSpeedLevel >= 5) return;
             ReloadSpeedLevel++;
         }
 
         public void UpgradeBounceCount()
         {
-            if (BounceLevel >= 10) return;
+            if (BounceLevel >= 5) return;
             BounceLevel++;
         }
 

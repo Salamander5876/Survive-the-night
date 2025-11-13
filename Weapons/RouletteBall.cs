@@ -18,8 +18,8 @@ namespace Survive_the_night.Weapons
         public float ProjectileSpeed { get; private set; } = 500f;
         public float ParticleLifetime { get; private set; } = 0.5f;
         public int MaxBounces { get; private set; } = 10;
-        public int ParticleDamage { get; private set; } = 2; // ”¬≈Ћ»„≈Ќќ с 1 до 2
-        public int BallDamage { get; private set; } = 2; // ”¬≈Ћ»„≈Ќќ с 1 до 2
+        public int ParticleDamage { get; private set; } = 1;
+        public int BallDamage { get; private set; } = 1;
 
         // ”ровни прокачки
         public int SpeedLevel { get; private set; } = 0;
@@ -33,7 +33,7 @@ namespace Survive_the_night.Weapons
         private float _particleTimer = 0f;
         private const float PARTICLE_INTERVAL = 0.1f;
 
-        public RouletteBall(Player player) : base(player, WeaponType.Regular, WeaponName.RouletteBall, 4f, 2) // ”–ќЌ ”¬≈Ћ»„≈Ќ с 1 до 2
+        public RouletteBall(Player player) : base(player, WeaponType.Regular, WeaponName.RouletteBall, 4f, 2)
         {
             Damage = 2; // ”станавливаем базовый урон
         }
@@ -44,27 +44,24 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeSpeed()
         {
-            if (SpeedLevel >= 10) return;
-            ProjectileSpeed += 50f;
+            if (SpeedLevel >= 5) return;
+            ProjectileSpeed += 100f;
             SpeedLevel++;
-            Debug.WriteLine($"”лучшена скорость рулетки: {ProjectileSpeed} (”р. {SpeedLevel})");
         }
 
         public void UpgradeLifetime()
         {
-            if (LifetimeLevel >= 10) return;
-            ParticleLifetime += 0.5f;
+            if (LifetimeLevel >= 5) return;
+            ParticleLifetime += 1f;
             LifetimeLevel++;
-            Debug.WriteLine($"”лучшено врем€ частичек рулетки: {ParticleLifetime}с (”р. {LifetimeLevel})");
         }
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 10) return;
-            ParticleDamage += 2; // ”¬≈Ћ»„≈Ќќ с +1 до +2 за уровень
-            BallDamage += 2; // ”¬≈Ћ»„≈Ќќ с +1 до +2 за уровень
+            if (DamageLevel >= 5) return;
+            ParticleDamage += 1;
+            BallDamage += 1;
             DamageLevel++;
-            Debug.WriteLine($"”лучшен урон рулетки: шарик={BallDamage}, частички={ParticleDamage} (”р. {DamageLevel})");
         }
 
         public override void Update(GameTime gameTime)

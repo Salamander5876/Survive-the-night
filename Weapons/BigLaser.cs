@@ -27,7 +27,7 @@ namespace Survive_the_night.Weapons
 
         private List<Enemy> _enemies;
 
-        public BigLaser(Player player) : base(player, WeaponType.Legendary, WeaponName.BigLaser, BASE_COOLDOWN, 3) // спнм сбекхвем Я 2 ДН 3
+        public BigLaser(Player player) : base(player, WeaponType.Legendary, WeaponName.BigLaser, BASE_COOLDOWN, 1)
         {
             _enemies = Game1.CurrentEnemies;
             _cooldownTimer = 0f;
@@ -40,14 +40,14 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeDuration()
         {
-            if (DurationLevel >= 5) return;
+            if (DurationLevel >= 3) return;
             DurationLevel++;
         }
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 5) return;
-            Damage += 2;
+            if (DamageLevel >= 3) return;
+            Damage += 1;
             DamageLevel++;
 
             if (ActiveLaser != null)
@@ -58,7 +58,7 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeCooldown()
         {
-            if (CooldownLevel >= 5) return;
+            if (CooldownLevel >= 3) return;
             CooldownLevel++;
         }
 
@@ -106,7 +106,7 @@ namespace Survive_the_night.Weapons
                 laserSound
             )
             {
-                DamageInterval = 0.1f, // слемэьемн Я 0.2Я ДН 0.1Я
+                DamageInterval = 0.1f,
                 RotationSpeed = RotationSpeed
             };
 

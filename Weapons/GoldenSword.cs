@@ -10,21 +10,21 @@ namespace Survive_the_night.Weapons
 {
     public class GoldenSword : Weapon
     {
-        public int NumSwords { get; private set; } = 1;
+        public int NumSwords { get; private set; } = 2;
         public float ProjectileSpeed { get; private set; } = 500f; // ФИКСИРОВАННАЯ скорость
         public List<GoldenSwordProjectile> ActiveProjectiles { get; private set; } = new List<GoldenSwordProjectile>();
-        public int MaxTargets { get; private set; } = 10; // НОВОЕ: максимальное количество целей
+        public int MaxTargets { get; private set; } = 10; // максимальное количество целей
 
         private float _baseCooldown = 2.0f;
         public float CurrentCooldown => _baseCooldown;
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
-        public int TargetsLevel { get; private set; } = 0; // НОВОЕ: уровень количества целей
+        public int TargetsLevel { get; private set; } = 0;
 
         public bool HasActiveSwords => ActiveProjectiles.Count > 0;
 
-        public GoldenSword(Player player) : base(player, WeaponType.Legendary, WeaponName.GoldenSword, 2.0f, 5)
+        public GoldenSword(Player player) : base(player, WeaponType.Legendary, WeaponName.GoldenSword, 2.0f, 4)
         {
         }
 
@@ -32,22 +32,22 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeCount()
         {
-            if (CountLevel >= 5) return;
-            NumSwords += 1;
+            if (CountLevel >= 3) return;
+            NumSwords += 2;
             CountLevel++;
         }
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 5) return;
-            Damage += 3; // УВЕЛИЧЕНО с +2 до +3 за уровень
+            if (DamageLevel >= 3) return;
+            Damage += 4;
             DamageLevel++;
         }
 
-        public void UpgradeTargets() // НОВЫЙ МЕТОД: улучшение количества целей
+        public void UpgradeTargets() // улучшение количества целей
         {
-            if (TargetsLevel >= 5) return;
-            MaxTargets += 5; // +5 целей за уровень
+            if (TargetsLevel >= 3) return;
+            MaxTargets += 10;
             TargetsLevel++;
         }
 

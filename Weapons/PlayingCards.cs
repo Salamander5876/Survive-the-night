@@ -11,10 +11,10 @@ namespace Survive_the_night.Weapons
         public int NumCards { get; private set; } = 1;
         public float Range { get; private set; } = 0.20f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
-        public float ProjectileSpeed { get; private set; } = 300f; // УВЕЛИЧЕНО с 250 до 300
+        public float ProjectileSpeed { get; private set; } = 300f;
 
         private float _baseCooldown = 1.5f;
-        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.1f);
+        public float CurrentCooldown => _baseCooldown - (ReloadSpeedLevel * 0.2f);
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
@@ -29,7 +29,7 @@ namespace Survive_the_night.Weapons
 
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
+        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 2)
         {
         }
 
@@ -37,21 +37,21 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeCount()
         {
-            if (CountLevel >= 10) return;
+            if (CountLevel >= 5) return;
             NumCards += 1;
             CountLevel++;
         }
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 10) return;
-            Damage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
+            if (DamageLevel >= 5) return;
+            Damage += 2;
             DamageLevel++;
         }
 
         public void UpgradeReloadSpeed()
         {
-            if (ReloadSpeedLevel >= 10) return;
+            if (ReloadSpeedLevel >= 5) return;
             ReloadSpeedLevel++;
         }
 

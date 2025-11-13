@@ -10,12 +10,12 @@ namespace Survive_the_night.Weapons
     public class GoldenBullet : Weapon
     {
         public int NumBullets { get; private set; } = 1;
-        public float ProjectileSpeed { get; private set; } = 800f; // УВЕЛИЧЕНО с 500 до 800
+        public float ProjectileSpeed { get; private set; } = 1000f;
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
-        public int KnockbackLevel { get; private set; } = 0; // НОВОЕ: уровень отталкивания
+        public int KnockbackLevel { get; private set; } = 0;
 
         private const float ShotIntervalSeconds = 0.2f;
         private const float BurstCooldownSeconds = 1.0f;
@@ -24,7 +24,7 @@ namespace Survive_the_night.Weapons
         private float _nextShotTimer = 0f;
         private float _burstCooldownTimer = 0f;
 
-        public GoldenBullet(Player player) : base(player, WeaponType.Regular, WeaponName.GoldenBullet, 1.5f, 2) // УРОН УВЕЛИЧЕН с 1 до 2
+        public GoldenBullet(Player player) : base(player, WeaponType.Regular, WeaponName.GoldenBullet, 1.5f, 2)
         {
         }
 
@@ -32,28 +32,28 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeCount()
         {
-            if (CountLevel >= 10) return;
+            if (CountLevel >= 5) return;
             NumBullets += 1;
             CountLevel++;
         }
 
         public void UpgradeDamage()
         {
-            if (DamageLevel >= 10) return;
-            Damage += 2; // УВЕЛИЧЕНО с +1 до +2 за уровень
+            if (DamageLevel >= 5) return;
+            Damage += 2;
             DamageLevel++;
         }
 
-        public void UpgradeKnockback() // НОВЫЙ МЕТОД: улучшение отталкивания
+        public void UpgradeKnockback()
         {
-            if (KnockbackLevel >= 10) return;
+            if (KnockbackLevel >= 5) return;
             KnockbackLevel++;
         }
 
         // Метод для получения силы отталкивания
         public float GetKnockbackForce()
         {
-            return 5f + (KnockbackLevel * 5f); // 5px базовое + 5px за уровень
+            return 5f + (KnockbackLevel * 5f);
         }
 
         public override void Update(GameTime gameTime)

@@ -17,9 +17,9 @@ namespace Survive_the_night.Weapons
         public int PierceBonusLevel { get; private set; } = 0;
         public int CooldownLevel { get; private set; } = 0;
 
-        // ИЗМЕНЕНО: начальная перезарядка 5.1 сек, улучшение -0.5 сек
+        // начальная перезарядка 5.1 сек, улучшение -1 сек
         private float _baseCooldown = 5.1f;
-        public float CurrentCooldown => Math.Max(0.1f, _baseCooldown - (CooldownLevel * 0.5f)); // Минимум 0.1 сек
+        public float CurrentCooldown => Math.Max(0.1f, _baseCooldown - (CooldownLevel * 1.0f)); // Минимум 0.1 сек
 
         private float _cooldownTimer = 0f;
         private float _spawnTimer = 0f;
@@ -55,19 +55,19 @@ namespace Survive_the_night.Weapons
 
         public void UpgradeDamage()
         {
-            if (DamageBonusLevel >= 10) return;
+            if (DamageBonusLevel >= 5) return;
             DamageBonusLevel++;
         }
 
         public void UpgradePierce()
         {
-            if (PierceBonusLevel >= 10) return;
+            if (PierceBonusLevel >= 5) return;
             PierceBonusLevel++;
         }
 
         public void UpgradeCooldown()
         {
-            if (CooldownLevel >= 10) return;
+            if (CooldownLevel >= 5) return;
             CooldownLevel++;
         }
 
