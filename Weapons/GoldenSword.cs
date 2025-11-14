@@ -5,15 +5,16 @@ using Survive_the_night.Entities;
 using Survive_the_night.Projectiles;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Survive_the_night.Weapons
 {
     public class GoldenSword : Weapon
     {
         public int NumSwords { get; private set; } = 2;
-        public float ProjectileSpeed { get; private set; } = 500f; // ФИКСИРОВАННАЯ скорость
+        public float ProjectileSpeed { get; private set; } = 500f;
         public List<GoldenSwordProjectile> ActiveProjectiles { get; private set; } = new List<GoldenSwordProjectile>();
-        public int MaxTargets { get; private set; } = 10; // максимальное количество целей
+        public int MaxTargets { get; private set; } = 10;
 
         private float _baseCooldown = 2.0f;
         public float CurrentCooldown => _baseCooldown;
@@ -22,7 +23,12 @@ namespace Survive_the_night.Weapons
         public int DamageLevel { get; private set; } = 0;
         public int TargetsLevel { get; private set; } = 0;
 
-        public bool HasActiveSwords => ActiveProjectiles.Count > 0;
+        // Новые флаги для управления перезарядкой
+        private bool _waitingForSwordsToReturn = false;
+        private bool _canAttack = true;
+
+        // Список врагов, которые уже являются целями активных мечей
+        private List<Enemy> _assignedTargets = new List<Enemy>();
 
         public GoldenSword(Player player) : base(player, WeaponType.Legendary, WeaponName.GoldenSword, 2.0f, 4)
         {
@@ -44,7 +50,7 @@ namespace Survive_the_night.Weapons
             DamageLevel++;
         }
 
-        public void UpgradeTargets() // улучшение количества целей
+        public void UpgradeTargets()
         {
             if (TargetsLevel >= 3) return;
             MaxTargets += 10;
@@ -55,12 +61,28 @@ namespace Survive_the_night.Weapons
         {
             base.Update(gameTime);
 
+            // Очищаем список назначенных целей
+            _assignedTargets.Clear();
+
+            // Обновляем активные мечи и собираем их текущие цели
             for (int i = ActiveProjectiles.Count - 1; i >= 0; i--)
             {
                 var sword = ActiveProjectiles[i];
                 if (sword.IsActive)
                 {
                     sword.Update(gameTime);
+
+                    // Добавляем текущую цель меча в список занятых целей
+                    if (sword.HasAssignedTarget && sword.Target != null && sword.Target.IsAlive)
+                    {
+                        _assignedTargets.Add(sword.Target);
+                    }
+
+                    // Если меч вернулся к игроку, деактивируем его
+                    if (sword.HasReturnedToPlayer)
+                    {
+                        sword.IsActive = false;
+                    }
                 }
                 else
                 {
@@ -68,63 +90,121 @@ namespace Survive_the_night.Weapons
                 }
             }
 
+            // Проверяем, все ли мечи вернулись
+            if (_waitingForSwordsToReturn && ActiveProjectiles.Count == 0)
+            {
+                _waitingForSwordsToReturn = false;
+                _canAttack = true;
+                CooldownTimer = CurrentCooldown; // Запускаем перезарядку только сейчас
+            }
+
             CheckProjectileCollisions(Game1.CurrentEnemies);
         }
 
         public override void Attack(GameTime gameTime, List<Enemy> enemies)
         {
-            if (CooldownTimer > 0f || HasActiveSwords) return;
+            // Атакуем только если можем атаковать и перезарядка прошла
+            if (!_canAttack || CooldownTimer > 0f) return;
 
-            List<Enemy> targets = FindTargetsForSwords(enemies, NumSwords);
+            // Находим цели для мечей (исключая уже занятых врагов)
+            List<Enemy> availableTargets = FindAvailableTargets(enemies);
 
-            if (targets.Count > 0)
+            if (availableTargets.Count > 0 || NumSwords > 0) // Атакуем даже если врагов нет, но есть мечи
             {
-                foreach (var target in targets)
-                {
-                    var sword = new GoldenSwordProjectile(
-                        Player.Position,
-                        0,
-                        Color.Gold,
-                        Damage,
-                        ProjectileSpeed,
-                        target,
-                        enemies,
-                        Player,
-                        WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenSword),
-                        MaxTargets // ПЕРЕДАЕМ максимальное количество целей
-                    );
+                // Создаем мечи для каждой доступной цели
+                int swordsToCreate = Math.Min(NumSwords, availableTargets.Count);
 
-                    ActiveProjectiles.Add(sword);
+                for (int i = 0; i < swordsToCreate; i++)
+                {
+                    var target = availableTargets[i];
+                    CreateSwordForTarget(target, enemies);
+                }
+
+                // Если есть свободные мечи (целей меньше чем мечей), создаем их без целей
+                for (int i = swordsToCreate; i < NumSwords; i++)
+                {
+                    CreateSwordWithoutTarget(enemies);
                 }
 
                 WeaponManager.GetWeaponSound(WeaponName.GoldenSword)?.Play();
-                CooldownTimer = CurrentCooldown;
+
+                // Блокируем следующую атаку до возврата всех мечей
+                _canAttack = false;
+                _waitingForSwordsToReturn = true;
             }
         }
 
-        private List<Enemy> FindTargetsForSwords(List<Enemy> enemies, int maxTargets)
+        private List<Enemy> FindAvailableTargets(List<Enemy> enemies)
         {
-            List<Enemy> targets = new List<Enemy>();
+            List<Enemy> availableTargets = new List<Enemy>();
             List<Enemy> aliveEnemies = new List<Enemy>();
 
+            // Собираем всех живых врагов в радиусе, которые НЕ являются целями активных мечей
             foreach (var enemy in enemies)
             {
-                if (enemy.IsAlive && Vector2.DistanceSquared(Player.Position, enemy.Position) < 1000 * 1000)
+                if (enemy.IsAlive &&
+                    Vector2.DistanceSquared(Player.Position, enemy.Position) < 1000 * 1000 &&
+                    !_assignedTargets.Contains(enemy)) // Исключаем уже занятых врагов
                 {
                     aliveEnemies.Add(enemy);
                 }
             }
 
+            // Сортируем по расстоянию от игрока
             aliveEnemies.Sort((a, b) =>
                 Vector2.DistanceSquared(Player.Position, a.Position).CompareTo(
                 Vector2.DistanceSquared(Player.Position, b.Position)));
 
-            for (int i = 0; i < Math.Min(maxTargets, aliveEnemies.Count); i++)
+            // Ограничиваем количество целей максимальным количеством целей меча
+            for (int i = 0; i < Math.Min(MaxTargets, aliveEnemies.Count); i++)
             {
-                targets.Add(aliveEnemies[i]);
+                availableTargets.Add(aliveEnemies[i]);
             }
 
-            return targets;
+            return availableTargets;
+        }
+
+        private void CreateSwordForTarget(Enemy target, List<Enemy> enemies)
+        {
+            var sword = new GoldenSwordProjectile(
+                Player.Position,
+                0,
+                Color.Gold,
+                Damage,
+                ProjectileSpeed,
+                target,
+                enemies,
+                Player,
+                WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenSword),
+                MaxTargets
+            );
+
+            // Добавляем цель в список занятых
+            _assignedTargets.Add(target);
+
+            ActiveProjectiles.Add(sword);
+        }
+
+        private void CreateSwordWithoutTarget(List<Enemy> enemies)
+        {
+            // Создаем меч без начальной цели
+            var sword = new GoldenSwordProjectile(
+                Player.Position,
+                0,
+                Color.Gold,
+                Damage,
+                ProjectileSpeed,
+                null, // Нет начальной цели
+                enemies,
+                Player,
+                WeaponManager.GetRandomWeaponTexture(WeaponName.GoldenSword),
+                MaxTargets
+            );
+
+            // Немедленно переводим в режим возврата к игроку
+            sword.StartReturnToPlayer();
+
+            ActiveProjectiles.Add(sword);
         }
 
         private void CheckProjectileCollisions(List<Enemy> enemies)
@@ -133,13 +213,8 @@ namespace Survive_the_night.Weapons
             {
                 if (!sword.IsActive) continue;
 
-                foreach (var enemy in enemies)
-                {
-                    if (sword.CheckEnemyHit(enemy))
-                    {
-                        enemy.TakeDamage(sword.Damage);
-                    }
-                }
+                // Меч проверяет столкновения только со своей целью
+                sword.CheckEnemyHit();
             }
         }
     }
