@@ -157,7 +157,8 @@ namespace Survive_the_night.Interfaces
                 WeaponName.RouletteBall,
                 WeaponName.BigLaser,
                 WeaponName.MolotovCocktail,
-                WeaponName.GoldenSword
+                WeaponName.GoldenSword,
+                WeaponName.GoldenTyphoon
             };
 
             // Инициализация описаний режимов игры

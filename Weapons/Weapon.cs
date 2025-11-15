@@ -26,7 +26,8 @@ namespace Survive_the_night.Weapons
         BigLaser,
         StickyBomb,
         Dice,
-        RouletteBall
+        RouletteBall,
+        GoldenTyphoon
     }
 
     public abstract class Weapon
@@ -104,7 +105,8 @@ namespace Survive_the_night.Weapons
         {
             WeaponName.GoldenSword,
             WeaponName.MolotovCocktail,
-            WeaponName.BigLaser
+            WeaponName.BigLaser,
+            WeaponName.GoldenTyphoon
         };
 
         // Текстуры для оружий
@@ -171,6 +173,8 @@ namespace Survive_the_night.Weapons
                     return new DiceWeapon(player);
                 case WeaponName.RouletteBall:
                     return new RouletteBall(player);
+                case WeaponName.GoldenTyphoon:
+                    return new GoldenTyphoon(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -197,6 +201,7 @@ namespace Survive_the_night.Weapons
                 case WeaponName.StickyBomb: return "Липкая бомба";
                 case WeaponName.Dice: return "Игральные кости";
                 case WeaponName.RouletteBall: return "Рулетка";
+                case WeaponName.GoldenTyphoon: return "Золотой Тайфун";
                 default: return "Неизвестное оружие";
             }
         }

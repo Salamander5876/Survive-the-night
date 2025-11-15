@@ -795,6 +795,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/Roulette15.png
 
+#begin Sprites/Projectiles/GoldenTyphoon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/GoldenTyphoon.png
+
 
 
 
@@ -864,6 +876,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXRouletteDamage.mp3
+
+#begin Sounds/Weapons/SFXGoldenTyphoon.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXGoldenTyphoon.mp3
 
 
 

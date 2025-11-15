@@ -94,6 +94,16 @@ namespace Survive_the_night.Managers
                         ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
                     });
                 }
+
+                if (!_weapons.Any(w => w is GoldenTyphoon))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
+                    });
+                }
             }
             else
             {
@@ -142,7 +152,6 @@ namespace Survive_the_night.Managers
                     });
                 }
 
-                // ДОБАВЬТЕ РУЛЕТКУ В СПИСОК ОБЫЧНЫХ ОРУЖИЙ
                 if (!_weapons.Any(w => w is RouletteBall))
                 {
                     regularPool.Add(new UpgradeOption
@@ -195,6 +204,16 @@ namespace Survive_the_night.Managers
                     });
                 }
 
+                if (!_weapons.Any(w => w is GoldenTyphoon) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
+                    });
+                }
+
                 // Объединяем пулы, сначала легендарные (если есть), затем обычные
                 pool.AddRange(legendaryPool);
                 pool.AddRange(regularPool);
@@ -233,6 +252,16 @@ namespace Survive_the_night.Managers
                         Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
                         Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
                         ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is GoldenTyphoon) && !pool.Any(o => o.Title.Contains("Золотой Тайфун")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
+                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
                     });
                 }
             }

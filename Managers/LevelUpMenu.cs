@@ -324,6 +324,36 @@ namespace Survive_the_night.Managers
                         });
                     }
                 }
+                else if (weapon is GoldenTyphoon gt)
+                {
+                    if (gt.CountLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenTyphoon)}: Количество снарядов +2 (Ур. {gt.CountLevel + 1}/3)",
+                            Description = $"Текущее количество: {gt.NumProjectiles}",
+                            ApplyUpgrade = () => gt.UpgradeCount()
+                        });
+                    }
+                    if (gt.DamageLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenTyphoon)}: Урон +4 (Ур. {gt.DamageLevel + 1}/3)",
+                            Description = $"Текущий урон: {gt.Damage}",
+                            ApplyUpgrade = () => gt.UpgradeDamage()
+                        });
+                    }
+                    if (gt.CooldownLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.GoldenTyphoon)}: Перезарядка -0.2с (Ур. {gt.CooldownLevel + 1}/3)",
+                            Description = $"Текущая перезарядка: {gt.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => gt.UpgradeCooldown()
+                        });
+                    }
+                }
             }
 
             // Всегда показываем 3 опции

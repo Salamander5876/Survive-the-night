@@ -239,6 +239,13 @@ namespace Survive_the_night
             WeaponManager.LoadWeaponSound(WeaponName.BigLaser, SFXBigLaser);
             BigLaserProjectile.SetDefaultTexture(bigLaserTexture);
 
+            // Золотой Тайфун
+            var goldenTyphoonTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenTyphoon");
+            var goldenTyphoonSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenTyphoon");
+            WeaponManager.LoadWeaponTextures(WeaponName.GoldenTyphoon, goldenTyphoonTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.GoldenTyphoon, goldenTyphoonSound);
+            GoldenTyphoonProjectile.SetDefaultTexture(goldenTyphoonTexture);
+
             // Установка текстур по умолчанию для проектов
             PlayingCard.SetDefaultTexture(cardTexture1);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
@@ -1117,6 +1124,18 @@ namespace Survive_the_night
                         if (ball.IsActive)
                         {
                             ball.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                // Отрисовка Золотого Тайфуна
+                if (weapon is GoldenTyphoon goldenTyphoon)
+                {
+                    foreach (var projectile in goldenTyphoon.ActiveProjectiles)
+                    {
+                        if (projectile.IsActive)
+                        {
+                            projectile.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }
