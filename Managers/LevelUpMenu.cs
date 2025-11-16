@@ -354,6 +354,36 @@ namespace Survive_the_night.Managers
                         });
                     }
                 }
+                else if (weapon is EventHorizon eh)
+                {
+                    if (eh.CountLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.EventHorizon)}: Количество звезд +2 (Ур. {eh.CountLevel + 1}/3)",
+                            Description = $"Текущее количество: {eh.NumStars}",
+                            ApplyUpgrade = () => eh.UpgradeCount()
+                        });
+                    }
+                    if (eh.DamageLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.EventHorizon)}: Урон +5 (Ур. {eh.DamageLevel + 1}/3)",
+                            Description = $"Текущий урон: {eh.Damage}",
+                            ApplyUpgrade = () => eh.UpgradeDamage()
+                        });
+                    }
+                    if (eh.CooldownLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.EventHorizon)}: Перезарядка -0.3с (Ур. {eh.CooldownLevel + 1}/3)",
+                            Description = $"Текущая перезарядка: {eh.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => eh.UpgradeCooldown()
+                        });
+                    }
+                }
             }
 
             // Всегда показываем 3 опции

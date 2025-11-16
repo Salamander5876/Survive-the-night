@@ -246,6 +246,13 @@ namespace Survive_the_night
             WeaponManager.LoadWeaponSound(WeaponName.GoldenTyphoon, goldenTyphoonSound);
             GoldenTyphoonProjectile.SetDefaultTexture(goldenTyphoonTexture);
 
+            // Горизонт Событий
+            var eventHorizonTexture = Content.Load<Texture2D>("Sprites/Projectiles/EventHorizonStar");
+            var eventHorizonSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXEventHorizonStar");
+            WeaponManager.LoadWeaponTextures(WeaponName.EventHorizon, eventHorizonTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.EventHorizon, eventHorizonSound);
+            EventHorizonStarProjectile.SetDefaultTexture(eventHorizonTexture);
+
             // Установка текстур по умолчанию для проектов
             PlayingCard.SetDefaultTexture(cardTexture1);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
@@ -1136,6 +1143,18 @@ namespace Survive_the_night
                         if (projectile.IsActive)
                         {
                             projectile.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                // Отрисовка Горизонта Событий
+                if (weapon is EventHorizon eventHorizon)
+                {
+                    foreach (var star in eventHorizon.ActiveProjectiles)
+                    {
+                        if (star.IsActive)
+                        {
+                            star.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }
