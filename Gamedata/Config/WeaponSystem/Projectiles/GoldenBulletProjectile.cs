@@ -1,0 +1,74 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Gamedata.Config.WeaponSystem;
+
+namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
+{
+    public class GoldenBulletProjectile : Projectile
+    {
+        private static Texture2D _defaultTexture;
+        private Texture2D _bulletTexture;
+
+        private GoldenBullet _weapon; // —сылка на оружие дл€ отталкивани€
+
+        public GoldenBulletProjectile(Vector2 position, int size, Color color, int damage, float speed, Vector2 target, Texture2D texture = null, GoldenBullet weapon = null) : base(position, size, color, damage, speed, target, 1)
+        {
+            _bulletTexture = texture ?? _defaultTexture;
+            _weapon = weapon;
+
+            // јвтоматически определ€ем размер из текстуры
+            if (_bulletTexture != null && size == 0) // если размер не задан
+            {
+                Size = Math.Max(_bulletTexture.Width, _bulletTexture.Height);
+            }
+
+            Rotation = CalculateRotationToTarget(target);
+        }
+
+        // ћетод дл€ установки текстуры по умолчанию
+        public static void SetDefaultTexture(Texture2D texture)
+        {
+            _defaultTexture = texture;
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            base.Update(gameTime);
+
+            // ќбновл€ем поворот, чтобы пул€ всегда была направлена в сторону движени€
+            Rotation = CalculateRotationToDirection(Direction);
+        }
+
+        // –асчет поворота к цели
+        private float CalculateRotationToTarget(Vector2 target)
+        {
+            Vector2 direction = Vector2.Normalize(target - Position);
+            return CalculateRotationToDirection(direction);
+        }
+
+        // –асчет поворота по направлению
+        private float CalculateRotationToDirection(Vector2 direction)
+        {
+            // јтангенс2 возвращает угол в радианах, конвертируем в градусы
+            // » добавл€ем 90 градусов, чтобы верх текстуры смотрел вперед
+            float angle = MathHelper.ToDegrees((float)Math.Atan2(direction.Y, direction.X)) + 90f;
+            return angle;
+        }
+
+        public override void Draw(SpriteBatch spriteBatch, Texture2D debugTexture)
+        {
+            if (_bulletTexture != null)
+            {
+                // »спользуем метод из базового класса дл€ отрисовки с текстурой
+                DrawWithTexture(spriteBatch, _bulletTexture);
+            }
+            else
+            {
+                // «апасной вариант - отрисовка пр€моугольника
+                base.Draw(spriteBatch, debugTexture);
+            }
+        }
+    }
+}

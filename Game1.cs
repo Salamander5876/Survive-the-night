@@ -9,13 +9,16 @@ using Microsoft.Xna.Framework.Audio;
 
 // Убедитесь, что все эти пространства имен существуют
 using Survive_the_night.Entities;
-using Survive_the_night.Weapons;
-using Survive_the_night.Projectiles;
-using Survive_the_night.Managers;
-using Survive_the_night.Interfaces;
-using Survive_the_night.Items;
 using Survive_the_night.Entities.Enemies.Regular;
 using Survive_the_night.Entities.Enemies.Elite;
+using Survive_the_night.Scripts.Interfaces;
+using Survive_the_night.Scripts.Managers;
+using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Gamedata.Config.ItemSystem.Items;
+using Survive_the_night.Gamedata.Config.ItemSystem.Renderers;
+using Survive_the_night.Gamedata.Managers;
 
 namespace Survive_the_night
 {

@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Survive_the_night.Managers;
+using Survive_the_night.Scripts.Managers;
 
 namespace Survive_the_night.Entities.Enemies.Regular
 {
