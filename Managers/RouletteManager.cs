@@ -104,6 +104,17 @@ namespace Survive_the_night.Managers
                         ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
                     });
                 }
+
+                // === ДОБАВЛЕНО: Горизонт Событий ===
+                if (!_weapons.Any(w => w is EventHorizon))
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
+                    });
+                }
             }
             else
             {
@@ -214,6 +225,17 @@ namespace Survive_the_night.Managers
                     });
                 }
 
+                // === ДОБАВЛЕНО: Горизонт Событий (10% шанс) ===
+                if (!_weapons.Any(w => w is EventHorizon) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
+                    });
+                }
+
                 // Объединяем пулы, сначала легендарные (если есть), затем обычные
                 pool.AddRange(legendaryPool);
                 pool.AddRange(regularPool);
@@ -262,6 +284,17 @@ namespace Survive_the_night.Managers
                         Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
                         Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
                         ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
+                    });
+                }
+
+                // === ДОБАВЛЕНО: Горизонт Событий (резервное добавление) ===
+                if (!_weapons.Any(w => w is EventHorizon) && !pool.Any(o => o.Title.Contains("Горизонт Событий")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
                     });
                 }
             }
