@@ -378,7 +378,7 @@ namespace Survive_the_night.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.EventHorizon)}: Перезарядка -0.3с (Ур. {eh.CooldownLevel + 1}/3)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.EventHorizon)}: Перезарядка -0.2с (Ур. {eh.CooldownLevel + 1}/3)",
                             Description = $"Текущая перезарядка: {eh.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => eh.UpgradeCooldown()
                         });
