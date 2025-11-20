@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
 using System;
 using System.Collections.Generic;
 
@@ -110,20 +111,20 @@ namespace Survive_the_night.Scripts.Interfaces
             {
                 WeaponName.StickyBomb,
                 "Тактическое оружие с отложенным взрывом.\n\n" +
-                "Бомба прилипает к врагу и взрывается через 60 секунд, нанося урон всем врагам в радиусе.\n\n" +
+                "Бомба прилипает к врагу и взрывается через 10 секунд, нанося урон всем врагам в радиусе.\n\n" +
                 "Новые бомбы не появляются, пока все предыдущие не взорвались.\n\n" +
                 "Отлично подходит для контроля толп и стратегического планирования."
             },
             {
                 WeaponName.Dice,
                 "Магические кости с уникальными характеристиками для каждого значения.\n\n" +
-                "Кость 1: Урон 1, Пробитие 6\n" +
-                "Кость 2: Урон 2, Пробитие 5\n" +
-                "Кость 3: Урон 3, Пробитие 4\n" +
-                "Кость 4: Урон 4, Пробитие 3\n" +
-                "Кость 5: Урон 5, Пробитие 2\n" +
-                "Кость 6: Урон 6, Пробитие 1\n\n" +
-                "Перезарядка: 20 сек (после уничтожения всех костей)\n" +
+                "Кость 1: Урон 2, Пробитие 6\n" +
+                "Кость 2: Урон 4, Пробитие 5\n" +
+                "Кость 3: Урон 6, Пробитие 4\n" +
+                "Кость 4: Урон 8, Пробитие 3\n" +
+                "Кость 5: Урон 10, Пробитие 2\n" +
+                "Кость 6: Урон 12, Пробитие 1\n\n" +
+                "Перезарядка: 5,1 сек (после уничтожения всех костей)\n" +
                 "Меняют направление вращения после каждого перезапуска."
             },
             {
@@ -134,6 +135,13 @@ namespace Survive_the_night.Scripts.Interfaces
                 "Стандартные отскоки: 10\n" +
                 "Стандартный урон: 1\n\n" +
                 "Прокачка: скорость, время жизни частичек, урон частичек."
+            },
+            {
+                WeaponName.BeerBottle,
+                "Бросает бутылки пива, которые разбиваются и создают липкие лужи.\n\n" +
+                "Лужи наносят 3 урона врагам с интервалом 2 секунды.\n\n" +
+                "Каждый враг имеет свой независимый таймер урона при нахождении в луже.\n\n" +
+                "Прокачка: количество бутылок, время жизни лужи, скорость нанесения урона."
             }
         };
 
@@ -155,6 +163,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 WeaponName.StickyBomb,
                 WeaponName.Dice,
                 WeaponName.RouletteBall,
+                WeaponName.BeerBottle,
                 WeaponName.BigLaser,
                 WeaponName.MolotovCocktail,
                 WeaponName.GoldenSword,
@@ -243,6 +252,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 _weaponSprites[WeaponName.StickyBomb] = content.Load<Texture2D>("Sprites/GUI/WeaponStickyBomb");
                 _weaponSprites[WeaponName.Dice] = content.Load<Texture2D>("Sprites/GUI/WeaponDice");
                 _weaponSprites[WeaponName.RouletteBall] = content.Load<Texture2D>("Sprites/GUI/WeaponRoulette");
+                _weaponSprites[WeaponName.BeerBottle] = content.Load<Texture2D>("Sprites/GUI/WeaponBottleBeer");
             }
             catch (Exception ex)
             {

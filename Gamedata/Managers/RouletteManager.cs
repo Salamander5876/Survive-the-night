@@ -106,7 +106,6 @@ namespace Survive_the_night.Gamedata.Managers
                     });
                 }
 
-                // === ДОБАВЛЕНО: Горизонт Событий ===
                 if (!_weapons.Any(w => w is EventHorizon))
                 {
                     pool.Add(new UpgradeOption
@@ -159,7 +158,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Золотая пуля",
-                        Description = "Добавляет новое оружие: точные золотые пули без пробития.",
+                        Description = "Добавляет новое оружие: точные золотые пули, которые могут отталкивать врагов.",
                         ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
                     });
                 }
@@ -169,8 +168,8 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Рулетка",
-                        Description = "Шарик рулетки летит случайно и отскакивает от стен (10 отскоков).\n" +
-                                     "Оставляет след из частичек с уроном 1, которые уничтожаются при столкновении.",
+                        Description = "Шарик рулетки летит случайно и отскакивает от стен.\n" +
+                                     "Оставляет след из частичек, которые наносят урон и уничтожаются при столкновении.",
                         ApplyUpgrade = () => _weapons.Add(new RouletteBall(_player))
                     });
                 }
@@ -182,6 +181,16 @@ namespace Survive_the_night.Gamedata.Managers
                         Title = "Игральные кости",
                         Description = "Добавляет новое оружие: магические кости, вращающиеся вокруг игрока.",
                         ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is BeerBottle))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Бутылка пива",
+                        Description = "Добавляет новое оружие: бутылки пива, создающие липкие лужи с периодическим уроном.",
+                        ApplyUpgrade = () => _weapons.Add(new BeerBottle(_player))
                     });
                 }
 
@@ -226,7 +235,6 @@ namespace Survive_the_night.Gamedata.Managers
                     });
                 }
 
-                // === ДОБАВЛЕНО: Горизонт Событий (10% шанс) ===
                 if (!_weapons.Any(w => w is EventHorizon) && _random.NextDouble() < 0.1)
                 {
                     legendaryPool.Add(new UpgradeOption

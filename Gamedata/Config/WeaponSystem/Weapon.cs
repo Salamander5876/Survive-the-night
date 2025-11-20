@@ -28,7 +28,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         Dice,
         RouletteBall,
         GoldenTyphoon,
-        EventHorizon
+        EventHorizon,
+        BeerBottle
     }
 
     public abstract class Weapon
@@ -99,7 +100,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             WeaponName.GoldenBullet,
             WeaponName.StickyBomb,
             WeaponName.Dice,
-            WeaponName.RouletteBall
+            WeaponName.RouletteBall,
+            WeaponName.BeerBottle
         };
 
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
@@ -179,6 +181,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     return new GoldenTyphoon(player);
                 case WeaponName.EventHorizon:
                     return new EventHorizon(player);
+                case WeaponName.BeerBottle:
+                    return new BeerBottle(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -207,6 +211,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.RouletteBall: return "Рулетка";
                 case WeaponName.GoldenTyphoon: return "Золотой Тайфун";
                 case WeaponName.EventHorizon: return "Горизонт Событий";
+                case WeaponName.BeerBottle: return "Пивная бутылка";
                 default: return "Неизвестное оружие";
             }
         }

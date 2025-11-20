@@ -164,6 +164,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites\GUI\WeaponRoulette.png
 
+#begin Sprites\GUI\WeaponBottleBeer.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites\GUI\WeaponBottleBeer.png
+
 
 
 
@@ -819,6 +831,30 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/EventHorizonStar.png
 
+#begin Sprites/Projectiles/BottleBeer.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/BottleBeer.png
+
+#begin Sprites/Projectiles/PuddleBeer.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/PuddleBeer.png
+
 
 
 
@@ -900,6 +936,18 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXEventHorizonStar.mp3
+
+#begin Sounds/Weapons/SFXThrowBeer.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXThrowBeer.mp3
+
+#begin Sounds/Weapons/SFXPuddleBeer.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXPuddleBeer.mp3
 
 
 

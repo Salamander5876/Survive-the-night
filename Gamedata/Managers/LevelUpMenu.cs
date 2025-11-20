@@ -233,6 +233,37 @@ namespace Survive_the_night.Gamedata.Managers
                         });
                     }
                 }
+                else if (weapon is BeerBottle bb)
+                {
+                    if (bb.CountLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BeerBottle)}: Количество +1 (Ур. {bb.CountLevel + 1}/5)",
+                            Description = $"Текущее количество: {bb.NumBottles}",
+                            ApplyUpgrade = () => bb.UpgradeBottleCount()
+                        });
+                    }
+                    if (bb.DurationLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BeerBottle)}: Время лужи +5с (Ур. {bb.DurationLevel + 1}/5)",
+                            Description = $"Текущее время: {bb.PuddleDuration:0} сек",
+                            ApplyUpgrade = () => bb.UpgradePuddleDuration()
+                        });
+                    }
+                    if (bb.IntervalLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.BeerBottle)}: Интервал урона -0.3с (Ур. {bb.IntervalLevel + 1}/5)",
+                            Description = $"Текущий интервал: {bb.DamageInterval:0.0} сек",
+                            ApplyUpgrade = () => bb.UpgradeDamageInterval()
+                        });
+                    }
+                }
+
 
                 // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
                 else if (weapon is GoldenSword gs)

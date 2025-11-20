@@ -106,6 +106,10 @@ namespace Survive_the_night
         private Texture2D _heartTexture;
         private Texture2D _goldenHeartTexture;
 
+        private Texture2D _beerBottleTexture;
+        private Texture2D _bottleTexture;
+        private Texture2D _puddleTexture;
+
         // Стартовое оружие
         private WeaponName _selectedStartingWeapon = WeaponName.PlayingCards;
 
@@ -312,6 +316,20 @@ namespace Survive_the_night
             // Рулетка
             var rouletteBallTexture = Content.Load<Texture2D>("Sprites/Projectiles/RouletteBall");
             var rouletteSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXRouletteDamage");
+
+            // Beer Bottle
+            var beerBottleTexture = Content.Load<Texture2D>("Sprites/Projectiles/BottleBeer");
+            var beerPuddleTexture = Content.Load<Texture2D>("Sprites/Projectiles/PuddleBeer");
+            var beerThrowSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowBeer");
+            var beerPuddleSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXPuddleBeer");
+
+            BeerBottle.SetTexturesAndSounds(beerBottleTexture, beerPuddleTexture, beerThrowSound, beerPuddleSound);
+            WeaponManager.LoadWeaponTextures(WeaponName.BeerBottle, beerBottleTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.BeerBottle, beerThrowSound);
+
+            _beerBottleTexture = beerBottleTexture;
+            _bottleTexture = beerBottleTexture;
+            _puddleTexture = beerPuddleTexture;
 
             // Загружаем все текстуры частичек
             for (int i = 1; i <= 15; i++)
@@ -1010,6 +1028,19 @@ namespace Survive_the_night
                 {
                     molotov.DrawProjectiles(_spriteBatch);
                 }
+
+                // ДОБАВЛЕНО: Отрисовка пивных луж (только лужи, бутылки отрисуются позже)
+                if (weapon is BeerBottle beerBottle)
+                {
+                    // Отрисовываем только лужи здесь (они будут ПОД всеми)
+                    foreach (var puddle in beerBottle.ActivePuddles)
+                    {
+                        if (puddle.IsActive)
+                        {
+                            puddle.DrawWithTexture(_spriteBatch, _puddleTexture);
+                        }
+                    }
+                }
             }
 
             DynamiteExplosion.DrawAll(_spriteBatch);
@@ -1158,6 +1189,18 @@ namespace Survive_the_night
                         if (star.IsActive)
                         {
                             star.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                // ДОБАВЛЕНО: Отрисовка летящих бутылок пива(над лужами, но под другими объектами)
+                if (weapon is BeerBottle beerBottle)
+                {
+                    foreach (var bottle in beerBottle.ActiveBottles)
+                    {
+                        if (bottle.IsActive)
+                        {
+                            bottle.DrawWithTexture(_spriteBatch, _bottleTexture);
                         }
                     }
                 }
