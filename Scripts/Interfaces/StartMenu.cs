@@ -168,7 +168,8 @@ namespace Survive_the_night.Scripts.Interfaces
                 WeaponName.MolotovCocktail,
                 WeaponName.GoldenSword,
                 WeaponName.GoldenTyphoon,
-                WeaponName.EventHorizon
+                WeaponName.EventHorizon,
+                WeaponName.Breaker
             };
 
             // Инициализация описаний режимов игры

@@ -331,6 +331,14 @@ namespace Survive_the_night
             _bottleTexture = beerBottleTexture;
             _puddleTexture = beerPuddleTexture;
 
+            // Разрушитель
+            var breakerTexture = Content.Load<Texture2D>("Sprites/Projectiles/BreakerBlade");
+            var breakerSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBreakerBlade");
+            WeaponManager.LoadWeaponTextures(WeaponName.Breaker, breakerTexture);
+            WeaponManager.LoadWeaponSound(WeaponName.Breaker, breakerSound);
+            BreakerBladeProjectile.SetDefaultTexture(breakerTexture);
+            Breaker.SetSwingSound(breakerSound);
+
             // Загружаем все текстуры частичек
             for (int i = 1; i <= 15; i++)
             {
@@ -1193,7 +1201,7 @@ namespace Survive_the_night
                     }
                 }
 
-                // ДОБАВЛЕНО: Отрисовка летящих бутылок пива(над лужами, но под другими объектами)
+                // Отрисовка летящих бутылок пива
                 if (weapon is BeerBottle beerBottle)
                 {
                     foreach (var bottle in beerBottle.ActiveBottles)
@@ -1201,6 +1209,17 @@ namespace Survive_the_night
                         if (bottle.IsActive)
                         {
                             bottle.DrawWithTexture(_spriteBatch, _bottleTexture);
+                        }
+                    }
+                }
+
+                if (weapon is Breaker breaker)
+                {
+                    foreach (var blade in breaker.ActiveBlades)
+                    {
+                        if (blade.IsActive)
+                        {
+                            blade.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }

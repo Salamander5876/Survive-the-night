@@ -115,6 +115,16 @@ namespace Survive_the_night.Gamedata.Managers
                         ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
                     });
                 }
+
+                if (!_weapons.Any(w => w is Breaker) && !pool.Any(o => o.Title.Contains("Разрушитель")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Разрушитель [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: массивный меч, совершающий сокрушительные взмахи вокруг игрока.",
+                        ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
+                    });
+                }
             }
             else
             {
@@ -128,7 +138,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Липкая бомба",
-                        Description = "Добавляет новое оружие: бомбы, которые прилипают к врагам и взрываются через время.",
+                        Description = "Бомбы, которые прилипают к врагам и взрываются через время.",
                         ApplyUpgrade = () => _weapons.Add(new StickyBomb(_player))
                     });
                 }
@@ -138,7 +148,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Игральные карты",
-                        Description = "Добавляет новое оружие: игральные карты, которые пробивают врагов.",
+                        Description = "Игральные карты, которые пробивают врагов.",
                         ApplyUpgrade = () => _weapons.Add(new PlayingCards(_player))
                     });
                 }
@@ -148,7 +158,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Фишки казино",
-                        Description = "Добавляет новое оружие: фишки, которые отскакивают между врагами.",
+                        Description = "Фишки, которые отскакивают между врагами.",
                         ApplyUpgrade = () => _weapons.Add(new CasinoChips(_player))
                     });
                 }
@@ -158,7 +168,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Золотая пуля",
-                        Description = "Добавляет новое оружие: точные золотые пули, которые могут отталкивать врагов.",
+                        Description = "Точные золотые пули, которые могут отталкивать врагов.",
                         ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
                     });
                 }
@@ -179,7 +189,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Игральные кости",
-                        Description = "Добавляет новое оружие: магические кости, вращающиеся вокруг игрока.",
+                        Description = "Кости, вращающиеся вокруг игрока и имеют разное количество пробития и урона",
                         ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
                     });
                 }
@@ -189,7 +199,7 @@ namespace Survive_the_night.Gamedata.Managers
                     regularPool.Add(new UpgradeOption
                     {
                         Title = "Бутылка пива",
-                        Description = "Добавляет новое оружие: бутылки пива, создающие липкие лужи с периодическим уроном.",
+                        Description = "Бутылки пива, создающие липкие лужи с периодическим уроном.",
                         ApplyUpgrade = () => _weapons.Add(new BeerBottle(_player))
                     });
                 }
@@ -200,7 +210,7 @@ namespace Survive_the_night.Gamedata.Managers
                     legendaryPool.Add(new UpgradeOption
                     {
                         Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
+                        Description = "Золотые мечи, летящие с автонаводкой.",
                         ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
                     });
                 }
@@ -210,7 +220,7 @@ namespace Survive_the_night.Gamedata.Managers
                     legendaryPool.Add(new UpgradeOption
                     {
                         Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
+                        Description = "Бросает бутылки, создающие огненные зоны.",
                         ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
                     });
                 }
@@ -220,7 +230,7 @@ namespace Survive_the_night.Gamedata.Managers
                     legendaryPool.Add(new UpgradeOption
                     {
                         Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
+                        Description = "Мощный лазер, который автоматически наводится и имеет приоритет атаки на врагов с большим хп.",
                         ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
                     });
                 }
@@ -230,7 +240,7 @@ namespace Survive_the_night.Gamedata.Managers
                     legendaryPool.Add(new UpgradeOption
                     {
                         Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
+                        Description = "Снаряды, летящие по 8 направлениям с огромной скоростью вращения и с бесконечным пробитием.",
                         ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
                     });
                 }
@@ -240,8 +250,18 @@ namespace Survive_the_night.Gamedata.Managers
                     legendaryPool.Add(new UpgradeOption
                     {
                         Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
+                        Description = "Звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
                         ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is Breaker) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Разрушитель [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Массивный меч, совершающий сокрушительные взмахи вокруг игрока и наносит дополнительный урон врагам с полным хп",
+                        ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
                     });
                 }
 

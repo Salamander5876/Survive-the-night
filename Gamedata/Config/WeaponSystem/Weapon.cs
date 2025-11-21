@@ -29,7 +29,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         RouletteBall,
         GoldenTyphoon,
         EventHorizon,
-        BeerBottle
+        BeerBottle,
+        Breaker
     }
 
     public abstract class Weapon
@@ -110,7 +111,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             WeaponName.MolotovCocktail,
             WeaponName.BigLaser,
             WeaponName.GoldenTyphoon,
-            WeaponName.EventHorizon
+            WeaponName.EventHorizon,
+            WeaponName.Breaker
         };
 
         // Текстуры для оружий
@@ -183,6 +185,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     return new EventHorizon(player);
                 case WeaponName.BeerBottle:
                     return new BeerBottle(player);
+                case WeaponName.Breaker:
+                    return new Breaker(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -212,6 +216,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.GoldenTyphoon: return "Золотой Тайфун";
                 case WeaponName.EventHorizon: return "Горизонт Событий";
                 case WeaponName.BeerBottle: return "Пивная бутылка";
+                case WeaponName.Breaker: return "Разрушитель";
                 default: return "Неизвестное оружие";
             }
         }

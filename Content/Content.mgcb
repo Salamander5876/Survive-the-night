@@ -855,6 +855,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/PuddleBeer.png
 
+#begin Sprites/Projectiles/BreakerBlade.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/BreakerBlade.png
+
 
 
 
@@ -948,6 +960,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXPuddleBeer.mp3
+
+#begin Sounds/Weapons/SFXBreakerBlade.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXBreakerBlade.mp3
 
 
 

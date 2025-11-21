@@ -416,6 +416,37 @@ namespace Survive_the_night.Gamedata.Managers
                         });
                     }
                 }
+
+                else if (weapon is Breaker breaker)
+                {
+                    if (breaker.SpeedLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Breaker)}: Скорость атаки +150 (Ур. {breaker.SpeedLevel + 1}/3)",
+                            Description = $"Текущая скорость: {breaker.SwingSpeed:0}",
+                            ApplyUpgrade = () => breaker.UpgradeSpeed()
+                        });
+                    }
+                    if (breaker.DamageLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Breaker)}: Урон +5 (Ур. {breaker.DamageLevel + 1}/3)",
+                            Description = $"Текущий урон: {breaker.Damage}",
+                            ApplyUpgrade = () => breaker.UpgradeDamage()
+                        });
+                    }
+                    if (breaker.CooldownLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Breaker)}: Перезарядка -0.2с (Ур. {breaker.CooldownLevel + 1}/3)",
+                            Description = $"Текущая перезарядка: {breaker.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => breaker.UpgradeCooldown()
+                        });
+                    }
+                }
             }
 
             // Всегда показываем 3 опции

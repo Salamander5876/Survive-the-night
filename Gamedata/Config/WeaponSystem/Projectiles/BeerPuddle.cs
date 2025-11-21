@@ -13,7 +13,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private float _lifeTimer = 0f;
         private float _damageCooldown;
         private Dictionary<Enemy, float> _enemyDamageTimers = new Dictionary<Enemy, float>();
-        private SoundEffectInstance _puddleSoundInstance;
+        private SoundEffect _puddleSound;
         private bool _soundPlayed = false;
         private float _fadeOutDuration = 1.0f;
 
@@ -23,13 +23,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             _timeToLive = duration;
             _damageCooldown = damageInterval;
             Size = size;
-
-            if (puddleSound != null)
-            {
-                _puddleSoundInstance = puddleSound.CreateInstance();
-                _puddleSoundInstance.Volume = 0.3f;
-                _puddleSoundInstance.IsLooped = true;
-            }
+            _puddleSound = puddleSound; // Сохраняем звук, но не создаем SoundEffectInstance
         }
 
         public override void Update(GameTime gameTime)
@@ -39,30 +33,24 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _lifeTimer += delta;
 
-            if (!_soundPlayed && _puddleSoundInstance != null)
+            // Проигрываем звук один раз при создании лужи
+            if (!_soundPlayed && _puddleSound != null)
             {
-                _puddleSoundInstance.Play();
+                _puddleSound.Play(); // Проигрываем звук один раз
                 _soundPlayed = true;
             }
 
+            // Плавное исчезновение (альфа-канал)
             if (_lifeTimer >= _timeToLive - _fadeOutDuration)
             {
                 float fadeProgress = (_lifeTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
-                float volume = MathHelper.Clamp(0.3f * (1f - fadeProgress), 0f, 0.3f);
-
-                if (_puddleSoundInstance != null)
-                {
-                    _puddleSoundInstance.Volume = volume;
-                }
+                // Не нужно управлять громкостью, так как звук уже проигрался один раз
             }
 
+            // Полное исчезновение
             if (_lifeTimer >= _timeToLive)
             {
                 IsActive = false;
-                if (_puddleSoundInstance != null)
-                {
-                    _puddleSoundInstance.Stop();
-                }
                 _enemyDamageTimers.Clear();
                 return;
             }
