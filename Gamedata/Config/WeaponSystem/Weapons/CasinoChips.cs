@@ -122,7 +122,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
                         _hitEnemies[chip] = new List<Enemy>();
 
-                        WeaponManager.GetWeaponSound(WeaponName.CasinoChips)?.Play();
+                        WeaponManager.PlayWeaponSound(WeaponName.CasinoChips);
                     }
 
                     _shotsFiredInBurst++;

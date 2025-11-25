@@ -165,7 +165,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             }
 
             // Проигрываем звук
-            WeaponManager.GetWeaponSound(WeaponName.GoldenTyphoon)?.Play();
+            WeaponManager.PlayWeaponSound(WeaponName.GoldenTyphoon);
 
             // Устанавливаем перезарядку с учетом прокачки
             CooldownTimer = CurrentCooldown;

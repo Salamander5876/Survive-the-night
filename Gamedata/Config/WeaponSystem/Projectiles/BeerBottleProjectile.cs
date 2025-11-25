@@ -12,14 +12,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private float _maxFlightTime = 1.5f;
         private float _flightTime = 0f;
         private bool _soundPlayed = false;
-        private SoundEffect _throwSound;
 
-        public BeerBottleProjectile(Vector2 startPosition, Vector2 targetPosition, int size, Color color, float speed, SoundEffect throwSound)
+        public BeerBottleProjectile(Vector2 startPosition, Vector2 targetPosition, int size, Color color, float speed)
             : base(startPosition, size, color, 0, speed, targetPosition, 1)
         {
             _targetPosition = targetPosition;
             Direction = Vector2.Normalize(targetPosition - startPosition);
-            _throwSound = throwSound;
 
             // Устанавливаем реальный размер на основе текстуры
             Size = size;
@@ -32,12 +30,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _flightTime += deltaTime;
 
-            if (!_soundPlayed && _throwSound != null)
-            {
-                _throwSound.Play();
-                _soundPlayed = true;
-                Debug.WriteLine("Beer bottle throw sound played!");
-            }
+            // Звук теперь проигрывается в BeerBottle.Attack(), поэтому убираем отсюда
 
             Position += Direction * Speed * deltaTime;
             Rotation += 180f * deltaTime;

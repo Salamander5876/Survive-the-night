@@ -117,7 +117,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         );
                         ActiveProjectiles.Add(bullet);
 
-                        WeaponManager.GetWeaponSound(WeaponName.GoldenBullet)?.Play();
+                        WeaponManager.PlayWeaponSound(WeaponName.GoldenBullet);
                     }
 
                     _shotsFiredInBurst++;

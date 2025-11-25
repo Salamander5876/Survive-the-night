@@ -20,8 +20,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private static Texture2D _bottleTexture;
         private static Texture2D _puddleTexture;
-        private static SoundEffect _throwSound;
-        private static SoundEffect _puddleSound;
 
         public int CountLevel { get; private set; } = 0;
         public int DurationLevel { get; private set; } = 0;
@@ -35,8 +33,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         {
             _bottleTexture = bottleTexture;
             _puddleTexture = puddleTexture;
-            _throwSound = throwSound;
-            _puddleSound = puddleSound;
+            // Звуки теперь управляются через SoundManager, поэтому не сохраняем их здесь
         }
 
         public override void LevelUp()
@@ -86,8 +83,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         Color.White,
                         Damage,
                         PuddleDuration,
-                        DamageInterval,
-                        _puddleSound
+                        DamageInterval
                     );
 
                     ActivePuddles.Add(beerPuddle);
@@ -122,6 +118,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             {
                 Debug.WriteLine("Beer Bottle attacking!");
 
+                // Воспроизводим звук броска через WeaponManager
+                WeaponManager.PlayWeaponSound(WeaponName.BeerBottle);
+
                 for (int i = 0; i < NumBottles; i++)
                 {
                     float spawnRadius = 200f + (float)Game1.Random.NextDouble() * 150f;
@@ -137,10 +136,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                     BeerBottleProjectile bottle = new BeerBottleProjectile(
                         Player.Position,
                         randomPositionNearPlayer,
-                        _bottleTexture.Width, // Используем реальный размер текстуры
+                        _bottleTexture.Width,
                         Color.White,
-                        250f,
-                        _throwSound
+                        250f
                     );
                     ActiveBottles.Add(bottle);
                 }

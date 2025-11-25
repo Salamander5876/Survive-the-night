@@ -38,18 +38,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private WeaponState _currentState = WeaponState.Ready;
 
-        private static SoundEffect _hitSound;
         private Dictionary<DiceProjectile, List<Enemy>> _hitEnemies = new Dictionary<DiceProjectile, List<Enemy>>();
 
         public DiceWeapon(Player player) : base(player, WeaponType.Regular, WeaponName.Dice, 0f, 1)
         {
             _currentState = WeaponState.Ready;
             _cooldownTimer = 0f;
-        }
-
-        public static void SetHitSound(SoundEffect sound)
-        {
-            _hitSound = sound;
         }
 
         public override void LevelUp() { }

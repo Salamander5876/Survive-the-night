@@ -138,7 +138,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             }
 
             // Проигрываем звук
-            WeaponManager.GetWeaponSound(WeaponName.EventHorizon)?.Play();
+            WeaponManager.PlayWeaponSound(WeaponName.EventHorizon);
 
             // Устанавливаем перезарядку с учетом прокачки
             CooldownTimer = CurrentCooldown;

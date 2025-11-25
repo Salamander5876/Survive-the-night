@@ -26,13 +26,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _flightTime += deltaTime;
 
-            // Проигрываем звук броска при старте (только один раз) - КАК В CARDS
-            if (!_soundPlayed)
-            {
-                Game1.SFXThrowMolotov?.Play();
-                _soundPlayed = true;
-                Debug.WriteLine("🔊 Molotov throw sound played!");
-            }
+            // Звук броска теперь проигрывается в MolotovCocktail.Attack(), поэтому убираем отсюда
 
             // Двигаемся к цели
             Position += Direction * Speed * deltaTime;

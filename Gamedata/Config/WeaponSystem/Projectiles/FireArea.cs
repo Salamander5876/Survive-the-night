@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Scripts.Managers;
 using System.Collections.Generic;
 
 namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
@@ -18,17 +19,27 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private float _fadeOutDuration = 1.5f;
 
         public FireArea(Vector2 position, int size, Color color, int damage, float duration, float damageInterval)
-            : base(position, size, color, damage, 0f, position, 1) // Урон передается из MolotovCocktail
+            : base(position, size, color, damage, 0f, position, 1)
         {
             _timeToLive = duration;
             _damageCooldown = damageInterval;
 
-            if (Game1.SFXFireBurn != null)
+            // Создаем зацикленный звук ГОРЕНИЯ через отдельный метод
+            _fireSoundInstance = CreateFireBurnSound();
+        }
+
+        private SoundEffectInstance CreateFireBurnSound()
+        {
+            // Используем прямой доступ к SoundManager для звука горения
+            string fireBurnKey = "fire_burn";
+            if (SoundManager.Instance.ContainsSound(fireBurnKey))
             {
-                _fireSoundInstance = Game1.SFXFireBurn.CreateInstance();
-                _fireSoundInstance.Volume = 0.4f;
-                _fireSoundInstance.IsLooped = true;
+                var instance = SoundManager.Instance.PlaySoundInstance(fireBurnKey, 0.4f, true);
+                // Добавляем в группу звуков огня для управления паузой
+                SoundManager.Instance.AddToSoundGroup("fire_sounds", instance);
+                return instance;
             }
+            return null;
         }
 
         public override void Update(GameTime gameTime)
@@ -40,20 +51,13 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             _burnTimer += delta;
             _damageTimer += delta;
 
-            // Запускаем звук при первом обновлении
-            if (!_soundPlayed && _fireSoundInstance != null)
-            {
-                _fireSoundInstance.Play();
-                _soundPlayed = true;
-            }
-
             // Плавное уменьшение громкости в конце жизни
             if (_burnTimer >= _timeToLive - _fadeOutDuration)
             {
                 float fadeProgress = (_burnTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
-                float volume = MathHelper.Clamp(0.4f * (1f - fadeProgress), 0f, 0.4f); // Ограничиваем громкость
+                float volume = MathHelper.Clamp(0.4f * (1f - fadeProgress), 0f, 0.4f);
 
-                if (_fireSoundInstance != null)
+                if (_fireSoundInstance != null && !_fireSoundInstance.IsDisposed)
                 {
                     _fireSoundInstance.Volume = volume;
                 }
@@ -63,11 +67,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_burnTimer >= _timeToLive)
             {
                 IsActive = false;
-                // Плавно останавливаем звук
-                if (_fireSoundInstance != null)
-                {
-                    _fireSoundInstance.Stop();
-                }
+                StopFireSound();
                 return;
             }
 
@@ -75,6 +75,19 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             {
                 ApplyDamageToEnemies(Game1.CurrentEnemies);
                 _damageTimer = 0f;
+            }
+        }
+
+        private void StopFireSound()
+        {
+            if (_fireSoundInstance != null && !_fireSoundInstance.IsDisposed)
+            {
+                _fireSoundInstance.Stop();
+                _fireSoundInstance.Dispose();
+                _fireSoundInstance = null;
+
+                // Удаляем из группы звуков
+                SoundManager.Instance.RemoveFromSoundGroup("fire_sounds", _fireSoundInstance);
             }
         }
 
@@ -105,13 +118,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_burnTimer >= _timeToLive - _fadeOutDuration)
             {
                 float fadeProgress = (_burnTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
-                alpha = MathHelper.Clamp(1f - fadeProgress, 0f, 1f); // Ограничиваем альфа-канал
+                alpha = MathHelper.Clamp(1f - fadeProgress, 0f, 1f);
             }
 
             Color drawColor = Color * pulse * alpha;
 
-            // Используем безопасное значение layerDepth (0.0 - 1.0)
-            float layerDepth = 0.1f; // НИЗКИЙ LAYER DEPTH - отрисовывается ПОД другими объектами
+            float layerDepth = 0.1f;
 
             spriteBatch.Draw(
                 texture,
@@ -124,6 +136,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
                 SpriteEffects.None,
                 layerDepth
             );
+        }
+
+        protected override void OnDeactivate()
+        {
+            StopFireSound();
+            base.OnDeactivate();
         }
     }
 }

@@ -122,7 +122,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
                         _hitEnemies[card] = new List<Enemy>();
 
-                        WeaponManager.GetWeaponSound(WeaponName.PlayingCards)?.Play();
+                        WeaponManager.PlayWeaponSound(WeaponName.PlayingCards);
                     }
 
                     _shotsFiredInBurst++;

@@ -27,14 +27,17 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         public int DamageLevel { get; private set; } = 0;
         public int CooldownLevel { get; private set; } = 0;
 
-        // Звук
-        private static SoundEffect _swingSound;
-
         // Отладочная информация
         private static readonly bool SHOW_DEBUG_INFO = true;
 
         public Breaker(Player player) : base(player, WeaponType.Legendary, WeaponName.Breaker, 0.8f, 5)
         {
+        }
+
+        public static void SetSwingSound(SoundEffect sound)
+        {
+            // Этот метод оставлен для обратной совместимости
+            // Звуки теперь управляются через SoundManager
         }
 
         public override void Update(GameTime gameTime)
@@ -259,15 +262,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             CooldownLevel++;
         }
 
-        // Статические методы для установки контента
-        public static void SetSwingSound(SoundEffect sound)
-        {
-            _swingSound = sound;
-        }
-
         private void PlaySwingSound()
         {
-            _swingSound?.Play();
+            WeaponManager.PlayWeaponSound(WeaponName.Breaker);
         }
 
         private enum AttackState

@@ -2,10 +2,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
-using System.Collections.Generic;
-using System.Linq;
 using Survive_the_night.Entities.Enemies.Elite;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Scripts.Managers;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 {
@@ -28,19 +29,17 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
         private HashSet<Enemy> _hitEnemiesThisCycle = new HashSet<Enemy>();
         private Enemy _currentTarget;
-        private SoundEffect _laserSound;
         private SoundEffectInstance _laserSoundInstance;
 
         private const float HITBOX_WIDTH = 33f;
         private const float HITBOX_LENGTH = 800f;
 
-        public BigLaserProjectile(Vector2 position, Player player, List<Enemy> enemies, int damage, Texture2D texture = null, SoundEffect laserSound = null)
+        public BigLaserProjectile(Vector2 position, Player player, List<Enemy> enemies, int damage, Texture2D texture = null)
             : base(position, 20, Color.White, damage, 0f, Vector2.Zero, int.MaxValue)
         {
             _player = player;
             _enemies = enemies;
             _laserTexture = texture ?? _defaultTexture;
-            _laserSound = laserSound;
 
             if (_laserTexture != null)
             {
@@ -57,11 +56,13 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             _targetRotation = 0f;
             _currentTarget = FindBestTarget();
 
-            if (_laserSound != null)
+            // Создаем зацикленный звук лазера через WeaponManager
+            _laserSoundInstance = WeaponManager.PlayWeaponSoundLooping(WeaponName.BigLaser);
+
+            // Добавляем в отдельную группу для лазеров
+            if (_laserSoundInstance != null)
             {
-                _laserSoundInstance = _laserSound.CreateInstance();
-                _laserSoundInstance.IsLooped = true;
-                _laserSoundInstance.Play();
+                SoundManager.Instance.AddToSoundGroup("laser_sounds", _laserSoundInstance);
             }
         }
 
@@ -320,8 +321,16 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         // Останавливаем звук при деактивации лазера
         public void StopSound()
         {
-            _laserSoundInstance?.Stop();
-            _laserSoundInstance?.Dispose();
+            if (_laserSoundInstance != null && !_laserSoundInstance.IsDisposed)
+            {
+                _laserSoundInstance.Stop();
+                _laserSoundInstance.Dispose();
+                _laserSoundInstance = null;
+
+                // Удаляем из группы звуков
+                SoundManager.Instance.RemoveFromSoundGroup("weapon_sounds", _laserSoundInstance);
+                SoundManager.Instance.RemoveFromSoundGroup("laser_sounds", _laserSoundInstance);
+            }
         }
 
         protected override void OnDeactivate()

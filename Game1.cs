@@ -50,12 +50,10 @@ namespace Survive_the_night
         public static Vector2 WorldSize { get; private set; }
         public static List<Enemy> CurrentEnemies { get; private set; }
 
-        // Звуки (только общие, не связанные с оружиями)
-        public static SoundEffect SFXGoldenSword;
-        public static SoundEffect SFXThrowMolotov;
-        public static SoundEffect SFXFireBurn;
-        public static SoundEffect SFXCasinoChips;
-        public static SoundEffect SFXBigLaser;
+        public MusicsManager GetMusicManager()
+        {
+            return _musicManager;
+        }
 
         /// <summary>
         /// Глобальное статическое поле, которое используется для управления состоянием игры из других классов.
@@ -70,6 +68,7 @@ namespace Survive_the_night
         private RouletteManager _rouletteManager;
         private RouletteMenu _rouletteMenu;
         private MusicsManager _musicManager;
+        private SoundManager _soundManager;
         private LevelManager _levelManager;
         private GameHUD _gameHUD;
         private DifficultyManager _difficultyManager;
@@ -165,6 +164,7 @@ namespace Survive_the_night
             // Создаем DifficultyManager
             _difficultyManager = new DifficultyManager();
 
+            _soundManager = SoundManager.Instance;
             _musicManager = new MusicsManager();
             _levelManager = new LevelManager(_difficultyManager);
 
@@ -196,68 +196,52 @@ namespace Survive_the_night
             Texture2D casinoFloorTexture = _levelManager.LoadCurrentLevelFloorTexture(Content);
             _worldGeneration = new WorldGeneration(casinoFloorTexture, _camera, GraphicsDevice.Viewport);
 
-            // Загрузка музыки
+            // Загрузка музыки и звуков
             _musicManager.LoadContent(Content);
+            _soundManager.LoadContent(Content); // SoundManager загрузит все звуки автоматически
 
-            // --- ЗАГРУЗКА ТЕКСТУР И ЗВУКОВ ДЛЯ ОРУЖИЙ ЧЕРЕПРЕДЕЛАННЫЙ WEAPON MANAGER ---
+            // --- ЗАГРУЗКА ТЕКСТУР ДЛЯ ОРУЖИЙ (звуки теперь через SoundManager) ---
 
             // Игральные карты
             var cardTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Card1");
             var cardTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/Card2");
             var cardTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/Card3");
             var cardTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Card4");
-            var cardSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXCardDeal");
             WeaponManager.LoadWeaponTextures(WeaponName.PlayingCards, cardTexture1, cardTexture2, cardTexture3, cardTexture4);
-            WeaponManager.LoadWeaponSound(WeaponName.PlayingCards, cardSound);
 
             // Золотые пули
             var bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
-            var gunSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGunShooting");
             WeaponManager.LoadWeaponTextures(WeaponName.GoldenBullet, bulletTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.GoldenBullet, gunSound);
 
             // Фишки казино
             var chipTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsBlue");
             var chipTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsGreen");
             var chipTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/CasinoChipsRed");
-            var chipsSound = Content.Load<SoundEffect>("Sounds/Weapons/SFCCasinoChips");
             WeaponManager.LoadWeaponTextures(WeaponName.CasinoChips, chipTexture1, chipTexture2, chipTexture3);
-            WeaponManager.LoadWeaponSound(WeaponName.CasinoChips, chipsSound);
 
             // Золотой меч
             var swordTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenSword");
-            SFXGoldenSword = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenSword");
             WeaponManager.LoadWeaponTextures(WeaponName.GoldenSword, swordTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.GoldenSword, SFXGoldenSword);
 
             // Молотов
             var molotovTexture = Content.Load<Texture2D>("Sprites/Projectiles/Molotov");
             var molotovFireTexture = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire");
-            SFXThrowMolotov = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowMolotov");
-            SFXFireBurn = Content.Load<SoundEffect>("Sounds/Weapons/SFXFireBurn");
             MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
             WeaponManager.LoadWeaponTextures(WeaponName.MolotovCocktail, molotovTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.MolotovCocktail, SFXThrowMolotov);
 
             // Большой лазер
             var bigLaserTexture = Content.Load<Texture2D>("Sprites/Projectiles/BigLaser");
-            SFXBigLaser = Content.Load<SoundEffect>("Sounds/Weapons/SFXBigLaser");
             WeaponManager.LoadWeaponTextures(WeaponName.BigLaser, bigLaserTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.BigLaser, SFXBigLaser);
             BigLaserProjectile.SetDefaultTexture(bigLaserTexture);
 
             // Золотой Тайфун
             var goldenTyphoonTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenTyphoon");
-            var goldenTyphoonSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXGoldenTyphoon");
             WeaponManager.LoadWeaponTextures(WeaponName.GoldenTyphoon, goldenTyphoonTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.GoldenTyphoon, goldenTyphoonSound);
             GoldenTyphoonProjectile.SetDefaultTexture(goldenTyphoonTexture);
 
             // Горизонт Событий
             var eventHorizonTexture = Content.Load<Texture2D>("Sprites/Projectiles/EventHorizonStar");
-            var eventHorizonSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXEventHorizonStar");
             WeaponManager.LoadWeaponTextures(WeaponName.EventHorizon, eventHorizonTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.EventHorizon, eventHorizonSound);
             EventHorizonStarProjectile.SetDefaultTexture(eventHorizonTexture);
 
             // Установка текстур по умолчанию для проектов
@@ -279,21 +263,13 @@ namespace Survive_the_night
             _itemManager.SetDebugTexture(_debugTexture);
 
             var dynamiteExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/DynamiteExplosion");
-            var dynamiteExplosionSound = Content.Load<SoundEffect>("Sounds/Items/SFXDynamiteExplosion");
-            Dynamite.SetExplosionSound(dynamiteExplosionSound);
             DynamiteExplosion.SetTexture(dynamiteExplosionTexture);
 
             // Липкая бомба
             var stickyBombTexture = Content.Load<Texture2D>("Sprites/Projectiles/StickyBomb");
             var bombExplosionTexture = Content.Load<Texture2D>("Sprites/Projectiles/BombExplosion");
-            var bombThrowSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBombThrow");
-            var bombExplosionSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBombExplosion");
-
             WeaponManager.LoadWeaponTextures(WeaponName.StickyBomb, stickyBombTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.StickyBomb, bombThrowSound);
-
             StickyBombProjectile.SetTextures(stickyBombTexture, bombExplosionTexture);
-            StickyBomb.SetSounds(bombThrowSound, bombExplosionSound);
 
             // Игральные кости
             var diceTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Dice1");
@@ -302,30 +278,23 @@ namespace Survive_the_night
             var diceTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Dice4");
             var diceTexture5 = Content.Load<Texture2D>("Sprites/Projectiles/Dice5");
             var diceTexture6 = Content.Load<Texture2D>("Sprites/Projectiles/Dice6");
-            var diceSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXDiceDamage");
-
             WeaponManager.LoadWeaponTextures(WeaponName.Dice,
                 diceTexture1, diceTexture2, diceTexture3,
                 diceTexture4, diceTexture5, diceTexture6);
-            WeaponManager.LoadWeaponSound(WeaponName.Dice, diceSound);
 
-            // Устанавливаем текстуры и звук для DiceProjectile
+            // Устанавливаем текстуры для DiceProjectile
             DiceProjectile.SetTextures(diceTexture1, diceTexture2, diceTexture3, diceTexture4, diceTexture5, diceTexture6);
-            DiceProjectile.SetHitSound(diceSound);
 
             // Рулетка
             var rouletteBallTexture = Content.Load<Texture2D>("Sprites/Projectiles/RouletteBall");
-            var rouletteSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXRouletteDamage");
+            WeaponManager.LoadWeaponTextures(WeaponName.RouletteBall, rouletteBallTexture);
+            RouletteBallProjectile.SetDefaultTexture(rouletteBallTexture);
 
             // Beer Bottle
             var beerBottleTexture = Content.Load<Texture2D>("Sprites/Projectiles/BottleBeer");
             var beerPuddleTexture = Content.Load<Texture2D>("Sprites/Projectiles/PuddleBeer");
-            var beerThrowSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXThrowBeer");
-            var beerPuddleSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXPuddleBeer");
-
-            BeerBottle.SetTexturesAndSounds(beerBottleTexture, beerPuddleTexture, beerThrowSound, beerPuddleSound);
+            BeerBottle.SetTexturesAndSounds(beerBottleTexture, beerPuddleTexture, null, null); // Звуки теперь null
             WeaponManager.LoadWeaponTextures(WeaponName.BeerBottle, beerBottleTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.BeerBottle, beerThrowSound);
 
             _beerBottleTexture = beerBottleTexture;
             _bottleTexture = beerBottleTexture;
@@ -333,11 +302,8 @@ namespace Survive_the_night
 
             // Разрушитель
             var breakerTexture = Content.Load<Texture2D>("Sprites/Projectiles/BreakerBlade");
-            var breakerSound = Content.Load<SoundEffect>("Sounds/Weapons/SFXBreakerBlade");
             WeaponManager.LoadWeaponTextures(WeaponName.Breaker, breakerTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.Breaker, breakerSound);
             BreakerBladeProjectile.SetDefaultTexture(breakerTexture);
-            Breaker.SetSwingSound(breakerSound);
 
             // Загружаем все текстуры частичек
             for (int i = 1; i <= 15; i++)
@@ -345,10 +311,6 @@ namespace Survive_the_night
                 var particleTexture = Content.Load<Texture2D>($"Sprites/Projectiles/Roulette{i}");
                 RouletteParticle.AddParticleTexture(particleTexture);
             }
-
-            WeaponManager.LoadWeaponTextures(WeaponName.RouletteBall, rouletteBallTexture);
-            WeaponManager.LoadWeaponSound(WeaponName.RouletteBall, rouletteSound);
-            RouletteBallProjectile.SetDefaultTexture(rouletteBallTexture);
 
             // Загрузка текстур для StartMenu
             var weaponCellTexture = Content.Load<Texture2D>("Sprites/GUI/CellWeapon");
@@ -382,6 +344,7 @@ namespace Survive_the_night
 
             // Инициализация меню паузы
             _pauseMenu = new PauseMenu(GraphicsDevice, _debugTexture, _font);
+            _pauseMenu.SetInitialVolumes(0.75f, 1.0f);
 
             // Инициализация экрана загрузки
             _loadingScreen = new LoadingScreen(GraphicsDevice, _debugTexture, _font);
@@ -782,6 +745,7 @@ namespace Survive_the_night
                     _pauseMenu.Update();
 
                     _musicManager.PauseMusic();
+                    _soundManager.PauseAllGameSounds();
 
                     // Проверяем, не изменилось ли состояние игры через меню паузы
                     if (Game1.CurrentState == GameState.MainMenu)
@@ -804,6 +768,7 @@ namespace Survive_the_night
                     {
                         // Если меню паузы скрылось, возвращаемся в игру
                         _musicManager.ResumeMusic();
+                        _soundManager.ResumeAllGameSounds();
                         Game1.CurrentState = GameState.Playing;
                     }
                     break;
@@ -1264,6 +1229,7 @@ namespace Survive_the_night
         protected override void UnloadContent()
         {
             _musicManager?.Dispose();
+            _soundManager?.Dispose();
             base.UnloadContent();
         }
 

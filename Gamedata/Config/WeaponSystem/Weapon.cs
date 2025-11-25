@@ -117,7 +117,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
 
         // Текстуры для оружий
         private static Dictionary<WeaponName, List<Texture2D>> _weaponTextures = new Dictionary<WeaponName, List<Texture2D>>();
-        private static Dictionary<WeaponName, SoundEffect> _weaponSounds = new Dictionary<WeaponName, SoundEffect>();
 
         // Методы для загрузки контента
         public static void LoadWeaponTextures(WeaponName weaponName, params Texture2D[] textures)
@@ -136,11 +135,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             }
         }
 
-        public static void LoadWeaponSound(WeaponName weaponName, SoundEffect sound)
-        {
-            _weaponSounds[weaponName] = sound;
-        }
-
         // Методы для получения контента
         public static Texture2D GetRandomWeaponTexture(WeaponName weaponName)
         {
@@ -151,9 +145,74 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             return null;
         }
 
-        public static SoundEffect GetWeaponSound(WeaponName weaponName)
+        // === НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ СО ЗВУКАМИ ЧЕРЕЗ SOUNDMANAGER ===
+
+        public static void PlayWeaponSound(WeaponName weaponName, float volumeMultiplier = 1.0f)
         {
-            return _weaponSounds.ContainsKey(weaponName) ? _weaponSounds[weaponName] : null;
+            string soundKey = GetWeaponSoundKey(weaponName);
+            SoundManager.Instance.PlaySound(soundKey, volumeMultiplier);
+        }
+
+        // Специальный метод для BigLaser и других оружий с длительными звуками
+        public static SoundEffectInstance PlayWeaponSoundLooping(WeaponName weaponName, float volumeMultiplier = 1.0f)
+        {
+            string soundKey = GetWeaponSoundKey(weaponName);
+            var instance = SoundManager.Instance.PlaySoundInstance(soundKey, volumeMultiplier, true);
+
+            // Добавляем в группу оружий для управления паузой
+            if (instance != null)
+            {
+                SoundManager.Instance.AddToSoundGroup("weapon_sounds", instance);
+            }
+
+            return instance;
+        }
+
+        public static void StopWeaponSoundInstance(SoundEffectInstance instance)
+        {
+            if (instance != null && !instance.IsDisposed)
+            {
+                instance.Stop();
+                instance.Dispose();
+
+                // Удаляем из группы звуков
+                SoundManager.Instance.RemoveFromSoundGroup("weapon_sounds", instance);
+            }
+        }
+
+        private static string GetWeaponSoundKey(WeaponName weaponName)
+        {
+            switch (weaponName)
+            {
+                case WeaponName.PlayingCards: return "card_deal";
+                case WeaponName.GoldenBullet: return "gun_shoot";
+                case WeaponName.CasinoChips: return "casino_chips";
+                case WeaponName.GoldenSword: return "golden_sword";
+                case WeaponName.MolotovCocktail: return "molotov_throw";
+                case WeaponName.BigLaser: return "big_laser";
+                case WeaponName.StickyBomb: return "bomb_throw";
+                case WeaponName.Dice: return "dice_damage";
+                case WeaponName.RouletteBall: return "roulette_damage";
+                case WeaponName.GoldenTyphoon: return "golden_typhoon";
+                case WeaponName.EventHorizon: return "event_horizon";
+                case WeaponName.BeerBottle: return "beer_throw";
+                case WeaponName.Breaker: return "breaker_swing";
+                default: return "card_deal";
+            }
+        }
+
+        // Метод для получения звука горения огня
+        public static SoundEffectInstance PlayFireBurnSound(float volumeMultiplier = 1.0f)
+        {
+            var instance = SoundManager.Instance.PlaySoundInstance("fire_burn", volumeMultiplier, true);
+
+            // Добавляем в группу звуков огня для управления паузой
+            if (instance != null)
+            {
+                SoundManager.Instance.AddToSoundGroup("fire_sounds", instance);
+            }
+
+            return instance;
         }
 
         // Фабричный метод для создания оружия
@@ -190,13 +249,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 default:
                     return new PlayingCards(player);
             }
-        }
-
-        // Временный метод - нужно будет заменить на получение реального GameBoundaries
-        private static GameBoundaries CreateTemporaryGameBoundaries()
-        {
-            // Это временное решение - в реальной игре нужно получить GameBoundaries из Game1
-            return null;
         }
 
         // Получение отображаемого имени оружия

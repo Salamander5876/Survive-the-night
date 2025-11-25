@@ -116,6 +116,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             {
                 Debug.WriteLine("🎯 Molotov attacking!");
 
+                // Проигрываем звук броска через WeaponManager
+                WeaponManager.PlayWeaponSound(WeaponName.MolotovCocktail);
+
                 for (int i = 0; i < NumBottles; i++)
                 {
                     float spawnRadius = 300f + (float)Game1.Random.NextDouble() * 200f;

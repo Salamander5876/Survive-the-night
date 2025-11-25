@@ -10,20 +10,18 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
     public class BeerPuddle : Projectile
     {
         private float _timeToLive;
-        private float _lifeTimer = 0f;
+        private new float _lifeTimer = 0f; // Используем new чтобы скрыть наследуемый член
         private float _damageCooldown;
         private Dictionary<Enemy, float> _enemyDamageTimers = new Dictionary<Enemy, float>();
-        private SoundEffect _puddleSound;
         private bool _soundPlayed = false;
         private float _fadeOutDuration = 1.0f;
 
-        public BeerPuddle(Vector2 position, int size, Color color, int damage, float duration, float damageInterval, SoundEffect puddleSound)
+        public BeerPuddle(Vector2 position, int size, Color color, int damage, float duration, float damageInterval)
             : base(position, size, color, damage, 0f, position, 1)
         {
             _timeToLive = duration;
             _damageCooldown = damageInterval;
             Size = size;
-            _puddleSound = puddleSound; // Сохраняем звук, но не создаем SoundEffectInstance
         }
 
         public override void Update(GameTime gameTime)
@@ -33,18 +31,11 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _lifeTimer += delta;
 
-            // Проигрываем звук один раз при создании лужи
-            if (!_soundPlayed && _puddleSound != null)
+            // Проигрываем звук один раз при создании лужи через WeaponManager
+            if (!_soundPlayed)
             {
-                _puddleSound.Play(); // Проигрываем звук один раз
+                WeaponManager.PlayWeaponSound(WeaponName.BeerBottle, 0.7f); // Немного тише
                 _soundPlayed = true;
-            }
-
-            // Плавное исчезновение (альфа-канал)
-            if (_lifeTimer >= _timeToLive - _fadeOutDuration)
-            {
-                float fadeProgress = (_lifeTimer - (_timeToLive - _fadeOutDuration)) / _fadeOutDuration;
-                // Не нужно управлять громкостью, так как звук уже проигрался один раз
             }
 
             // Полное исчезновение

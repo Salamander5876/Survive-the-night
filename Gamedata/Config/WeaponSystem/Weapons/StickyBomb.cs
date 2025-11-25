@@ -28,17 +28,14 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private List<Enemy> _enemiesWithBombs = new List<Enemy>();
 
-        private static SoundEffect _throwSound;
-        private static SoundEffect _explosionSound;
-
         public StickyBomb(Player player) : base(player, WeaponType.Regular, WeaponName.StickyBomb, 0f, 10)
         {
         }
 
         public static void SetSounds(SoundEffect throwSound, SoundEffect explosionSound)
         {
-            _throwSound = throwSound;
-            _explosionSound = explosionSound;
+            // Ётот метод оставлен дл€ обратной совместимости
+            // «вуки теперь управл€ютс€ через SoundManager
         }
 
         public override void LevelUp() { }
@@ -139,14 +136,14 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                 Damage,
                 ProjectileSpeed,
                 target,
-                ExplosionTime,
-                _explosionSound
+                ExplosionTime
+            // ”брали последний параметр SoundEffect
             );
 
             ActiveBombs.Add(bomb);
             _enemiesWithBombs.Add(target);
 
-            _throwSound?.Play();
+            WeaponManager.PlayWeaponSound(WeaponName.StickyBomb);
         }
 
         private Enemy FindEnemyWithoutBomb(List<Enemy> enemies)

@@ -29,6 +29,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private List<Enemy> _enemies;
 
+        // Для управления звуком лазера
+        private SoundEffectInstance _laserSoundInstance;
+
         public BigLaser(Player player) : base(player, WeaponType.Legendary, WeaponName.BigLaser, BASE_COOLDOWN, 1)
         {
             _enemies = Game1.CurrentEnemies;
@@ -81,7 +84,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
                 if (!ActiveLaser.IsActive)
                 {
-                    ActiveLaser.StopSound();
+                    StopLaserSound();
                     ActiveLaser = null;
                     _isLaserActive = false;
                     _cooldownTimer = CurrentCooldown;
@@ -97,15 +100,13 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         private void ActivateLaser()
         {
             Texture2D laserTexture = WeaponManager.GetRandomWeaponTexture(WeaponName.BigLaser);
-            SoundEffect laserSound = WeaponManager.GetWeaponSound(WeaponName.BigLaser);
 
             ActiveLaser = new BigLaserProjectile(
                 Player.Position,
                 Player,
                 _enemies,
                 Damage,
-                laserTexture,
-                laserSound
+                laserTexture // Только 5 параметров
             )
             {
                 DamageInterval = 0.1f,
@@ -114,6 +115,18 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
             ActiveLaser.SetLifeTime(CurrentDuration);
             _isLaserActive = true;
+
+            // Запускаем звук лазера через WeaponManager
+            _laserSoundInstance = WeaponManager.PlayWeaponSoundLooping(WeaponName.BigLaser);
+        }
+
+        private void StopLaserSound()
+        {
+            if (_laserSoundInstance != null)
+            {
+                WeaponManager.StopWeaponSoundInstance(_laserSoundInstance);
+                _laserSoundInstance = null;
+            }
         }
 
         public void UpdateLaserTexture(Texture2D newTexture)

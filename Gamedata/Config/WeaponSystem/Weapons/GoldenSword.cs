@@ -127,7 +127,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                     CreateSwordWithoutTarget(enemies);
                 }
 
-                WeaponManager.GetWeaponSound(WeaponName.GoldenSword)?.Play();
+                WeaponManager.PlayWeaponSound(WeaponName.GoldenSword);
 
                 // Блокируем следующую атаку до возврата всех мечей
                 _canAttack = false;

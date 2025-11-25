@@ -17,7 +17,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
         private static Texture2D _bombTexture;
         private static Texture2D _explosionTexture;
-        private SoundEffect _explosionSound;
 
         private List<Enemy> _damagedEnemies = new List<Enemy>();
         private bool _hasPlayedExplosionSound = false;
@@ -27,12 +26,11 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private int _bombSize;
         private int _explosionSize;
 
-        public StickyBombProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy targetEnemy, float explosionTime, SoundEffect explosionSound)
+        public StickyBombProjectile(Vector2 position, int size, Color color, int damage, float speed, Enemy targetEnemy, float explosionTime)
             : base(position, size, color, damage, speed, targetEnemy.Position, 1)
         {
             StuckEnemy = targetEnemy;
             _explosionTimer = explosionTime;
-            _explosionSound = explosionSound;
             MaxLifeTime = 120f;
 
             // Автоматически определяем размеры из текстур
@@ -111,9 +109,10 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             _isExploding = true;
             HasExploded = true;
 
-            if (!_hasPlayedExplosionSound && _explosionSound != null)
+            // Проигрываем звук взрыва через WeaponManager
+            if (!_hasPlayedExplosionSound)
             {
-                _explosionSound.Play();
+                WeaponManager.PlayWeaponSound(WeaponName.StickyBomb, 0.8f); // Немного тише для взрыва
                 _hasPlayedExplosionSound = true;
             }
 

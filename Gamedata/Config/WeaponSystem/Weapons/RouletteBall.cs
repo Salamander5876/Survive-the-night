@@ -259,7 +259,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         // НОВЫЙ МЕТОД: воспроизведение звука отскока (будет вызываться из RouletteBallProjectile)
         public void PlayBounceSound()
         {
-            WeaponManager.GetWeaponSound(WeaponName.RouletteBall)?.Play();
+            WeaponManager.PlayWeaponSound(WeaponName.RouletteBall);
         }
 
         // Проверка столкновений шарика с врагами
