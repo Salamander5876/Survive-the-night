@@ -367,7 +367,11 @@ namespace Survive_the_night
             KeyboardState currentKs = Keyboard.GetState();
             MouseState currentMs = Mouse.GetState();
 
-            // Обработка ESC - новое поведение
+            // Сохраняем предыдущее состояние для обнаружения изменений
+            GameState previousState = _currentGameState;
+            _currentGameState = Game1.CurrentState;
+
+            // Обработка ESC - ПРИОРИТЕТНАЯ
             if (currentKs.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
             {
                 if (_currentGameState == GameState.Playing)
@@ -375,18 +379,21 @@ namespace Survive_the_night
                     // В игре - открываем меню паузы
                     _pauseMenu.Show();
                     Game1.CurrentState = GameState.Paused;
+                    System.Diagnostics.Debug.WriteLine("🔄 ESC: Playing -> Paused");
                 }
                 else if (_currentGameState == GameState.Paused)
                 {
                     // В паузе - закрываем меню паузы
                     _pauseMenu.Hide();
                     Game1.CurrentState = GameState.Playing;
+                    System.Diagnostics.Debug.WriteLine("🔄 ESC: Paused -> Playing");
                 }
                 else if (_currentGameState == GameState.BonusShop)
                 {
                     // В магазине - закрываем магазин
                     _bonusShop.Hide();
                     Game1.CurrentState = GameState.Playing;
+                    System.Diagnostics.Debug.WriteLine("🔄 ESC: BonusShop -> Playing");
                 }
                 else if (_currentGameState == GameState.MainMenu)
                 {
@@ -395,17 +402,17 @@ namespace Survive_the_night
                 }
             }
 
-            // Обработка клавиши B для открытия магазина из состояния Playing
+            // Обработка клавиши B для открытия магазина
             if (currentKs.IsKeyDown(Keys.B) && !_previousKeyboardState.IsKeyDown(Keys.B) &&
                 _currentGameState == GameState.Playing)
             {
                 _bonusShop.Show();
                 Game1.CurrentState = GameState.BonusShop;
+                System.Diagnostics.Debug.WriteLine("🔄 B: Playing -> BonusShop");
             }
 
             // Обработка кликов по кнопкам HUD
-            if (currentMs.LeftButton == ButtonState.Pressed &&
-                _previousMouseState.LeftButton == ButtonState.Released)
+            if (currentMs.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
             {
                 Point mousePos = currentMs.Position;
 
@@ -414,25 +421,34 @@ namespace Survive_the_night
                     // Открываем меню паузы по кнопке
                     _pauseMenu.Show();
                     Game1.CurrentState = GameState.Paused;
+                    System.Diagnostics.Debug.WriteLine("🔄 Кнопка паузы: Playing -> Paused");
                 }
                 else if (_gameHUD.IsShopButtonClicked(mousePos) && _currentGameState == GameState.Playing)
                 {
                     // Открываем магазин бонусов
                     _bonusShop.Show();
                     Game1.CurrentState = GameState.BonusShop;
+                    System.Diagnostics.Debug.WriteLine("🔄 Кнопка магазина: Playing -> BonusShop");
                 }
             }
 
-            // Обновляем приватное состояние из статического для работы switch'а
+            // ОБНОВЛЯЕМ состояние после всех изменений
             _currentGameState = Game1.CurrentState;
+
+            // Управление звуками при переходе между состояниями - ВСЕГДА ВЫЗЫВАЕТСЯ
+            if (previousState != _currentGameState)
+            {
+                System.Diagnostics.Debug.WriteLine($"🔄 ОБНАРУЖЕНО ИЗМЕНЕНИЕ: {previousState} -> {_currentGameState}");
+                HandleSoundStateTransition(previousState, _currentGameState);
+            }
 
             // Управление музыкой в зависимости от состояния
             UpdateMusicForState();
 
+            // ОСНОВНАЯ ЛОГИКА СОСТОЯНИЙ
             switch (_currentGameState)
             {
                 case GameState.MainMenu:
-                    Game1.CurrentState = _mainMenu.Update(gameTime);
                     var menuState = _mainMenu.Update(gameTime);
                     if (menuState == GameState.StartMenu)
                     {
@@ -448,7 +464,6 @@ namespace Survive_the_night
                     var newState = _startMenu.Update(gameTime);
                     if (newState == GameState.Loading)
                     {
-                        // Сохраняем выбранное оружие
                         _selectedStartingWeapon = _startMenu.SelectedWeapon;
                     }
                     Game1.CurrentState = newState;
@@ -456,21 +471,14 @@ namespace Survive_the_night
 
                 case GameState.Loading:
                     bool startGame = _loadingScreen.Update(gameTime);
-
                     if (startGame)
                     {
                         ResetGameToInitialState();
-
-                        // Устанавливаем выбранный режим сложности
                         _difficultyManager.SetDifficulty(_startMenu.SelectedGameMode);
-
-                        // Устанавливаем режим в MusicManager
                         _musicManager.SetGameMode(_startMenu.SelectedGameMode);
-
                         _musicManager.StopMusicForGameStart();
                         InitializePlayerWeapon();
 
-                        // Запускаем соответствующую музыку - УПРОЩАЕМ ЛОГИКУ
                         if (_startMenu.SelectedGameMode == StartMenu.GameMode.Survival)
                         {
                             _musicManager.ForcePlaySurvivalCycleMusic(1);
@@ -486,351 +494,31 @@ namespace Survive_the_night
                     break;
 
                 case GameState.Playing:
-                    _survivalTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-                    // Обновляем HUD
-                    _gameHUD.UpdateGameStats(_survivalTime, _killCount);
-                    _gameHUD.Update(gameTime);
-
-                    _itemManager.Update(gameTime);
-
-                    // Временный тест - создание предметов по клавише F9 рядом с игроком
-                    if (currentKs.IsKeyDown(Keys.F9) && !_previousKeyboardState.IsKeyDown(Keys.F9))
-                    {
-                        // Создаем тестовые предметы рядом с игроком
-                        Vector2 playerPos = _player.Position;
-                        _itemManager.AddExperienceOrb(playerPos + new Vector2(50, 0), 25);
-                        _itemManager.AddCoin(playerPos + new Vector2(-50, 0), 1);
-                        _itemManager.AddHealthOrb(playerPos + new Vector2(0, 50), 0.25f);
-                        _itemManager.AddDynamite(playerPos + new Vector2(0, -50));
-                    }
-
-                    // Тест состояния игрока по клавише F10
-                    if (currentKs.IsKeyDown(Keys.F10) && !_previousKeyboardState.IsKeyDown(Keys.F10))
-                    {
-                        _spawnManager.SpawnEliteEnemy();
-                    }
-
-                    if (currentKs.IsKeyDown(Keys.F8) && !_previousKeyboardState.IsKeyDown(Keys.F8))
-                    {
-                        // Принудительная победа для тестирования
-                        Game1.CurrentState = GameState.Victory;
-                        _victoryScreen.Show();
-                        break;
-                    }
-
-                    // В Survival режиме музыка управляется автоматически при смене циклов
-                    if (_difficultyManager.CurrentDifficulty != StartMenu.GameMode.Survival)
-                    {
-                        _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
-                    }
-
-                    // Проверки состояния
-                    if (!_player.IsAlive)
-                    {
-                        Game1.CurrentState = GameState.GameOver;
-                        _gameOverScreen.Show();
-                        _musicManager.StopMusic();
-                        break;
-                    }
-
-                    // Обычный LevelUp
-                    if (_player.IsLevelUpPending)
-                    {
-                        Game1.CurrentState = GameState.LevelUp;
-                        break;
-                    }
-
-                    // Игровая логика
-                    _player.Update(gameTime);
-                    _camera.Follow();
-                    _spawnManager.Update(gameTime);
-
-                    // Обновление менеджера предметов
-                    _itemManager.Update(gameTime);
-
-                    // Обновление взрывов динамита
-                    DynamiteExplosion.UpdateAll(gameTime, _enemies);
-
-                    // Обработка кликов по кнопкам HUD
-                    MouseState mouseState = Mouse.GetState();
-                    if (mouseState.LeftButton == ButtonState.Pressed &&
-                        _previousMouseState.LeftButton == ButtonState.Released)
-                    {
-                        Point mousePos = mouseState.Position;
-
-                        if (_gameHUD.IsPauseButtonClicked(mousePos))
-                        {
-                        }
-                        else if (_gameHUD.IsShopButtonClicked(mousePos))
-                        {
-                            // Открываем магазин бонусов
-                            _bonusShop.Show();
-                            Game1.CurrentState = GameState.BonusShop;
-                        }
-                    }
-
-                    for (int i = _enemies.Count - 1; i >= 0; i--)
-                    {
-                        Enemy enemy = _enemies[i];
-                        enemy.Update(gameTime);
-
-                        if (!enemy.IsAlive)
-                        {
-                            _killCount++;
-
-                            // Дроп элитного врага
-                            if (enemy is EliteEnemy)
-                            {
-                                // Сохраняем состояние ДО обработки
-                                int elitesBefore = _levelManager.ElitesKilled;
-                                int levelBefore = _levelManager.CurrentLevel;
-                                int cycleBefore = _difficultyManager.CurrentCycle;
-
-                                // РЕГИСТРИРУЕМ УБИЙСТВО ЭЛИТНОГО ВРАГА
-                                _levelManager.EliteKilled();
-
-                                int elitesAfter = _levelManager.ElitesKilled;
-                                int levelAfter = _levelManager.CurrentLevel;
-                                int cycleAfter = _difficultyManager.CurrentCycle;
-
-                                System.Diagnostics.Debug.WriteLine($"Элитный враг убит! Уровень: {levelBefore}->{levelAfter}, Элитных: {elitesBefore}->{elitesAfter}, Цикл: {cycleBefore}->{cycleAfter}");
-
-                                // ОБНОВЛЯЕМ ТЕКСТУРУ ПОЛА ЕСЛИ УРОВЕНЬ ИЗМЕНИЛСЯ
-                                if (levelAfter != levelBefore)
-                                {
-                                    UpdateFloorTexture();
-                                    _gameHUD.ShowStageAnnouncement(levelAfter);
-                                }
-
-                                // В режиме Survival обновляем музыку цикла при смене цикла
-                                if (_difficultyManager.CurrentDifficulty == StartMenu.GameMode.Survival && cycleAfter != cycleBefore)
-                                {
-                                    _difficultyManager.UpdateSurvivalBaseHealth(cycleAfter);
-
-                                    // Используем принудительное переключение музыки
-                                    _musicManager.ForcePlaySurvivalCycleMusic(cycleAfter);
-
-                                    System.Diagnostics.Debug.WriteLine($"Survival: переход на цикл {cycleAfter}, HP и музыка обновлены");
-                                }
-
-                                // ПРОВЕРКА ПОБЕДЫ: проверяем уровень ДО убийства и количество ДО убийства
-                                bool isVictoryCondition = _difficultyManager.CheckVictoryCondition(levelBefore, elitesBefore + 1);
-
-                                if (isVictoryCondition)
-                                {
-                                    Game1.CurrentState = GameState.Victory;
-                                    _victoryScreen.Show();
-                                    _musicManager.StopMusic();
-                                    System.Diagnostics.Debug.WriteLine($"ПОБЕДА ДОСТИГНУТА! Уровень: {levelBefore}, Элитных убито: {elitesBefore + 1}, Цикл: {cycleBefore}");
-                                    break;
-                                }
-
-                                // Элитные враги дропают 5 монет
-                                for (int j = 0; j < 5; j++)
-                                {
-                                    _itemManager.AddCoin(enemy.Position, 1);
-                                }
-
-                                // 3 эссенции опыта от элитного врага
-                                for (int j = 0; j < 3; j++)
-                                {
-                                    _itemManager.AddExperienceOrb(enemy.Position, 1);
-                                }
-
-                                // 100% шанс дропа золотого сердца от элитного врага
-                                _itemManager.AddGoldenHealthOrb(enemy.Position, 1.0f);
-
-                                _rouletteManager.StartRoulette();
-                                Game1.CurrentState = GameState.Roulette;
-                            }
-                            else
-                            {
-                                // Обычный дроп опыта через менеджер предметов
-                                Vector2 worldPosition = enemy.Position; // Это мировые координаты
-                                _itemManager.AddExperienceOrb(worldPosition, 1);
-
-                                // Шанс дропа сердца 2%
-                                if (Game1.Random.NextDouble() < 0.02)
-                                {
-                                    _itemManager.AddHealthOrb(enemy.Position, 0.25f);
-                                }
-
-                                // Шанс дропа монеты 25% (1 к 4)
-                                if (Game1.Random.NextDouble() < 0.25)
-                                {
-                                    _itemManager.AddCoin(enemy.Position, 1);
-                                }
-
-                                // Шанс дропа эссенции опыта 50%
-                                if (Game1.Random.NextDouble() < 0.5)
-                                {
-                                    _itemManager.AddExperienceOrb(enemy.Position, 1);
-                                }
-
-                                // Шанс дропа магнита 2% от обычных врагов
-                                if (Game1.Random.NextDouble() < 0.02 && !(enemy is EliteEnemy))
-                                {
-                                    _itemManager.AddMagnet(enemy.Position);
-                                }
-
-                                // Шанс дропа динамита 2% от обычных врагов
-                                if (Game1.Random.NextDouble() < 0.02)
-                                {
-                                    _itemManager.AddDynamite(enemy.Position);
-                                }
-                            }
-
-                            _enemies.RemoveAt(i);
-                        }
-                    }
-
-                    // Обработка коллизий с врагами
-                    if (_player.IsAlive)
-                    {
-                        var playerBounds = GetBounds(_player);
-                        var collidingEnemies = _enemies.Where(enemy =>
-                            enemy.IsAlive &&
-                            GetBounds(enemy).Intersects(playerBounds)
-                        ).ToList();
-
-                        if (collidingEnemies.Any())
-                        {
-                            if (!_player.IsInvulnerable)
-                            {
-                                _player.TakeDamage(collidingEnemies.First().Damage);
-                            }
-                        }
-                    }
-
-                    // Обновление оружия
-                    foreach (var weapon in _weapons)
-                    {
-                        weapon.Update(gameTime);
-                        weapon.Attack(gameTime, _enemies);
-
-                        // Особый случай для RouletteBall - обновляем камеру и границы
-                        if (weapon is RouletteBall rouletteBall)
-                        {
-                            // Устанавливаем камеру и вьюпорт если они еще не установлены
-                            var rouletteField = weapon.GetType().GetField("_camera",
-                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (rouletteField != null && rouletteField.GetValue(weapon) == null)
-                            {
-                                weapon.GetType().GetMethod("SetCamera")?.Invoke(weapon,
-                                    new object[] { _camera, GraphicsDevice.Viewport });
-                            }
-
-                            // Создаем актуальные границы экрана для ВСЕХ активных шариков
-                            Rectangle screenBounds = new Rectangle(
-                                (int)_camera.Position.X,
-                                (int)_camera.Position.Y,
-                                GraphicsDevice.Viewport.Width,
-                                GraphicsDevice.Viewport.Height
-                            );
-
-                            // Обновляем границы для ВСЕХ активных шариков
-                            foreach (var ball in rouletteBall.ActiveBalls)
-                            {
-                                if (ball.IsActive)
-                                {
-                                    ball.ScreenBounds = screenBounds;
-                                }
-                            }
-                        }
-                    }
+                    UpdatePlayingState(gameTime, currentKs, currentMs);
                     break;
 
                 case GameState.Paused:
-                    _pauseMenu.Update();
-
-                    _musicManager.PauseMusic();
-                    _soundManager.PauseAllGameSounds();
-
-                    // Проверяем, не изменилось ли состояние игры через меню паузы
-                    if (Game1.CurrentState == GameState.MainMenu)
-                    {
-                        // Сбрасываем игру
-                        _enemies.Clear();
-                        _weapons.Clear();
-                        _levelManager.Reset();
-                        _itemManager.Clear();
-                        _survivalTime = 0f;
-                        _killCount = 0;
-
-                        // Запускаем музыку меню
-                        _musicManager.PlayMenuMusic();
-
-                        _pauseMenu.Hide();
-                        System.Diagnostics.Debug.WriteLine("Возврат в главное меню, музыка меню запущена");
-                    }
-                    else if (!_pauseMenu.IsVisible)
-                    {
-                        // Если меню паузы скрылось, возвращаемся в игру
-                        _musicManager.ResumeMusic();
-                        _soundManager.ResumeAllGameSounds();
-                        Game1.CurrentState = GameState.Playing;
-                    }
+                    UpdatePausedState();
                     break;
 
                 case GameState.LevelUp:
-                    if (_levelUpMenu.CurrentOptions.Count == 0) { _levelUpMenu.GenerateOptions(); }
-                    _levelUpMenu.Update(gameTime);
-                    if (!_player.IsLevelUpPending)
-                    {
-                        Game1.CurrentState = GameState.Playing;
-                        _levelUpMenu.CurrentOptions.Clear();
-                    }
+                    UpdateLevelUpState(gameTime);
                     break;
 
                 case GameState.Roulette:
-                    _rouletteManager.Update(gameTime);
-
-                    // Проверяем, завершилась ли рулетка
-                    if (!_rouletteManager.IsActive)
-                    {
-                        Game1.CurrentState = GameState.Playing;
-
-                        // ПОСЛЕ РУЛЕТКИ показываем анимацию этапа, если уровень изменился
-                        if (_levelManager.ElitesKilled > 0 && _levelManager.ElitesKilled % 2 == 0)
-                        {
-                            _gameHUD.ShowStageAnnouncement(_levelManager.CurrentLevel);
-                        }
-                    }
+                    UpdateRouletteState(gameTime);
                     break;
 
                 case GameState.BonusShop:
-                    _bonusShop.Update(gameTime);
-                    _bonusShopInterface.UpdateInput();
-
-                    // Если магазин скрылся, возвращаемся в игру
-                    if (!_bonusShop.IsVisible)
-                    {
-                        Game1.CurrentState = GameState.Playing;
-                        System.Diagnostics.Debug.WriteLine("Возврат в игру после закрытия магазина");
-                    }
+                    UpdateBonusShopState(gameTime);
                     break;
 
                 case GameState.GameOver:
-                    _musicManager.StopMusic();
-                    _gameOverScreen.Update();
-
-                    if (!_gameOverScreen.IsVisible)
-                    {
-                        // Не сбрасываем здесь - полный сброс будет при загрузке новой игры
-                        System.Diagnostics.Debug.WriteLine("Переход к загрузке новой игры после поражения");
-                    }
+                    UpdateGameOverState();
                     break;
 
                 case GameState.Victory:
-                    _musicManager.StopMusic();
-                    _victoryScreen.Update();
-
-                    if (!_victoryScreen.IsVisible)
-                    {
-                        // Не сбрасываем здесь - полный сброс будет при загрузке новой игры
-                        System.Diagnostics.Debug.WriteLine("Переход к загрузке новой игры после победы");
-                    }
+                    UpdateVictoryState();
                     break;
             }
 
@@ -839,6 +527,322 @@ namespace Survive_the_night
             _previousMouseState = currentMs;
             base.Update(gameTime);
         }
+
+        private void UpdatePlayingState(GameTime gameTime, KeyboardState currentKs, MouseState currentMs)
+        {
+            _survivalTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Обновляем HUD
+            _gameHUD.UpdateGameStats(_survivalTime, _killCount);
+            _gameHUD.Update(gameTime);
+            _itemManager.Update(gameTime);
+
+            // Тестовые команды
+            if (currentKs.IsKeyDown(Keys.F9) && !_previousKeyboardState.IsKeyDown(Keys.F9))
+            {
+                Vector2 playerPos = _player.Position;
+                _itemManager.AddExperienceOrb(playerPos + new Vector2(50, 0), 25);
+                _itemManager.AddCoin(playerPos + new Vector2(-50, 0), 1);
+                _itemManager.AddHealthOrb(playerPos + new Vector2(0, 50), 0.25f);
+                _itemManager.AddDynamite(playerPos + new Vector2(0, -50));
+            }
+
+            if (currentKs.IsKeyDown(Keys.F10) && !_previousKeyboardState.IsKeyDown(Keys.F10))
+            {
+                _spawnManager.SpawnEliteEnemy();
+            }
+
+            if (currentKs.IsKeyDown(Keys.F8) && !_previousKeyboardState.IsKeyDown(Keys.F8))
+            {
+                Game1.CurrentState = GameState.Victory;
+                _victoryScreen.Show();
+                return;
+            }
+
+            // Музыка
+            if (_difficultyManager.CurrentDifficulty != StartMenu.GameMode.Survival)
+            {
+                _musicManager.PlayLevelMusic(_levelManager.CurrentLevel);
+            }
+
+            // Проверки состояния
+            if (!_player.IsAlive)
+            {
+                Game1.CurrentState = GameState.GameOver;
+                _gameOverScreen.Show();
+                _musicManager.StopMusic();
+                return;
+            }
+
+            if (_player.IsLevelUpPending)
+            {
+                Game1.CurrentState = GameState.LevelUp;
+                return;
+            }
+
+            // Игровая логика
+            _player.Update(gameTime);
+            _camera.Follow();
+            _spawnManager.Update(gameTime);
+            _itemManager.Update(gameTime);
+            DynamiteExplosion.UpdateAll(gameTime, _enemies);
+
+            // Обновление врагов
+            for (int i = _enemies.Count - 1; i >= 0; i--)
+            {
+                Enemy enemy = _enemies[i];
+                enemy.Update(gameTime);
+
+                if (!enemy.IsAlive)
+                {
+                    _killCount++;
+                    HandleEnemyDeath(enemy);
+                    _enemies.RemoveAt(i);
+                }
+            }
+
+            // Коллизии с врагами
+            if (_player.IsAlive)
+            {
+                var playerBounds = GetBounds(_player);
+                var collidingEnemies = _enemies.Where(enemy =>
+                    enemy.IsAlive && GetBounds(enemy).Intersects(playerBounds)
+                ).ToList();
+
+                if (collidingEnemies.Any() && !_player.IsInvulnerable)
+                {
+                    _player.TakeDamage(collidingEnemies.First().Damage);
+                }
+            }
+
+            // Обновление оружия
+            foreach (var weapon in _weapons)
+            {
+                weapon.Update(gameTime);
+                weapon.Attack(gameTime, _enemies);
+                UpdateWeaponSpecifics(weapon);
+            }
+        }
+
+        private void UpdatePausedState()
+        {
+            _pauseMenu.Update();
+            _musicManager.PauseMusic();
+
+            // Проверяем, не изменилось ли состояние через меню паузы
+            if (Game1.CurrentState == GameState.MainMenu)
+            {
+                ResetToMainMenu();
+            }
+            else if (!_pauseMenu.IsVisible)
+            {
+                // Если меню паузы скрылось, возвращаемся в игру
+                _musicManager.ResumeMusic();
+                Game1.CurrentState = GameState.Playing;
+                System.Diagnostics.Debug.WriteLine("🔄 Пауза закрыта: Paused -> Playing");
+            }
+        }
+
+        private void UpdateBonusShopState(GameTime gameTime)
+        {
+            _bonusShop.Update(gameTime);
+            _bonusShopInterface.UpdateInput();
+
+            // Если магазин скрылся, возвращаемся в игру
+            if (!_bonusShop.IsVisible)
+            {
+                Game1.CurrentState = GameState.Playing;
+                System.Diagnostics.Debug.WriteLine("🔄 Магазин закрыт: BonusShop -> Playing");
+            }
+        }
+
+        private void UpdateLevelUpState(GameTime gameTime)
+        {
+            if (_levelUpMenu.CurrentOptions.Count == 0)
+            {
+                _levelUpMenu.GenerateOptions();
+            }
+            _levelUpMenu.Update(gameTime);
+
+            if (!_player.IsLevelUpPending)
+            {
+                Game1.CurrentState = GameState.Playing;
+                _levelUpMenu.CurrentOptions.Clear();
+            }
+        }
+
+        private void UpdateRouletteState(GameTime gameTime)
+        {
+            _rouletteManager.Update(gameTime);
+
+            if (!_rouletteManager.IsActive)
+            {
+                Game1.CurrentState = GameState.Playing;
+
+                if (_levelManager.ElitesKilled > 0 && _levelManager.ElitesKilled % 2 == 0)
+                {
+                    _gameHUD.ShowStageAnnouncement(_levelManager.CurrentLevel);
+                }
+            }
+        }
+
+        private void UpdateGameOverState()
+        {
+            _musicManager.StopMusic();
+            _gameOverScreen.Update();
+
+            if (!_gameOverScreen.IsVisible)
+            {
+                StopAllGameSounds();
+            }
+        }
+
+        private void UpdateVictoryState()
+        {
+            _musicManager.StopMusic();
+            _victoryScreen.Update();
+
+            if (!_victoryScreen.IsVisible)
+            {
+                StopAllGameSounds();
+            }
+        }
+
+
+        private void HandleEnemyDeath(Enemy enemy)
+        {
+            if (enemy is EliteEnemy)
+            {
+                HandleEliteEnemyDeath(enemy);
+            }
+            else
+            {
+                HandleRegularEnemyDeath(enemy);
+            }
+        }
+
+        private void HandleEliteEnemyDeath(Enemy enemy)
+        {
+            int elitesBefore = _levelManager.ElitesKilled;
+            int levelBefore = _levelManager.CurrentLevel;
+            int cycleBefore = _difficultyManager.CurrentCycle;
+
+            _levelManager.EliteKilled();
+
+            int elitesAfter = _levelManager.ElitesKilled;
+            int levelAfter = _levelManager.CurrentLevel;
+            int cycleAfter = _difficultyManager.CurrentCycle;
+
+            System.Diagnostics.Debug.WriteLine($"Элитный враг убит! Уровень: {levelBefore}->{levelAfter}, Элитных: {elitesBefore}->{elitesAfter}, Цикл: {cycleBefore}->{cycleAfter}");
+
+            if (levelAfter != levelBefore)
+            {
+                UpdateFloorTexture();
+                _gameHUD.ShowStageAnnouncement(levelAfter);
+            }
+
+            if (_difficultyManager.CurrentDifficulty == StartMenu.GameMode.Survival && cycleAfter != cycleBefore)
+            {
+                _difficultyManager.UpdateSurvivalBaseHealth(cycleAfter);
+                _musicManager.ForcePlaySurvivalCycleMusic(cycleAfter);
+            }
+
+            if (_difficultyManager.CheckVictoryCondition(levelBefore, elitesBefore + 1))
+            {
+                Game1.CurrentState = GameState.Victory;
+                _victoryScreen.Show();
+                _musicManager.StopMusic();
+                return;
+            }
+
+            // Дроп от элитного врага
+            for (int j = 0; j < 5; j++)
+            {
+                _itemManager.AddCoin(enemy.Position, 1);
+            }
+            for (int j = 0; j < 3; j++)
+            {
+                _itemManager.AddExperienceOrb(enemy.Position, 1);
+            }
+            _itemManager.AddGoldenHealthOrb(enemy.Position, 1.0f);
+
+            _rouletteManager.StartRoulette();
+            Game1.CurrentState = GameState.Roulette;
+        }
+
+        private void HandleRegularEnemyDeath(Enemy enemy)
+        {
+            Vector2 worldPosition = enemy.Position;
+            _itemManager.AddExperienceOrb(worldPosition, 1);
+
+            if (Game1.Random.NextDouble() < 0.02)
+            {
+                _itemManager.AddHealthOrb(enemy.Position, 0.25f);
+            }
+            if (Game1.Random.NextDouble() < 0.25)
+            {
+                _itemManager.AddCoin(enemy.Position, 1);
+            }
+            if (Game1.Random.NextDouble() < 0.5)
+            {
+                _itemManager.AddExperienceOrb(enemy.Position, 1);
+            }
+            if (Game1.Random.NextDouble() < 0.02 && !(enemy is EliteEnemy))
+            {
+                _itemManager.AddMagnet(enemy.Position);
+            }
+            if (Game1.Random.NextDouble() < 0.02)
+            {
+                _itemManager.AddDynamite(enemy.Position);
+            }
+        }
+
+        private void UpdateWeaponSpecifics(Weapon weapon)
+        {
+            if (weapon is RouletteBall rouletteBall)
+            {
+                var rouletteField = weapon.GetType().GetField("_camera",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (rouletteField != null && rouletteField.GetValue(weapon) == null)
+                {
+                    weapon.GetType().GetMethod("SetCamera")?.Invoke(weapon,
+                        new object[] { _camera, GraphicsDevice.Viewport });
+                }
+
+                Rectangle screenBounds = new Rectangle(
+                    (int)_camera.Position.X,
+                    (int)_camera.Position.Y,
+                    GraphicsDevice.Viewport.Width,
+                    GraphicsDevice.Viewport.Height
+                );
+
+                foreach (var ball in rouletteBall.ActiveBalls)
+                {
+                    if (ball.IsActive)
+                    {
+                        ball.ScreenBounds = screenBounds;
+                    }
+                }
+            }
+        }
+
+        private void ResetToMainMenu()
+        {
+            _enemies.Clear();
+            _weapons.Clear();
+            _levelManager.Reset();
+            _itemManager.Clear();
+            _survivalTime = 0f;
+            _killCount = 0;
+
+            StopAllGameSounds();
+            StopWeaponSpecificSounds();
+
+            _musicManager.PlayMenuMusic();
+            _pauseMenu.Hide();
+            System.Diagnostics.Debug.WriteLine("Возврат в главное меню, музыка меню запущена");
+        }
+
 
         // Метод для обновления текстуры пола
         private void UpdateFloorTexture()
@@ -1228,6 +1232,7 @@ namespace Survive_the_night
 
         protected override void UnloadContent()
         {
+            StopAllGameSounds();
             _musicManager?.Dispose();
             _soundManager?.Dispose();
             base.UnloadContent();
@@ -1266,6 +1271,9 @@ namespace Survive_the_night
         private void ResetGameToInitialState()
         {
             System.Diagnostics.Debug.WriteLine("ПОЛНЫЙ СБРОС ИГРЫ К НАЧАЛЬНОМУ СОСТОЯНИЮ");
+
+            // ОСТАНАВЛИВАЕМ ВСЕ ЗВУКИ ПЕРЕД СБРОСОМ
+            StopAllGameSounds();
 
             // СБРОС ЭКРАНОВ СМЕРТИ И ПОБЕДЫ - ДОБАВЛЕНО ДЛЯ ИСПРАВЛЕНИЯ БАГА
             if (_gameOverScreen != null && _gameOverScreen.IsVisible)
@@ -1384,6 +1392,132 @@ namespace Survive_the_night
                 else
                 {
                     Debug.WriteLine("ОШИБКА: Не найден поле _camera в WorldGeneration");
+                }
+            }
+        }
+
+        private void StopAllGameSounds()
+        {
+            System.Diagnostics.Debug.WriteLine("=== ПОЛНАЯ ОСТАНОВКА ВСЕХ ИГРОВЫХ ЗВУКОВ ===");
+
+            // Останавливаем все звуки через SoundManager
+            _soundManager.StopAllGameSounds();
+            _soundManager.StopAllSounds();
+
+            // Особые случаи - останавливаем специфические звуки оружий
+            StopWeaponSpecificSounds();
+        }
+
+        private void StopWeaponSpecificSounds()
+        {
+            foreach (var weapon in _weapons)
+            {
+                if (weapon is BigLaser bigLaser)
+                {
+                    bigLaser.StopLaserSound();
+                    System.Diagnostics.Debug.WriteLine($"Остановлен звук лазера");
+                }
+
+                if (weapon is MolotovCocktail molotov)
+                {
+                    molotov.StopAllSounds();
+                    System.Diagnostics.Debug.WriteLine($"Остановлены звуки MolotovCocktail");
+                }
+            }
+        }
+
+        private void PauseWeaponSpecificSounds()
+        {
+            int lasersPaused = 0;
+            int molotovsPaused = 0;
+
+            foreach (var weapon in _weapons)
+            {
+                if (weapon is BigLaser bigLaser)
+                {
+                    bigLaser.PauseLaserSound();
+                    lasersPaused++;
+                    System.Diagnostics.Debug.WriteLine($"Приостановлен звук лазера");
+                }
+
+                if (weapon is MolotovCocktail molotov)
+                {
+                    molotov.PauseAllSounds();
+                    molotovsPaused++;
+                    System.Diagnostics.Debug.WriteLine($"Приостановлены звуки MolotovCocktail");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Пауза оружий: лазеров={lasersPaused}, молотовов={molotovsPaused}");
+        }
+
+        private void ResumeWeaponSpecificSounds()
+        {
+            int lasersResumed = 0;
+            int molotovsResumed = 0;
+
+            foreach (var weapon in _weapons)
+            {
+                if (weapon is BigLaser bigLaser)
+                {
+                    bigLaser.ResumeLaserSound();
+                    lasersResumed++;
+                    System.Diagnostics.Debug.WriteLine($"▶Возобновлен звук лазера");
+                }
+
+                if (weapon is MolotovCocktail molotov)
+                {
+                    molotov.ResumeAllSounds();
+                    molotovsResumed++;
+                    System.Diagnostics.Debug.WriteLine($"▶Возобновлены звуки MolotovCocktail");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Возобновление оружий: лазеров={lasersResumed}, молотовов={molotovsResumed}");
+        }
+
+        private void HandleSoundStateTransition(GameState previousState, GameState newState)
+        {
+            System.Diagnostics.Debug.WriteLine($"=== ПЕРЕХОД СОСТОЯНИЯ: {previousState} -> {newState} ===");
+
+            // Пауза звуков при переходе в меню-состояния (включая BonusShop)
+            if (newState == GameState.LevelUp ||
+                newState == GameState.Roulette ||
+                newState == GameState.BonusShop ||  // <- магазин здесь!
+                newState == GameState.Paused)
+            {
+                if (previousState == GameState.Playing)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ПАУЗА звуков при переходе в {newState}");
+                    _soundManager.PauseAllGameSounds();
+                    PauseWeaponSpecificSounds();
+                }
+            }
+
+            // Возобновление звуков при возврате в игру
+            if (newState == GameState.Playing)
+            {
+                if (previousState == GameState.LevelUp ||
+                    previousState == GameState.Roulette ||
+                    previousState == GameState.BonusShop ||  // <- магазин здесь!
+                    previousState == GameState.Paused)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ВОЗОБНОВЛЕНИЕ звуков при возврате в игру из {previousState}");
+                    _soundManager.ResumeAllGameSounds();
+                    ResumeWeaponSpecificSounds();
+                }
+            }
+
+            // Полная остановка звуков при переходе в финальные состояния
+            if (newState == GameState.GameOver ||
+                newState == GameState.Victory ||
+                newState == GameState.MainMenu)
+            {
+                if (previousState == GameState.Playing)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ПОЛНАЯ ОСТАНОВКА звуков при переходе в {newState}");
+                    StopAllGameSounds();
+                    StopWeaponSpecificSounds();
                 }
             }
         }

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Scripts.Managers;
 using System.Collections.Generic;
 
 namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
@@ -10,7 +11,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
     public class BeerPuddle : Projectile
     {
         private float _timeToLive;
-        private new float _lifeTimer = 0f; // Используем new чтобы скрыть наследуемый член
+        private new float _lifeTimer = 0f;
         private float _damageCooldown;
         private Dictionary<Enemy, float> _enemyDamageTimers = new Dictionary<Enemy, float>();
         private bool _soundPlayed = false;
@@ -31,10 +32,10 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _lifeTimer += delta;
 
-            // Проигрываем звук один раз при создании лужи через WeaponManager
+            // Проигрываем звук РАЗБИТИЯ БУТЫЛКИ один раз при создании лужи
             if (!_soundPlayed)
             {
-                WeaponManager.PlayWeaponSound(WeaponName.BeerBottle, 0.7f); // Немного тише
+                PlayBottleBreakSound();
                 _soundPlayed = true;
             }
 
@@ -47,6 +48,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             }
 
             ApplyDamageToEnemies(Game1.CurrentEnemies, delta);
+        }
+
+        private void PlayBottleBreakSound()
+        {
+            // Воспроизводим звук разбития бутылки через SoundManager
+            SoundManager.Instance.PlaySound("beer_puddle", 0.7f);
         }
 
         private void ApplyDamageToEnemies(List<Enemy> enemies, float deltaTime)

@@ -120,13 +120,34 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             _laserSoundInstance = WeaponManager.PlayWeaponSoundLooping(WeaponName.BigLaser);
         }
 
-        private void StopLaserSound()
+        public void PauseLaserSound()
+        {
+            if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Playing)
+            {
+                _laserSoundInstance.Pause();
+                System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера приостановлен");
+            }
+            ActiveLaser?.PauseSound();
+        }
+
+        public void ResumeLaserSound()
+        {
+            if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Paused)
+            {
+                _laserSoundInstance.Resume();
+                System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера возобновлен");
+            }
+            ActiveLaser?.ResumeSound();
+        }
+
+        public void StopLaserSound()
         {
             if (_laserSoundInstance != null)
             {
                 WeaponManager.StopWeaponSoundInstance(_laserSoundInstance);
                 _laserSoundInstance = null;
             }
+            ActiveLaser?.StopSound();
         }
 
         public void UpdateLaserTexture(Texture2D newTexture)

@@ -22,11 +22,14 @@ namespace Survive_the_night.Scripts.Managers
         // Группы звуков для категориального управления
         private Dictionary<string, List<SoundEffectInstance>> _soundGroups;
 
+        private Dictionary<string, SoundEffectInstance> _pausedSounds;
+
         private SoundManager()
         {
             _soundEffects = new Dictionary<string, SoundEffect>();
             _loopingSounds = new Dictionary<string, SoundEffectInstance>();
             _soundGroups = new Dictionary<string, List<SoundEffectInstance>>();
+            _pausedSounds = new Dictionary<string, SoundEffectInstance>();
         }
 
         public void LoadContent(ContentManager content)
@@ -212,6 +215,16 @@ namespace Survive_the_night.Scripts.Managers
         // Метод для паузы всех игровых звуков (оружие, огонь и т.д.)
         public void PauseAllGameSounds()
         {
+            // Пауза зацикленных звуков
+            foreach (var sound in _loopingSounds.Values.ToList())
+            {
+                if (sound != null && sound.State == SoundState.Playing)
+                {
+                    sound.Pause();
+                }
+            }
+
+            // Пауза звуков в группах
             PauseSoundGroup("weapon_sounds");
             PauseSoundGroup("laser_sounds");
             PauseSoundGroup("fire_sounds");
@@ -221,6 +234,16 @@ namespace Survive_the_night.Scripts.Managers
         // Метод для возобновления всех игровых звуков
         public void ResumeAllGameSounds()
         {
+            // Возобновление зацикленных звуков
+            foreach (var sound in _loopingSounds.Values.ToList())
+            {
+                if (sound != null && sound.State == SoundState.Paused)
+                {
+                    sound.Resume();
+                }
+            }
+
+            // Возобновление звуков в группах
             ResumeSoundGroup("weapon_sounds");
             ResumeSoundGroup("laser_sounds");
             ResumeSoundGroup("fire_sounds");

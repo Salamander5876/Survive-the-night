@@ -67,7 +67,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_burnTimer >= _timeToLive)
             {
                 IsActive = false;
-                StopFireSound();
+                StopSound();
                 return;
             }
 
@@ -78,16 +78,44 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             }
         }
 
-        private void StopFireSound()
-        {
-            if (_fireSoundInstance != null && !_fireSoundInstance.IsDisposed)
-            {
-                _fireSoundInstance.Stop();
-                _fireSoundInstance.Dispose();
-                _fireSoundInstance = null;
 
-                // Удаляем из группы звуков
-                SoundManager.Instance.RemoveFromSoundGroup("fire_sounds", _fireSoundInstance);
+        public void PauseSound()
+        {
+            if (_fireSoundInstance != null && _fireSoundInstance.State == SoundState.Playing)
+            {
+                _fireSoundInstance.Pause();
+            }
+        }
+
+        public void ResumeSound()
+        {
+            if (_fireSoundInstance != null && _fireSoundInstance.State == SoundState.Paused)
+            {
+                _fireSoundInstance.Resume();
+            }
+        }
+
+        public void StopSound()
+        {
+            if (_fireSoundInstance != null)
+            {
+                try
+                {
+                    if (!_fireSoundInstance.IsDisposed)
+                    {
+                        _fireSoundInstance.Stop();
+                        _fireSoundInstance.Dispose();
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука огня: {ex.Message}");
+                }
+                finally
+                {
+                    _fireSoundInstance = null;
+                    SoundManager.Instance.RemoveFromSoundGroup("fire_sounds", _fireSoundInstance);
+                }
             }
         }
 
@@ -140,7 +168,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
         protected override void OnDeactivate()
         {
-            StopFireSound();
+            StopSound();
             base.OnDeactivate();
         }
     }

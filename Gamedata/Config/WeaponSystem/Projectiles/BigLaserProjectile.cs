@@ -34,6 +34,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private const float HITBOX_WIDTH = 33f;
         private const float HITBOX_LENGTH = 800f;
 
+        private static List<SoundEffectInstance> _activeLaserSounds = new List<SoundEffectInstance>();
+
         public BigLaserProjectile(Vector2 position, Player player, List<Enemy> enemies, int damage, Texture2D texture = null)
             : base(position, 20, Color.White, damage, 0f, Vector2.Zero, int.MaxValue)
         {
@@ -56,12 +58,16 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             _targetRotation = 0f;
             _currentTarget = FindBestTarget();
 
+            // ПРЕДОТВРАЩЕНИЕ НАЛОЖЕНИЯ: останавливаем предыдущие звуки лазера
+            StopAllActiveLaserSounds();
+
             // Создаем зацикленный звук лазера через WeaponManager
             _laserSoundInstance = WeaponManager.PlayWeaponSoundLooping(WeaponName.BigLaser);
 
             // Добавляем в отдельную группу для лазеров
             if (_laserSoundInstance != null)
             {
+                _activeLaserSounds.Add(_laserSoundInstance);
                 SoundManager.Instance.AddToSoundGroup("laser_sounds", _laserSoundInstance);
             }
         }
@@ -318,25 +324,74 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             }
         }
 
+        private void StopAllActiveLaserSounds()
+        {
+            foreach (var sound in _activeLaserSounds.ToList())
+            {
+                if (sound != null && !sound.IsDisposed)
+                {
+                    sound.Stop();
+                    sound.Dispose();
+                    SoundManager.Instance.RemoveFromSoundGroup("laser_sounds", sound);
+                }
+            }
+            _activeLaserSounds.Clear();
+        }
+
         // Останавливаем звук при деактивации лазера
         public void StopSound()
         {
-            if (_laserSoundInstance != null && !_laserSoundInstance.IsDisposed)
+            if (_laserSoundInstance != null)
             {
-                _laserSoundInstance.Stop();
-                _laserSoundInstance.Dispose();
-                _laserSoundInstance = null;
-
-                // Удаляем из группы звуков
-                SoundManager.Instance.RemoveFromSoundGroup("weapon_sounds", _laserSoundInstance);
-                SoundManager.Instance.RemoveFromSoundGroup("laser_sounds", _laserSoundInstance);
+                try
+                {
+                    if (!_laserSoundInstance.IsDisposed)
+                    {
+                        _laserSoundInstance.Stop();
+                        _laserSoundInstance.Dispose();
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука лазера: {ex.Message}");
+                }
+                finally
+                {
+                    _activeLaserSounds.Remove(_laserSoundInstance);
+                    SoundManager.Instance.RemoveFromSoundGroup("laser_sounds", _laserSoundInstance);
+                    _laserSoundInstance = null;
+                }
             }
+        }
+
+        // Добавим деструктор для дополнительной безопасности
+        ~BigLaserProjectile()
+        {
+            StopSound();
         }
 
         protected override void OnDeactivate()
         {
             StopSound();
             base.OnDeactivate();
+        }
+
+        public void PauseSound()
+        {
+            if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Playing)
+            {
+                _laserSoundInstance.Pause();
+                System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера приостановлен");
+            }
+        }
+
+        public void ResumeSound()
+        {
+            if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Paused)
+            {
+                _laserSoundInstance.Resume();
+                System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера возобновлен");
+            }
         }
     }
 }

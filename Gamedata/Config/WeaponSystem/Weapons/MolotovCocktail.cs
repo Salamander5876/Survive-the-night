@@ -163,5 +163,30 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                 }
             }
         }
+
+        public void PauseAllSounds()
+        {
+            foreach (var fire in ActiveFires)
+            {
+                fire.PauseSound();
+            }
+        }
+
+        public void ResumeAllSounds()
+        {
+            foreach (var fire in ActiveFires)
+            {
+                fire.ResumeSound();
+            }
+        }
+
+        public void StopAllSounds()
+        {
+            foreach (var fire in ActiveFires)
+            {
+                fire.StopSound();
+            }
+            System.Diagnostics.Debug.WriteLine("Остановлены все звуки MolotovCocktail");
+        }
     }
 }
