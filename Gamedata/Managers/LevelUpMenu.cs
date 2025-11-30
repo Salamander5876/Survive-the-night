@@ -264,6 +264,37 @@ namespace Survive_the_night.Gamedata.Managers
                     }
                 }
 
+                else if (weapon is Typhoon typhoon)
+                {
+                    if (typhoon.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Typhoon)}: Урон +1 (Ур. {typhoon.DamageLevel + 1}/5)",
+                            Description = $"Текущий урон: {typhoon.Damage}",
+                            ApplyUpgrade = () => typhoon.UpgradeDamage()
+                        });
+                    }
+                    if (typhoon.CountLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Typhoon)}: Количество снарядов +1 (Ур. {typhoon.CountLevel + 1}/5)",
+                            Description = $"Текущее количество: {typhoon.NumProjectiles}",
+                            ApplyUpgrade = () => typhoon.UpgradeCount()
+                        });
+                    }
+                    if (typhoon.CooldownLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.Typhoon)}: Перезарядка -0.2с (Ур. {typhoon.CooldownLevel + 1}/5)",
+                            Description = $"Текущая перезарядка: {typhoon.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => typhoon.UpgradeCooldown()
+                        });
+                    }
+                }
+
 
                 // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
                 else if (weapon is GoldenSword gs)

@@ -46,7 +46,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         public void UpgradeDamage()
         {
             if (DamageLevel >= 5) return;
-            Damage += 2;
+            Damage += 1;
             DamageLevel++;
         }
 

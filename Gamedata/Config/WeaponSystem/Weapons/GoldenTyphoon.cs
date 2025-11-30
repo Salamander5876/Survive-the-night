@@ -14,7 +14,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         // Основные параметры оружия
         public int NumProjectiles { get; private set; } = 2;
         public float ProjectileSpeed { get; private set; } = 800f;
-        public float ProjectileLifetime { get; private set; } = 5f;
+        public float ProjectileLifetime { get; private set; } = 3f;
         public float CurrentCooldown => 1f - CooldownLevel * 0.2f;
 
         // Уровни прокачки

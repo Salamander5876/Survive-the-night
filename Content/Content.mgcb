@@ -176,6 +176,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites\GUI\WeaponBottleBeer.png
 
+#begin Sprites\GUI\WeaponTyphoon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites\GUI\WeaponTyphoon.png
+
 
 
 
@@ -892,6 +904,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/BreakerBlade.png
 
+#begin Sprites/Projectiles/Typhoon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/Typhoon.png
+
 
 
 
@@ -991,6 +1015,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXBreakerBlade.mp3
+
+#begin Sounds/Weapons/SFXTyphoon.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXTyphoon.mp3
 
 
 

@@ -244,6 +244,11 @@ namespace Survive_the_night
             WeaponManager.LoadWeaponTextures(WeaponName.EventHorizon, eventHorizonTexture);
             EventHorizonStarProjectile.SetDefaultTexture(eventHorizonTexture);
 
+            // Тайфун
+            var typhoonTexture = Content.Load<Texture2D>("Sprites/Projectiles/Typhoon");
+            WeaponManager.LoadWeaponTextures(WeaponName.Typhoon, typhoonTexture);
+            TyphoonProjectile.SetDefaultTexture(typhoonTexture);
+
             // Установка текстур по умолчанию для проектов
             PlayingCard.SetDefaultTexture(cardTexture1);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
@@ -1198,6 +1203,18 @@ namespace Survive_the_night
                         if (blade.IsActive)
                         {
                             blade.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                // Отрисовка Тайфуна
+                if (weapon is Typhoon typhoon)
+                {
+                    foreach (var projectile in typhoon.ActiveProjectiles)
+                    {
+                        if (projectile.IsActive)
+                        {
+                            projectile.Draw(_spriteBatch, _debugTexture);
                         }
                     }
                 }

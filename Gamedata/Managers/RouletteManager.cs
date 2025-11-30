@@ -204,6 +204,17 @@ namespace Survive_the_night.Gamedata.Managers
                     });
                 }
 
+                if (!_weapons.Any(w => w is Typhoon))
+                {
+                    regularPool.Add(new UpgradeOption
+                    {
+                        Title = "Тайфун",
+                        Description = "Снаряды, летящие к ближайшему врагу с бесконечным пробитием.\n" +
+                                     "Наносят урон каждые 0.3 секунды при контакте с врагом.",
+                        ApplyUpgrade = () => _weapons.Add(new Typhoon(_player))
+                    });
+                }
+
                 // Легендарные оружия (10% шанс появления каждого)
                 if (!_weapons.Any(w => w is GoldenSword) && _random.NextDouble() < 0.1)
                 {

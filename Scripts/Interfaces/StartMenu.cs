@@ -142,6 +142,15 @@ namespace Survive_the_night.Scripts.Interfaces
                 "Лужи наносят 3 урона врагам с интервалом 2 секунды.\n\n" +
                 "Каждый враг имеет свой независимый таймер урона при нахождении в луже.\n\n" +
                 "Прокачка: количество бутылок, время жизни лужи, скорость нанесения урона."
+            },
+            {
+                WeaponName.Typhoon,
+                "Мощные снаряды, летящие к ближайшему врагу.\n\n" +
+                "Особенности:\n" +
+                "Бесконечное пробитие врагов\n" +
+                "Наносит урон каждые 0.3 секунды\n" +
+                "Автоматическое наведение на ближайшего врага\n\n" +
+                "Прокачка: урон, количество снарядов, скорость перезарядки."
             }
         };
 
@@ -164,6 +173,8 @@ namespace Survive_the_night.Scripts.Interfaces
                 WeaponName.Dice,
                 WeaponName.RouletteBall,
                 WeaponName.BeerBottle,
+                WeaponName.Typhoon,
+
                 WeaponName.BigLaser,
                 WeaponName.MolotovCocktail,
                 WeaponName.GoldenSword,
@@ -254,6 +265,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 _weaponSprites[WeaponName.Dice] = content.Load<Texture2D>("Sprites/GUI/WeaponDice");
                 _weaponSprites[WeaponName.RouletteBall] = content.Load<Texture2D>("Sprites/GUI/WeaponRoulette");
                 _weaponSprites[WeaponName.BeerBottle] = content.Load<Texture2D>("Sprites/GUI/WeaponBottleBeer");
+                _weaponSprites[WeaponName.Typhoon] = content.Load<Texture2D>("Sprites/GUI/WeaponTyphoon");
             }
             catch (Exception ex)
             {

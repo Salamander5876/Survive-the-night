@@ -30,7 +30,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         GoldenTyphoon,
         EventHorizon,
         BeerBottle,
-        Breaker
+        Breaker,
+        Typhoon
     }
 
     public abstract class Weapon
@@ -102,7 +103,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             WeaponName.StickyBomb,
             WeaponName.Dice,
             WeaponName.RouletteBall,
-            WeaponName.BeerBottle
+            WeaponName.BeerBottle,
+            WeaponName.Typhoon
         };
 
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
@@ -197,6 +199,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.EventHorizon: return "event_horizon";
                 case WeaponName.BeerBottle: return "beer_throw";
                 case WeaponName.Breaker: return "breaker_swing";
+                case WeaponName.Typhoon: return "typhoon";
                 default: return "card_deal";
             }
         }
@@ -246,6 +249,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     return new BeerBottle(player);
                 case WeaponName.Breaker:
                     return new Breaker(player);
+                case WeaponName.Typhoon:
+                    return new Typhoon(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -269,6 +274,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.EventHorizon: return "Горизонт Событий";
                 case WeaponName.BeerBottle: return "Пивная бутылка";
                 case WeaponName.Breaker: return "Разрушитель";
+                case WeaponName.Typhoon: return "Тайфун";
                 default: return "Неизвестное оружие";
             }
         }
