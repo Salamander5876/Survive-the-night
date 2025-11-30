@@ -36,6 +36,7 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         {
             float healAmount = (HealPercentage + player.HeartHealBonusPercent) * player.MaxHealth;
             player.Heal(healAmount);
+            ItemSoundManager.PlayHealingSound();
         }
     }
 }

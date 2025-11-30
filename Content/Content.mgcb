@@ -397,6 +397,31 @@
 /processorParam:Quality=Best
 /build:Sounds/Items/SFXDynamiteExplosion.mp3
 
+#begin Sounds/Items/SFXHealing.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Items/SFXHealing.mp3
+
+#begin Sounds/Items/SFXMagneticSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Items/SFXMagneticSound.mp3
+
+#begin Sounds/Items/SFXTakeExperience.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Items/SFXTakeExperience.mp3
+
+#begin Sounds/Items/SFXTakeCoin.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Items/SFXTakeCoin.mp3
+
+
 
 
 #begin Sprites/Projectiles/DynamiteExplosion.png

@@ -44,6 +44,7 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         public override void ApplyEffect(Player player)
         {
             player.GainExperience(Value);
+            ItemSoundManager.PlayExperienceSound();
         }
     }
 }

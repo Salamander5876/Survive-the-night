@@ -30,6 +30,7 @@ namespace Survive_the_night.Gamedata.Managers
         private float _magnetDuration = 0f;
         private float _magnetSpeed = 0f;
         private float _currentRotation = 0f;
+        private Magnet _activeMagnet;
         public bool IsMagnetActive => _magnetTimer > 0f;
 
         // Свойство для доступа к активным предметам (для отладки)
@@ -69,6 +70,9 @@ namespace Survive_the_night.Gamedata.Managers
             var magnet = new Magnet(position);
             _activeItems.Add(magnet);
             _itemRenderers.Add(new MagnetRenderer(magnet, _magnetTexture));
+
+            // Сохраняем ссылку на активный магнит
+            _activeMagnet = magnet;
         }
 
         public void UpdatePlayerReference(Player newPlayer)
@@ -84,6 +88,12 @@ namespace Survive_the_night.Gamedata.Managers
             _magnetDuration = duration;
             _magnetSpeed = speed;
             _currentRotation = 0f;
+
+            // Запускаем звук магнита
+            if (_activeMagnet != null)
+            {
+                _activeMagnet.StartMagneticSound();
+            }
         }
 
         // Обновление магнитного эффекта
@@ -101,6 +111,12 @@ namespace Survive_the_night.Gamedata.Managers
                 {
                     _magnetTimer = 0f;
                     _currentRotation = 0f;
+
+                    // Останавливаем звук магнита
+                    if (_activeMagnet != null)
+                    {
+                        _activeMagnet.StopMagneticSound();
+                    }
                 }
             }
         }
@@ -302,6 +318,31 @@ namespace Survive_the_night.Gamedata.Managers
             _activeItems.Clear();
             _itemRenderers.Clear();
             Debug.WriteLine("ItemManager очищен");
+        }
+
+
+        public void PauseMagnetSound()
+        {
+            if (_activeMagnet != null && IsMagnetActive)
+            {
+                _activeMagnet.PauseMagneticSound();
+            }
+        }
+
+        public void ResumeMagnetSound()
+        {
+            if (_activeMagnet != null && IsMagnetActive)
+            {
+                _activeMagnet.ResumeMagneticSound();
+            }
+        }
+
+        public void StopMagnetSound()
+        {
+            if (_activeMagnet != null)
+            {
+                _activeMagnet.StopMagneticSound();
+            }
         }
     }
 }

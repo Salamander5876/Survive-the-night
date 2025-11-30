@@ -56,6 +56,10 @@ namespace Survive_the_night.Scripts.Managers
 
                 // Звуки предметов
                 LoadSoundEffect(content, "Sounds/Items/SFXDynamiteExplosion", "dynamite_explosion");
+                LoadSoundEffect(content, "Sounds/Items/SFXHealing", "healing");
+                LoadSoundEffect(content, "Sounds/Items/SFXTakeExperience", "take_experience");
+                LoadSoundEffect(content, "Sounds/Items/SFXTakeCoin", "take_coin");
+                LoadSoundEffect(content, "Sounds/Items/SFXMagneticSound", "magnetic_sound");
 
                 System.Diagnostics.Debug.WriteLine("SoundManager: Все звуки загружены");
             }

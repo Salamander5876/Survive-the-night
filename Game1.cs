@@ -1,24 +1,24 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System;
-using System.Linq;
-using Microsoft.Xna.Framework.Audio;
-
 // Убедитесь, что все эти пространства имен существуют
 using Survive_the_night.Entities;
-using Survive_the_night.Entities.Enemies.Regular;
 using Survive_the_night.Entities.Enemies.Elite;
-using Survive_the_night.Scripts.Interfaces;
-using Survive_the_night.Scripts.Managers;
+using Survive_the_night.Entities.Enemies.Regular;
+using Survive_the_night.Gamedata.Config.Items;
+using Survive_the_night.Gamedata.Config.ItemSystem.Items;
+using Survive_the_night.Gamedata.Config.ItemSystem.Renderers;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
-using Survive_the_night.Gamedata.Config.ItemSystem.Items;
-using Survive_the_night.Gamedata.Config.ItemSystem.Renderers;
 using Survive_the_night.Gamedata.Managers;
+using Survive_the_night.Scripts.Interfaces;
+using Survive_the_night.Scripts.Managers;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Survive_the_night
 {
@@ -198,7 +198,7 @@ namespace Survive_the_night
 
             // Загрузка музыки и звуков
             _musicManager.LoadContent(Content);
-            _soundManager.LoadContent(Content); // SoundManager загрузит все звуки автоматически
+            _soundManager.LoadContent(Content); // SoundManager загрузит все звуки автоматически, включая звуки предметов
 
             // --- ЗАГРУЗКА ТЕКСТУР ДЛЯ ОРУЖИЙ (звуки теперь через SoundManager) ---
 
@@ -352,6 +352,15 @@ namespace Survive_the_night
             // Инициализация экранов Game Over и Victory
             _gameOverScreen = new GameOverScreen(GraphicsDevice, _debugTexture, _font);
             _victoryScreen = new VictoryScreen(GraphicsDevice, _debugTexture, _font);
+
+            // ПРОВЕРКА ЗАГРУЗКИ ЗВУКОВ ПРЕДМЕТОВ
+            Debug.WriteLine("=== ПРОВЕРКА ЗАГРУЗКИ ЗВУКОВ ПРЕДМЕТОВ ===");
+            Debug.WriteLine($"Звук монеты: {(_soundManager.ContainsSound("take_coin") ? "✓ Загружен" : "✗ Ошибка")}");
+            Debug.WriteLine($"Звук опыта: {(_soundManager.ContainsSound("take_experience") ? "✓ Загружен" : "✗ Ошибка")}");
+            Debug.WriteLine($"Звук лечения: {(_soundManager.ContainsSound("healing") ? "✓ Загружен" : "✗ Ошибка")}");
+            Debug.WriteLine($"Звук взрыва: {(_soundManager.ContainsSound("dynamite_explosion") ? "✓ Загружен" : "✗ Ошибка")}");
+            Debug.WriteLine($"Звук магнита: {(_soundManager.ContainsSound("magnetic_sound") ? "✓ Загружен" : "✗ Ошибка")}");
+            Debug.WriteLine("=========================================");
         }
 
         // Метод для инициализации выбранного оружия
@@ -1406,6 +1415,10 @@ namespace Survive_the_night
 
             // Особые случаи - останавливаем специфические звуки оружий
             StopWeaponSpecificSounds();
+
+            // Останавливаем звуки предметов
+            ItemSoundManager.StopAllItemSounds();
+            _itemManager.StopMagnetSound();
         }
 
         private void StopWeaponSpecificSounds()
@@ -1491,6 +1504,9 @@ namespace Survive_the_night
                     System.Diagnostics.Debug.WriteLine($"ПАУЗА звуков при переходе в {newState}");
                     _soundManager.PauseAllGameSounds();
                     PauseWeaponSpecificSounds();
+
+                    ItemSoundManager.PauseAllItemSounds();
+                    _itemManager.PauseMagnetSound();
                 }
             }
 
@@ -1505,6 +1521,9 @@ namespace Survive_the_night
                     System.Diagnostics.Debug.WriteLine($"ВОЗОБНОВЛЕНИЕ звуков при возврате в игру из {previousState}");
                     _soundManager.ResumeAllGameSounds();
                     ResumeWeaponSpecificSounds();
+
+                    ItemSoundManager.ResumeAllItemSounds();
+                    _itemManager.ResumeMagnetSound();
                 }
             }
 
@@ -1518,6 +1537,9 @@ namespace Survive_the_night
                     System.Diagnostics.Debug.WriteLine($"ПОЛНАЯ ОСТАНОВКА звуков при переходе в {newState}");
                     StopAllGameSounds();
                     StopWeaponSpecificSounds();
+
+                    ItemSoundManager.StopAllItemSounds();
+                    _itemManager.StopMagnetSound();
                 }
             }
         }

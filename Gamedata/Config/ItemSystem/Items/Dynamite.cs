@@ -12,7 +12,6 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         private const float AttractionSpeed = 400f;
         private const float AttractionRadius = 50f;
         private static Texture2D _texture;
-        private static SoundEffect _explosionSound;
 
         public static int BaseDamage { get; private set; } = 5;
         public static int DamageBonus { get; private set; } = 0;
@@ -27,11 +26,6 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         public static void SetTexture(Texture2D texture)
         {
             _texture = texture;
-        }
-
-        public static void SetExplosionSound(SoundEffect sound)
-        {
-            _explosionSound = sound;
         }
 
         public static void ApplyDamageBonus(int bonusAmount)
@@ -56,7 +50,8 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
 
         public override void ApplyEffect(Player player)
         {
-            var explosion = new DynamiteExplosion(player.Position, TotalDamage, _explosionSound);
+            // Используем новый менеджер звуков
+            var explosion = new DynamiteExplosion(player.Position, TotalDamage, null); // SoundEffect больше не нужен
             DynamiteExplosion.ActiveExplosions.Add(explosion);
             IsActive = false;
         }

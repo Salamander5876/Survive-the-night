@@ -1,10 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
-using System.Collections.Generic;
-using System.Diagnostics;
+using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using Survive_the_night.Entities.Enemies.Elite;
+using Survive_the_night.Gamedata.Config.Items;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Survive_the_night.Gamedata.Config.ItemSystem.Renderers
 {
@@ -32,8 +33,8 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Renderers
             IsActive = true;
             _explosionSound = explosionSound;
             _damageApplied = false;
+            _soundPlayed = false; // Убедимся, что флаг сброшен
 
-            // Хитбокс будет установлен после загрузки текстуры
             if (_explosionTexture != null)
             {
                 UpdateHitbox();
@@ -74,10 +75,11 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Renderers
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _timer += deltaTime;
 
-            // Проигрываем звук при создании взрыва
-            if (!_soundPlayed && _explosionSound != null)
+            // Проигрываем звук при создании взрыва - ИСПРАВЛЕНИЕ БАГА
+            if (!_soundPlayed)
             {
-                _explosionSound.Play(0.3f, 0f, 0f);
+                // Используем новый менеджер звуков предметов
+                ItemSoundManager.PlayDynamiteExplosionSound(0.3f);
                 _soundPlayed = true;
             }
 

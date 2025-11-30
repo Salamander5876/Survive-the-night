@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.Items;
@@ -10,6 +11,7 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         private const float AttractionSpeed = 200f;
         private const float AttractionRadius = 60f;
         private static Texture2D _texture;
+        private SoundEffectInstance _magneticSoundInstance;
 
         // Статические свойства для бонусов
         public static float BaseAttractionSpeed { get; private set; } = 200f;
@@ -57,6 +59,51 @@ namespace Survive_the_night.Gamedata.Config.ItemSystem.Items
         public override bool CheckCollision(Player player)
         {
             return Vector2.Distance(Position, player.Position) < 25f;
+        }
+
+        // Метод для запуска звука магнита
+        public void StartMagneticSound()
+        {
+            if (_magneticSoundInstance == null || _magneticSoundInstance.IsDisposed)
+            {
+                _magneticSoundInstance = ItemSoundManager.PlayMagneticSoundLooping(0.5f);
+            }
+            else if (_magneticSoundInstance.State != SoundState.Playing)
+            {
+                _magneticSoundInstance.Play();
+            }
+        }
+
+        // Метод для остановки звука магнита
+        public void StopMagneticSound()
+        {
+            if (_magneticSoundInstance != null && !_magneticSoundInstance.IsDisposed)
+            {
+                ItemSoundManager.StopMagneticSoundInstance(_magneticSoundInstance);
+                _magneticSoundInstance = null;
+            }
+        }
+
+        // Метод для паузы звука магнита
+        public void PauseMagneticSound()
+        {
+            if (_magneticSoundInstance != null &&
+                !_magneticSoundInstance.IsDisposed &&
+                _magneticSoundInstance.State == SoundState.Playing)
+            {
+                _magneticSoundInstance.Pause();
+            }
+        }
+
+        // Метод для возобновления звука магнита
+        public void ResumeMagneticSound()
+        {
+            if (_magneticSoundInstance != null &&
+                !_magneticSoundInstance.IsDisposed &&
+                _magneticSoundInstance.State == SoundState.Paused)
+            {
+                _magneticSoundInstance.Resume();
+            }
         }
     }
 }
