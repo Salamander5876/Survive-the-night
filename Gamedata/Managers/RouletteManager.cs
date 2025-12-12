@@ -125,6 +125,16 @@ namespace Survive_the_night.Gamedata.Managers
                         ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
                     });
                 }
+
+                if (!_weapons.Any(w => w is WealthArtifactWeapon) && !pool.Any(o => o.Title.Contains("Артефакт богатства")) && pool.Count < 3)
+                {
+                    pool.Add(new UpgradeOption
+                    {
+                        Title = "Артефакт богатства [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: золотые артефакты, стреляющие монетами в ближайших врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new WealthArtifactWeapon(_player))
+                    });
+                }
             }
             else
             {
@@ -273,6 +283,16 @@ namespace Survive_the_night.Gamedata.Managers
                         Title = "Разрушитель [ЛЕГЕНДАРНЫЙ]",
                         Description = "Массивный меч, совершающий сокрушительные взмахи вокруг игрока и наносит дополнительный урон врагам с полным хп",
                         ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
+                    });
+                }
+
+                if (!_weapons.Any(w => w is WealthArtifactWeapon) && _random.NextDouble() < 0.1)
+                {
+                    legendaryPool.Add(new UpgradeOption
+                    {
+                        Title = "Артефакт богатства [ЛЕГЕНДАРНЫЙ]",
+                        Description = "Добавляет новое легендарное оружие: золотые артефакты, стреляющие монетами в ближайших врагов.",
+                        ApplyUpgrade = () => _weapons.Add(new WealthArtifactWeapon(_player))
                     });
                 }
 

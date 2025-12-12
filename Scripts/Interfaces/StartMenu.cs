@@ -180,7 +180,8 @@ namespace Survive_the_night.Scripts.Interfaces
                 WeaponName.GoldenSword,
                 WeaponName.GoldenTyphoon,
                 WeaponName.EventHorizon,
-                WeaponName.Breaker
+                WeaponName.Breaker,
+                WeaponName.WealthArtifact
             };
 
             // Инициализация описаний режимов игры

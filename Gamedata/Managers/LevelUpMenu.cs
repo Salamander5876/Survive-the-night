@@ -68,7 +68,7 @@ namespace Survive_the_night.Gamedata.Managers
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +2 (Ур. {pc.DamageLevel + 1}/5)",
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.PlayingCards)}: Урон карты +1 (Ур. {pc.DamageLevel + 1}/5)",
                             Description = $"Текущий урон: {pc.Damage}",
                             ApplyUpgrade = () => pc.UpgradeDamage()
                         });
@@ -475,6 +475,37 @@ namespace Survive_the_night.Gamedata.Managers
                             Title = $"{WeaponManager.GetDisplayName(WeaponName.Breaker)}: Перезарядка -0.2с (Ур. {breaker.CooldownLevel + 1}/3)",
                             Description = $"Текущая перезарядка: {breaker.CurrentCooldown:0.0}с",
                             ApplyUpgrade = () => breaker.UpgradeCooldown()
+                        });
+                    }
+                }
+
+                else if (weapon is WealthArtifactWeapon wa)
+                {
+                    if (wa.ArtifactCountLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.WealthArtifact)}: Количество артефактов +1 (Ур. {wa.ArtifactCountLevel + 1}/3)",
+                            Description = $"Текущее количество: {wa.CurrentArtifactCount}",
+                            ApplyUpgrade = () => wa.UpgradeArtifactCount()
+                        });
+                    }
+                    if (wa.GroupCountLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.WealthArtifact)}: Групп монет +5 (Ур. {wa.GroupCountLevel + 1}/3)",
+                            Description = $"Текущее количество групп: {wa.CurrentGroupCount}",
+                            ApplyUpgrade = () => wa.UpgradeGroupCount()
+                        });
+                    }
+                    if (wa.CooldownLevel < 3)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{WeaponManager.GetDisplayName(WeaponName.WealthArtifact)}: Перезарядка групп -0.3с (Ур. {wa.CooldownLevel + 1}/3)",
+                            Description = $"Текущая перезарядка: {wa.CurrentGroupCooldown:0.0}с",
+                            ApplyUpgrade = () => wa.UpgradeCooldown()
                         });
                     }
                 }

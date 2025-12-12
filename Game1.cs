@@ -249,6 +249,18 @@ namespace Survive_the_night
             WeaponManager.LoadWeaponTextures(WeaponName.Typhoon, typhoonTexture);
             TyphoonProjectile.SetDefaultTexture(typhoonTexture);
 
+            // Артефакт богатства
+            var artifactTexture = Content.Load<Texture2D>("Sprites/Projectiles/GoldenArtifact");
+            var moneyTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/Money1");
+            var moneyTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/Money2");
+            var moneyTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/Money3");
+            var moneyTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Money4");
+            var moneyTexture5 = Content.Load<Texture2D>("Sprites/Projectiles/Money5");
+
+            WealthArtifactProjectile.SetTexture(artifactTexture);
+            WealthArtifactMoneyProjectile.SetTextures(moneyTexture1, moneyTexture2, moneyTexture3, moneyTexture4, moneyTexture5);
+            WeaponManager.LoadWeaponTextures(WeaponName.WealthArtifact, artifactTexture);
+
             // Установка текстур по умолчанию для проектов
             PlayingCard.SetDefaultTexture(cardTexture1);
             GoldenBulletProjectile.SetDefaultTexture(bulletTexture);
@@ -1217,6 +1229,15 @@ namespace Survive_the_night
                             projectile.Draw(_spriteBatch, _debugTexture);
                         }
                     }
+                }
+
+                // Отрисовка Артефакта богатства
+                if (weapon is WealthArtifactWeapon wealthArtifact)
+                {
+                    // Сначала монеты (они под артефактами)
+                    wealthArtifact.DrawMoney(_spriteBatch, _debugTexture);
+                    // Потом артефакты (они сверху)
+                    wealthArtifact.DrawArtifacts(_spriteBatch, _debugTexture);
                 }
             }
         }

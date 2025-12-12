@@ -31,7 +31,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         EventHorizon,
         BeerBottle,
         Breaker,
-        Typhoon
+        Typhoon,
+        WealthArtifact
     }
 
     public abstract class Weapon
@@ -114,7 +115,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             WeaponName.BigLaser,
             WeaponName.GoldenTyphoon,
             WeaponName.EventHorizon,
-            WeaponName.Breaker
+            WeaponName.Breaker,
+            WeaponName.WealthArtifact
         };
 
         // Текстуры для оружий
@@ -200,6 +202,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.BeerBottle: return "beer_throw";
                 case WeaponName.Breaker: return "breaker_swing";
                 case WeaponName.Typhoon: return "typhoon";
+                case WeaponName.WealthArtifact: return "golden_artifact_money";
                 default: return "card_deal";
             }
         }
@@ -251,6 +254,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     return new Breaker(player);
                 case WeaponName.Typhoon:
                     return new Typhoon(player);
+                case WeaponName.WealthArtifact:
+                    return new WealthArtifactWeapon(player);
                 default:
                     return new PlayingCards(player);
             }
@@ -275,6 +280,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.BeerBottle: return "Пивная бутылка";
                 case WeaponName.Breaker: return "Разрушитель";
                 case WeaponName.Typhoon: return "Тайфун";
+                case WeaponName.WealthArtifact: return "Артефакт богатства";
                 default: return "Неизвестное оружие";
             }
         }
