@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Localizations;
 using Survive_the_night.Scripts.Managers;
 using System.Collections.Generic;
 
@@ -264,25 +265,13 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         // Получение отображаемого имени оружия
         public static string GetDisplayName(WeaponName weaponName)
         {
-            switch (weaponName)
-            {
-                case WeaponName.PlayingCards: return "Игральные карты";
-                case WeaponName.CasinoChips: return "Фишки казино";
-                case WeaponName.GoldenBullet: return "Золотые пули";
-                case WeaponName.GoldenSword: return "Золотой меч";
-                case WeaponName.MolotovCocktail: return "Коктейль Молотова";
-                case WeaponName.BigLaser: return "Большой лазер";
-                case WeaponName.StickyBomb: return "Липкая бомба";
-                case WeaponName.Dice: return "Игральные кости";
-                case WeaponName.RouletteBall: return "Рулетка";
-                case WeaponName.GoldenTyphoon: return "Золотой Тайфун";
-                case WeaponName.EventHorizon: return "Горизонт Событий";
-                case WeaponName.BeerBottle: return "Пивная бутылка";
-                case WeaponName.Breaker: return "Разрушитель";
-                case WeaponName.Typhoon: return "Тайфун";
-                case WeaponName.WealthArtifact: return "Артефакт богатства";
-                default: return "Неизвестное оружие";
-            }
+            return LocalizationManager.GetWeaponName(weaponName);
+        }
+
+        // Получение отображаемого описания оружия
+        public static string GetWeaponDescription(WeaponName weaponName)
+        {
+            return LocalizationManager.GetWeaponDescription(weaponName);
         }
 
         // Проверка доступности оружия (для меню выбора)

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Localizations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,250 +56,21 @@ namespace Survive_the_night.Gamedata.Managers
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
             // Проверяем, есть ли еще обычные оружия для получения
-            bool hasAllRegularWeapons = _weapons.Any(w => w is PlayingCards) &&
-                                      _weapons.Any(w => w is CasinoChips) &&
-                                      _weapons.Any(w => w is GoldenBullet) &&
-                                      _weapons.Any(w => w is StickyBomb) &&
-                                      _weapons.Any(w => w is DiceWeapon) &&
-                                      _weapons.Any(w => w is RouletteBall);
+            // Используем списки из WeaponManager для проверки
+            bool hasAllRegularWeapons = WeaponManager.RegularWeapons.All(weaponName =>
+                _weapons.Any(w => GetWeaponType(w.Name) == WeaponType.Regular && w.Name == weaponName));
 
             // Если все обычные оружия получены, показываем только легендарные
             if (hasAllRegularWeapons)
             {
                 // Легендарные оружия (гарантированно)
-                if (!_weapons.Any(w => w is GoldenSword))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is MolotovCocktail))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
-                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is BigLaser))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is GoldenTyphoon))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is EventHorizon))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is Breaker) && !pool.Any(o => o.Title.Contains("Разрушитель")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Разрушитель [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: массивный меч, совершающий сокрушительные взмахи вокруг игрока.",
-                        ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is WealthArtifactWeapon) && !pool.Any(o => o.Title.Contains("Артефакт богатства")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Артефакт богатства [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: золотые артефакты, стреляющие монетами в ближайших врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new WealthArtifactWeapon(_player))
-                    });
-                }
+                AddLegendaryWeaponsToPool(pool, true); // true = гарантированное добавление
             }
             else
             {
                 // Смешанный пул: обычные оружия + 10% шанс на легендарные
-                List<UpgradeOption> regularPool = new List<UpgradeOption>();
-                List<UpgradeOption> legendaryPool = new List<UpgradeOption>();
-
-                // Обычные оружия
-                if (!_weapons.Any(w => w is StickyBomb))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Липкая бомба",
-                        Description = "Бомбы, которые прилипают к врагам и взрываются через время.",
-                        ApplyUpgrade = () => _weapons.Add(new StickyBomb(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is PlayingCards))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Игральные карты",
-                        Description = "Игральные карты, которые пробивают врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new PlayingCards(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is CasinoChips))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Фишки казино",
-                        Description = "Фишки, которые отскакивают между врагами.",
-                        ApplyUpgrade = () => _weapons.Add(new CasinoChips(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is GoldenBullet))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Золотая пуля",
-                        Description = "Точные золотые пули, которые могут отталкивать врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenBullet(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is RouletteBall))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Рулетка",
-                        Description = "Шарик рулетки летит случайно и отскакивает от стен.\n" +
-                                     "Оставляет след из частичек, которые наносят урон и уничтожаются при столкновении.",
-                        ApplyUpgrade = () => _weapons.Add(new RouletteBall(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is DiceWeapon))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Игральные кости",
-                        Description = "Кости, вращающиеся вокруг игрока и имеют разное количество пробития и урона",
-                        ApplyUpgrade = () => _weapons.Add(new DiceWeapon(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is BeerBottle))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Бутылка пива",
-                        Description = "Бутылки пива, создающие липкие лужи с периодическим уроном.",
-                        ApplyUpgrade = () => _weapons.Add(new BeerBottle(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is Typhoon))
-                {
-                    regularPool.Add(new UpgradeOption
-                    {
-                        Title = "Тайфун",
-                        Description = "Снаряды, летящие к ближайшему врагу с бесконечным пробитием.\n" +
-                                     "Наносят урон каждые 0.3 секунды при контакте с врагом.",
-                        ApplyUpgrade = () => _weapons.Add(new Typhoon(_player))
-                    });
-                }
-
-                // Легендарные оружия (10% шанс появления каждого)
-                if (!_weapons.Any(w => w is GoldenSword) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Золотые мечи, летящие с автонаводкой.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is MolotovCocktail) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Бросает бутылки, создающие огненные зоны.",
-                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is BigLaser) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Мощный лазер, который автоматически наводится и имеет приоритет атаки на врагов с большим хп.",
-                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is GoldenTyphoon) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Снаряды, летящие по 8 направлениям с огромной скоростью вращения и с бесконечным пробитием.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is EventHorizon) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is Breaker) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Разрушитель [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Массивный меч, совершающий сокрушительные взмахи вокруг игрока и наносит дополнительный урон врагам с полным хп",
-                        ApplyUpgrade = () => _weapons.Add(new Breaker(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is WealthArtifactWeapon) && _random.NextDouble() < 0.1)
-                {
-                    legendaryPool.Add(new UpgradeOption
-                    {
-                        Title = "Артефакт богатства [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: золотые артефакты, стреляющие монетами в ближайших врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new WealthArtifactWeapon(_player))
-                    });
-                }
-
-                // Объединяем пулы, сначала легендарные (если есть), затем обычные
-                pool.AddRange(legendaryPool);
-                pool.AddRange(regularPool);
+                AddRegularWeaponsToPool(pool);
+                AddLegendaryWeaponsToPool(pool, false); // false = 10% шанс
             }
 
             // --- ИСПРАВЛЕНИЕ: Гарантируем, что всегда будет 3 варианта ---
@@ -306,57 +78,8 @@ namespace Survive_the_night.Gamedata.Managers
             // Если доступных опций меньше 3, добавляем легендарные оружия (если они еще не добавлены)
             if (pool.Count < 3)
             {
-                // Проверяем и добавляем недостающие легендарные оружия
-                if (!_weapons.Any(w => w is GoldenSword) && !pool.Any(o => o.Title.Contains("Золотой меч")))
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой меч [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: золотые мечи, летящие с автонаводкой.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenSword(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is MolotovCocktail) && !pool.Any(o => o.Title.Contains("Коктейль Молотова")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Коктейль Молотова [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: бросает бутылки, создающие огненные зоны.",
-                        ApplyUpgrade = () => _weapons.Add(new MolotovCocktail(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is BigLaser) && !pool.Any(o => o.Title.Contains("Большой лазер")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Большой лазер [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: мощный лазер, который автоматически наводится на врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new BigLaser(_player))
-                    });
-                }
-
-                if (!_weapons.Any(w => w is GoldenTyphoon) && !pool.Any(o => o.Title.Contains("Золотой Тайфун")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Золотой Тайфун [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: снаряды, летящие по 8 направлениям с огромной скоростью вращения.",
-                        ApplyUpgrade = () => _weapons.Add(new GoldenTyphoon(_player))
-                    });
-                }
-
-                // === ДОБАВЛЕНО: Горизонт Событий (резервное добавление) ===
-                if (!_weapons.Any(w => w is EventHorizon) && !pool.Any(o => o.Title.Contains("Горизонт Событий")) && pool.Count < 3)
-                {
-                    pool.Add(new UpgradeOption
-                    {
-                        Title = "Горизонт Событий [ЛЕГЕНДАРНЫЙ]",
-                        Description = "Добавляет новое легендарное оружие: звезды, вращающиеся по расширяющимся кольцам с самонаведением на врагов.",
-                        ApplyUpgrade = () => _weapons.Add(new EventHorizon(_player))
-                    });
-                }
+                // Добавляем все недостающие легендарные оружия
+                AddMissingLegendaryWeapons(pool);
             }
 
             // Если все равно меньше 3 опций, добавляем кнопку-пустышку
@@ -390,6 +113,91 @@ namespace Survive_the_night.Gamedata.Managers
                     CurrentOptions.Add(pool[index]);
                 }
             }
+        }
+
+        // Вспомогательный метод для определения типа оружия
+        private WeaponType GetWeaponType(WeaponName weaponName)
+        {
+            return WeaponManager.LegendaryWeapons.Contains(weaponName) ?
+                WeaponType.Legendary : WeaponType.Regular;
+        }
+
+        // Метод для добавления обычных оружий в пул
+        private void AddRegularWeaponsToPool(List<UpgradeOption> pool)
+        {
+            foreach (var weaponName in WeaponManager.RegularWeapons)
+            {
+                if (!HasWeapon(weaponName))
+                {
+                    pool.Add(CreateUpgradeOption(weaponName));
+                }
+            }
+        }
+
+        // Метод для добавления легендарных оружий в пул
+        private void AddLegendaryWeaponsToPool(List<UpgradeOption> pool, bool guaranteed)
+        {
+            foreach (var weaponName in WeaponManager.LegendaryWeapons)
+            {
+                if (!HasWeapon(weaponName))
+                {
+                    // Если гарантированное добавление или 10% шанс
+                    if (guaranteed || _random.NextDouble() < 0.1)
+                    {
+                        pool.Add(CreateUpgradeOption(weaponName));
+                    }
+                }
+            }
+        }
+
+        // Метод для добавления недостающих легендарных оружий
+        private void AddMissingLegendaryWeapons(List<UpgradeOption> pool)
+        {
+            foreach (var weaponName in WeaponManager.LegendaryWeapons)
+            {
+                if (!HasWeapon(weaponName) && !pool.Any(o => GetWeaponNameFromTitle(o.Title) == weaponName))
+                {
+                    pool.Add(CreateUpgradeOption(weaponName));
+                    if (pool.Count >= 3) break;
+                }
+            }
+        }
+
+        // Проверяет, есть ли оружие у игрока
+        private bool HasWeapon(WeaponName weaponName)
+        {
+            return _weapons.Any(w => w.Name == weaponName);
+        }
+
+        // Создает опцию улучшения для оружия
+        private UpgradeOption CreateUpgradeOption(WeaponName weaponName)
+        {
+            // Получаем соответствующее оружие для создания
+            Weapon weapon = WeaponManager.CreateWeapon(weaponName, _player);
+
+            return new UpgradeOption
+            {
+                Title = LocalizationManager.GetWeaponRouletteTitle(weaponName),
+                Description = LocalizationManager.GetWeaponRouletteDescription(weaponName),
+                ApplyUpgrade = () => _weapons.Add(weapon)
+            };
+        }
+
+        // Вспомогательный метод для получения WeaponName из заголовка
+        private WeaponName GetWeaponNameFromTitle(string title)
+        {
+            // Проходим по всем оружиям и ищем совпадение
+            foreach (WeaponName weaponName in Enum.GetValues(typeof(WeaponName)))
+            {
+                string weaponTitle = LocalizationManager.GetWeaponRouletteTitle(weaponName);
+                if (title == weaponTitle)
+                {
+                    return weaponName;
+                }
+            }
+
+            // Если не нашли, возвращаем первое оружие (заглушка)
+            return WeaponName.PlayingCards;
         }
 
         public void Update(GameTime gameTime)

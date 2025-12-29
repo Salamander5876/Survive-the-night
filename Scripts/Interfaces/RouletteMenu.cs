@@ -1,7 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Survive_the_night.Gamedata.Config.WeaponSystem;
 using Survive_the_night.Gamedata.Managers;
+using Survive_the_night.Localizations;
+using System;
 
 namespace Survive_the_night.Scripts.Interfaces
 {
@@ -53,9 +56,16 @@ namespace Survive_the_night.Scripts.Interfaces
 
                 // Определяем цвет текста в зависимости от типа оружия
                 Color titleColor = Color.White;
-                if (option.Title.Contains("Золотой меч") || option.Title.Contains("Коктейль Молотова") || option.Title.Contains("Большой лазер"))
+
+                // Получаем WeaponName из заголовка
+                WeaponName weaponName = GetWeaponNameFromTitle(option.Title);
+                if (weaponName != WeaponName.PlayingCards) // Проверяем, что нашли оружие
                 {
-                    titleColor = Color.Gold; // Легендарные оружия золотым цветом
+                    // Проверяем, является ли оружие легендарным
+                    if (WeaponManager.LegendaryWeapons.Contains(weaponName))
+                    {
+                        titleColor = Color.Gold; // Легендарные оружия золотым цветом
+                    }
                 }
 
                 spriteBatch.DrawString(_font, $"[{i + 1}] {option.Title}", textPos, titleColor);
@@ -63,6 +73,23 @@ namespace Survive_the_night.Scripts.Interfaces
                 textPos.Y += 40;
                 spriteBatch.DrawString(_font, option.Description, textPos, Color.LightGray);
             }
+        }
+
+        // Вспомогательный метод для получения WeaponName из заголовка
+        private WeaponName GetWeaponNameFromTitle(string title)
+        {
+            // Проходим по всем оружиям и ищем совпадение
+            foreach (WeaponName weaponName in Enum.GetValues(typeof(WeaponName)))
+            {
+                string weaponTitle = LocalizationManager.GetWeaponRouletteTitle(weaponName);
+                if (title == weaponTitle || title.Contains(weaponTitle))
+                {
+                    return weaponName;
+                }
+            }
+
+            // Если не нашли, возвращаем первое оружие (заглушка)
+            return WeaponName.PlayingCards;
         }
     }
 }

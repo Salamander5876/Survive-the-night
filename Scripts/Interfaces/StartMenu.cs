@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Localizations;
 using System;
 using System.Collections.Generic;
 
@@ -87,72 +88,7 @@ namespace Survive_the_night.Scripts.Interfaces
         public WeaponName SelectedWeapon => _availableWeapons[_selectedWeaponIndex];
         public GameMode SelectedGameMode => _selectedGameMode;
 
-        // Описания оружий с использованием \n для переносов
-        private Dictionary<WeaponName, string> _weaponDescriptions = new Dictionary<WeaponName, string>
-        {
-            {
-                WeaponName.PlayingCards,
-                "Мощное оружие, которое пробивает до 3 врагов за один выстрел.\n\n" +
-                "Карты летят по прямой траектории и наносят урон всем врагам на своем пути.\n\n" +
-                "Отлично подходит для борьбы с толпами противников."
-            },
-            {
-                WeaponName.GoldenBullet,
-                "Точное оружие с высоким уроном по одной цели.\n\n" +
-                "Пули летят с большой скоростью и гарантированно поражают ближайшего врага.\n\n" +
-                "Идеально для точечного уничтожения сильных противников."
-            },
-            {
-                WeaponName.CasinoChips,
-                "Фишки, которые отскакивают между врагами.\n\n" +
-                "Каждая фишка может поразить нескольких врагов, перескакивая между ними.\n\n" +
-                "Эффективны против групп, расположенных близко друг к другу."
-            },
-            {
-                WeaponName.StickyBomb,
-                "Тактическое оружие с отложенным взрывом.\n\n" +
-                "Бомба прилипает к врагу и взрывается через 10 секунд, нанося урон всем врагам в радиусе.\n\n" +
-                "Новые бомбы не появляются, пока все предыдущие не взорвались.\n\n" +
-                "Отлично подходит для контроля толп и стратегического планирования."
-            },
-            {
-                WeaponName.Dice,
-                "Магические кости с уникальными характеристиками для каждого значения.\n\n" +
-                "Кость 1: Урон 2, Пробитие 6\n" +
-                "Кость 2: Урон 4, Пробитие 5\n" +
-                "Кость 3: Урон 6, Пробитие 4\n" +
-                "Кость 4: Урон 8, Пробитие 3\n" +
-                "Кость 5: Урон 10, Пробитие 2\n" +
-                "Кость 6: Урон 12, Пробитие 1\n\n" +
-                "Перезарядка: 5,1 сек (после уничтожения всех костей)\n" +
-                "Меняют направление вращения после каждого перезапуска."
-            },
-            {
-                WeaponName.RouletteBall,
-                "Шарик рулетки, который летит в случайном направлении и отскакивает от стен экрана.\n\n" +
-                "Шарик не наносит урон, но оставляет след из частичек, которые наносят урон врагам.\n\n" +
-                "Частички существуют 0.5 секунды и уничтожаются при столкновении с врагами.\n\n" +
-                "Стандартные отскоки: 10\n" +
-                "Стандартный урон: 1\n\n" +
-                "Прокачка: скорость, время жизни частичек, урон частичек."
-            },
-            {
-                WeaponName.BeerBottle,
-                "Бросает бутылки пива, которые разбиваются и создают липкие лужи.\n\n" +
-                "Лужи наносят 3 урона врагам с интервалом 2 секунды.\n\n" +
-                "Каждый враг имеет свой независимый таймер урона при нахождении в луже.\n\n" +
-                "Прокачка: количество бутылок, время жизни лужи, скорость нанесения урона."
-            },
-            {
-                WeaponName.Typhoon,
-                "Мощные снаряды, летящие к ближайшему врагу.\n\n" +
-                "Особенности:\n" +
-                "Бесконечное пробитие врагов\n" +
-                "Наносит урон каждые 0.3 секунды\n" +
-                "Автоматическое наведение на ближайшего врага\n\n" +
-                "Прокачка: урон, количество снарядов, скорость перезарядки."
-            }
-        };
+        // Удаляем словарь _weaponDescriptions - теперь используем LocalizationManager
 
         public StartMenu(GraphicsDevice graphicsDevice, Texture2D debugTexture, SpriteFont font)
         {
@@ -459,9 +395,7 @@ namespace Survive_the_night.Scripts.Interfaces
         private float GetDescriptionTextHeight()
         {
             WeaponName currentWeapon = _availableWeapons[_selectedWeaponIndex];
-            string description = _weaponDescriptions.ContainsKey(currentWeapon)
-                ? _weaponDescriptions[currentWeapon]
-                : "Описание отсутствует.";
+            string description = LocalizationManager.GetWeaponDescription(currentWeapon);
 
             return MeasureTextHeight(description, _descriptionRect.Width - ScrollBarWidth - 20);
         }
@@ -701,7 +635,7 @@ namespace Survive_the_night.Scripts.Interfaces
             spriteBatch.DrawString(_font, title, titlePos, Color.White);
 
             // Название выбранного оружия (над областью описания)
-            string weaponName = WeaponManager.GetDisplayName(_availableWeapons[_selectedWeaponIndex]);
+            string weaponName = LocalizationManager.GetWeaponName(_availableWeapons[_selectedWeaponIndex]);
             Vector2 weaponNameSize = _font.MeasureString(weaponName);
             Vector2 weaponNamePos = new Vector2(
                 _descriptionRect.Center.X - weaponNameSize.X / 2,
@@ -911,9 +845,7 @@ namespace Survive_the_night.Scripts.Interfaces
 
             // Текст описания с учетом прокрутки
             WeaponName currentWeapon = _availableWeapons[_selectedWeaponIndex];
-            string description = _weaponDescriptions.ContainsKey(currentWeapon)
-                ? _weaponDescriptions[currentWeapon]
-                : "Описание отсутствует.";
+            string description = LocalizationManager.GetWeaponDescription(currentWeapon);
 
             // Увеличиваем отступы для лучшего вида
             Rectangle textArea = new Rectangle(
