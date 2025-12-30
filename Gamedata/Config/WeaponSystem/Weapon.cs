@@ -56,6 +56,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             Name = name;
             CooldownTime = cooldownTime;
             Damage = damage;
+
+            // ВОЗМОЖНАЯ ПРОБЛЕМА: Здесь может устанавливаться CooldownTimer = CooldownTime
+            // CooldownTimer = CooldownTime; // Если эта строка есть, закомментируйте ее!
+
+            // Вместо этого установим в 0
+            CooldownTimer = 0f;
         }
 
         public abstract void LevelUp();
@@ -138,10 +144,17 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     _weaponTextures[weaponName].Add(texture);
                 }
             }
+
+            // ДОПОЛНИТЕЛЬНО: Загрузка текстур для пробужденных карт
+            if (weaponName == WeaponName.PlayingCards && textures.Length >= 4)
+            {
+                // Передаем текстуры в AwakenPlayingCards
+                Awaken.AwakenPlayingCards.LoadAwakenTextures(textures[0], textures[1], textures[2], textures[3]);
+            }
         }
 
         // Методы для получения контента
-        public static Texture2D GetRandomWeaponTexture(WeaponName weaponName)
+        public static Texture2D GetRandomWeaponTexture(WeaponName weaponName, bool isAwaken = false)
         {
             if (_weaponTextures.ContainsKey(weaponName) && _weaponTextures[weaponName].Count > 0)
             {

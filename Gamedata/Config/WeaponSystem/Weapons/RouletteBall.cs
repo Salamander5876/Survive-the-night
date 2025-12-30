@@ -119,7 +119,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                 {
                     // Удаляем неактивные шарики
                     ActiveBalls.RemoveAt(i);
-                    Debug.WriteLine($"Шарик завершил отскоки. Осталось шариков: {ActiveBalls.Count}");
+                    //Debug.WriteLine($"Шарик завершил отскоки. Осталось шариков: {ActiveBalls.Count}");
                 }
             }
 
@@ -155,7 +155,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             if (closestEnemy == null)
             {
                 // Если врагов на экране нет, не создаем шарик
-                Debug.WriteLine("Нет врагов на экране - шарик не создается");
+                //Debug.WriteLine("Нет врагов на экране - шарик не создается");
                 return;
             }
 
@@ -240,7 +240,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             newBall.ScreenBounds = GetCurrentScreenBounds();
 
             ActiveBalls.Add(newBall);
-            Debug.WriteLine($"Создан новый шарик. Урон: {BallDamage}, Скорость: {ProjectileSpeed}, Отскоков: {MaxBounces}");
+            //Debug.WriteLine($"Создан новый шарик. Урон: {BallDamage}, Скорость: {ProjectileSpeed}, Отскоков: {MaxBounces}");
         }
 
         // Метод для поиска нового врага после отскока - ИЩЕМ БЛИЖАЙШЕГО К ИГРОКУ НА ЭКРАНЕ
@@ -277,7 +277,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                     // ШАРИК НАНОСИТ УРОН, НО НЕ УНИЧТОЖАЕТСЯ
                     enemy.TakeDamage(ball.Damage);
 
-                    Debug.WriteLine($"Шарик нанес урон {ball.Damage} врагу");
+                    //Debug.WriteLine($"Шарик нанес урон {ball.Damage} врагу");
                     // НЕ break - шарик может поразить нескольких врагов за один кадр
                 }
             }
@@ -312,7 +312,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         enemy.TakeDamage(particle.Damage);
                         particle.IsActive = false; // Уничтожаем частичку
 
-                        Debug.WriteLine($"Частичка нанесла урон {particle.Damage} врагу");
+                        //Debug.WriteLine($"Частичка нанесла урон {particle.Damage} врагу");
                         break;
                     }
                 }

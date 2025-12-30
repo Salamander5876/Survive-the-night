@@ -353,7 +353,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
                 }
                 catch (System.Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука лазера: {ex.Message}");
+                    //System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука лазера: {ex.Message}");
                 }
                 finally
                 {
@@ -381,7 +381,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Playing)
             {
                 _laserSoundInstance.Pause();
-                System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера приостановлен");
+                //System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера приостановлен");
             }
         }
 
@@ -390,7 +390,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Paused)
             {
                 _laserSoundInstance.Resume();
-                System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера возобновлен");
+                //System.Diagnostics.Debug.WriteLine("BigLaserProjectile: звук лазера возобновлен");
             }
         }
     }

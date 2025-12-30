@@ -114,7 +114,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         {
             if (ActiveFires.Count == 0 && CooldownTimer <= 0f)
             {
-                Debug.WriteLine("🎯 Molotov attacking!");
+                //Debug.WriteLine("Molotov attacking!");
 
                 // Проигрываем звук броска через WeaponManager
                 WeaponManager.PlayWeaponSound(WeaponName.MolotovCocktail);
@@ -186,7 +186,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             {
                 fire.StopSound();
             }
-            System.Diagnostics.Debug.WriteLine("Остановлены все звуки MolotovCocktail");
+            //System.Diagnostics.Debug.WriteLine("Остановлены все звуки MolotovCocktail");
         }
     }
 }

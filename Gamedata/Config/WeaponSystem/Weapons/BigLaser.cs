@@ -125,7 +125,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Playing)
             {
                 _laserSoundInstance.Pause();
-                System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера приостановлен");
+                //System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера приостановлен");
             }
             ActiveLaser?.PauseSound();
         }
@@ -135,7 +135,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             if (_laserSoundInstance != null && _laserSoundInstance.State == SoundState.Paused)
             {
                 _laserSoundInstance.Resume();
-                System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера возобновлен");
+                //System.Diagnostics.Debug.WriteLine("BigLaser: звук лазера возобновлен");
             }
             ActiveLaser?.ResumeSound();
         }

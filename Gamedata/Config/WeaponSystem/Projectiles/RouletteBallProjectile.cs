@@ -40,7 +40,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             SetLifeTime(300f);
             ScreenBounds = new Rectangle(0, 0, 1280, 720);
 
-            Debug.WriteLine($"Создан шарик рулетки. Урон: {Damage}, Скорость: {Speed}, Отскоков: {BouncesLeft}");
+            //Debug.WriteLine($"Создан шарик рулетки. Урон: {Damage}, Скорость: {Speed}, Отскоков: {BouncesLeft}");
         }
 
         public void SetWeapon(RouletteBall weapon)
@@ -77,7 +77,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             if (_lifeTimer >= MaxLifeTime)
             {
                 IsActive = false;
-                Debug.WriteLine($"Шарик исчез по времени: {_lifeTimer:0}с, всего отскоков: {_totalBounces}");
+                //Debug.WriteLine($"Шарик исчез по времени: {_lifeTimer:0}с, всего отскоков: {_totalBounces}");
                 return;
             }
         }
@@ -118,7 +118,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             BouncesLeft--;
             _totalBounces++;
 
-            Debug.WriteLine($"Отскок #{_totalBounces} от границы. Осталось отскоков: {BouncesLeft}");
+            //Debug.WriteLine($"Отскок #{_totalBounces} от границы. Осталось отскоков: {BouncesLeft}");
 
             // ВОСПРОИЗВОДИМ ЗВУК ПРИ ОТСКОКЕ ОТ СТЕНЫ
             if (_weapon != null)
@@ -154,12 +154,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
                 {
                     // Летим к врагу, если он есть на экране
                     Direction = Vector2.Normalize(nextTarget.Value - Position);
-                    Debug.WriteLine($"Новое направление к врагу: {Direction}");
+                    //Debug.WriteLine($"Новое направление к врагу: {Direction}");
                 }
                 else
                 {
                     // Если врагов нет, продолжаем лететь в отраженном направлении
-                    Debug.WriteLine($"Врагов нет, продолжаем в отраженном направлении: {Direction}");
+                    //Debug.WriteLine($"Врагов нет, продолжаем в отраженном направлении: {Direction}");
                 }
             }
         }

@@ -10,6 +10,7 @@ using Survive_the_night.Gamedata.Config.Items;
 using Survive_the_night.Gamedata.Config.ItemSystem.Items;
 using Survive_the_night.Gamedata.Config.ItemSystem.Renderers;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Awaken;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
 using Survive_the_night.Gamedata.Managers;
@@ -209,6 +210,14 @@ namespace Survive_the_night
             var cardTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/Card4");
             WeaponManager.LoadWeaponTextures(WeaponName.PlayingCards, cardTexture1, cardTexture2, cardTexture3, cardTexture4);
 
+            var megaCardTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/MegaCard1");
+            var megaCardTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/MegaCard2");
+            var megaCardTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/MegaCard3");
+            var megaCardTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/MegaCard4");
+            AwakenPlayingCard.SetDefaultTexture(megaCardTexture1);
+            AwakenPlayingCards.LoadAwakenTextures(megaCardTexture1, megaCardTexture2, megaCardTexture3, megaCardTexture4);
+            System.Diagnostics.Debug.WriteLine($"Awaken textures loaded: {megaCardTexture1 != null}");
+
             // Золотые пули
             var bulletTexture = Content.Load<Texture2D>("Sprites/Projectiles/Bullet");
             WeaponManager.LoadWeaponTextures(WeaponName.GoldenBullet, bulletTexture);
@@ -405,21 +414,21 @@ namespace Survive_the_night
                     // В игре - открываем меню паузы
                     _pauseMenu.Show();
                     Game1.CurrentState = GameState.Paused;
-                    System.Diagnostics.Debug.WriteLine("🔄 ESC: Playing -> Paused");
+                    System.Diagnostics.Debug.WriteLine("ESC: Playing -> Paused");
                 }
                 else if (_currentGameState == GameState.Paused)
                 {
                     // В паузе - закрываем меню паузы
                     _pauseMenu.Hide();
                     Game1.CurrentState = GameState.Playing;
-                    System.Diagnostics.Debug.WriteLine("🔄 ESC: Paused -> Playing");
+                    System.Diagnostics.Debug.WriteLine("ESC: Paused -> Playing");
                 }
                 else if (_currentGameState == GameState.BonusShop)
                 {
                     // В магазине - закрываем магазин
                     _bonusShop.Hide();
                     Game1.CurrentState = GameState.Playing;
-                    System.Diagnostics.Debug.WriteLine("🔄 ESC: BonusShop -> Playing");
+                    System.Diagnostics.Debug.WriteLine("ESC: BonusShop -> Playing");
                 }
                 else if (_currentGameState == GameState.MainMenu)
                 {
@@ -434,7 +443,7 @@ namespace Survive_the_night
             {
                 _bonusShop.Show();
                 Game1.CurrentState = GameState.BonusShop;
-                System.Diagnostics.Debug.WriteLine("🔄 B: Playing -> BonusShop");
+                System.Diagnostics.Debug.WriteLine("B: Playing -> BonusShop");
             }
 
             // Обработка кликов по кнопкам HUD
@@ -447,14 +456,14 @@ namespace Survive_the_night
                     // Открываем меню паузы по кнопке
                     _pauseMenu.Show();
                     Game1.CurrentState = GameState.Paused;
-                    System.Diagnostics.Debug.WriteLine("🔄 Кнопка паузы: Playing -> Paused");
+                    System.Diagnostics.Debug.WriteLine("Кнопка паузы: Playing -> Paused");
                 }
                 else if (_gameHUD.IsShopButtonClicked(mousePos) && _currentGameState == GameState.Playing)
                 {
                     // Открываем магазин бонусов
                     _bonusShop.Show();
                     Game1.CurrentState = GameState.BonusShop;
-                    System.Diagnostics.Debug.WriteLine("🔄 Кнопка магазина: Playing -> BonusShop");
+                    System.Diagnostics.Debug.WriteLine("Кнопка магазина: Playing -> BonusShop");
                 }
             }
 
@@ -464,7 +473,7 @@ namespace Survive_the_night
             // Управление звуками при переходе между состояниями - ВСЕГДА ВЫЗЫВАЕТСЯ
             if (previousState != _currentGameState)
             {
-                System.Diagnostics.Debug.WriteLine($"🔄 ОБНАРУЖЕНО ИЗМЕНЕНИЕ: {previousState} -> {_currentGameState}");
+                System.Diagnostics.Debug.WriteLine($"ОБНАРУЖЕНО ИЗМЕНЕНИЕ: {previousState} -> {_currentGameState}");
                 HandleSoundStateTransition(previousState, _currentGameState);
             }
 
@@ -585,6 +594,19 @@ namespace Survive_the_night
                 return;
             }
 
+            //if (currentKs.IsKeyDown(Keys.F1) && !_previousKeyboardState.IsKeyDown(Keys.F8))
+            //{
+            //    Game1.CurrentState = GameState.LevelUp;
+            //    return;
+            //}
+
+            //if (currentKs.IsKeyDown(Keys.F2) && !_previousKeyboardState.IsKeyDown(Keys.F8))
+            //{
+            //    Game1.CurrentState = GameState.Victory;
+            //    _victoryScreen.Show();
+            //    return;
+            //}
+
             // Музыка
             if (_difficultyManager.CurrentDifficulty != StartMenu.GameMode.Survival)
             {
@@ -644,10 +666,12 @@ namespace Survive_the_night
             // Обновление оружия
             foreach (var weapon in _weapons)
             {
+                System.Diagnostics.Debug.WriteLine($"Updating weapon: {weapon.Name}, Type: {weapon.GetType()}");
                 weapon.Update(gameTime);
                 weapon.Attack(gameTime, _enemies);
                 UpdateWeaponSpecifics(weapon);
             }
+
         }
 
         private void UpdatePausedState()
@@ -665,7 +689,7 @@ namespace Survive_the_night
                 // Если меню паузы скрылось, возвращаемся в игру
                 _musicManager.ResumeMusic();
                 Game1.CurrentState = GameState.Playing;
-                System.Diagnostics.Debug.WriteLine("🔄 Пауза закрыта: Paused -> Playing");
+                System.Diagnostics.Debug.WriteLine("Пауза закрыта: Paused -> Playing");
             }
         }
 
@@ -678,7 +702,7 @@ namespace Survive_the_night
             if (!_bonusShop.IsVisible)
             {
                 Game1.CurrentState = GameState.Playing;
-                System.Diagnostics.Debug.WriteLine("🔄 Магазин закрыт: BonusShop -> Playing");
+                System.Diagnostics.Debug.WriteLine("Магазин закрыт: BonusShop -> Playing");
             }
         }
 
@@ -1086,6 +1110,23 @@ namespace Survive_the_night
                         if (card.IsActive)
                         {
                             card.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                if (weapon is AwakenPlayingCards awakenCards)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Drawing AwakenPlayingCards: {awakenCards.ActiveProjectiles.Count} projectiles");
+
+                    foreach (var card in awakenCards.ActiveProjectiles)
+                    {
+                        if (card.IsActive)
+                        {
+                            card.Draw(_spriteBatch, _debugTexture);
+
+                            // Отладочный прямоугольник
+                            // var bounds = card.GetBounds();
+                            // _spriteBatch.Draw(_debugTexture, bounds, Color.Green * 0.3f);
                         }
                     }
                 }

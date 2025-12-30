@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Entities;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Awaken;
 using Survive_the_night.Localizations;
 using System;
 using System.Collections.Generic;
@@ -55,34 +56,41 @@ namespace Survive_the_night.Gamedata.Managers
             CurrentOptions.Clear();
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            // Проверяем, есть ли еще обычные оружия для получения
-            // Используем списки из WeaponManager для проверки
+            // --- ДОБАВЛЯЕМ ПРОБУЖДЕНИЯ ---
+            List<WeaponName> readyForAwaken = AwakenManager.GetReadyWeapons(_weapons);
+            foreach (var weaponName in readyForAwaken)
+            {
+                // Шанс 10% на появление пробуждения
+                if (_random.NextDouble() < 0.1)
+                {
+                    var awakenWeapon = AwakenManager.CreateAwakenWeapon(weaponName, _player);
+                    if (awakenWeapon != null)
+                    {
+                        pool.Add(CreateAwakenOption(weaponName, awakenWeapon));
+                    }
+                }
+            }
+
+            // --- СУЩЕСТВУЮЩАЯ ЛОГИКА ДОБАВЛЕНИЯ ОРУЖИЙ ---
             bool hasAllRegularWeapons = WeaponManager.RegularWeapons.All(weaponName =>
                 _weapons.Any(w => GetWeaponType(w.Name) == WeaponType.Regular && w.Name == weaponName));
 
-            // Если все обычные оружия получены, показываем только легендарные
             if (hasAllRegularWeapons)
             {
-                // Легендарные оружия (гарантированно)
-                AddLegendaryWeaponsToPool(pool, true); // true = гарантированное добавление
+                AddLegendaryWeaponsToPool(pool, true);
             }
             else
             {
-                // Смешанный пул: обычные оружия + 10% шанс на легендарные
                 AddRegularWeaponsToPool(pool);
-                AddLegendaryWeaponsToPool(pool, false); // false = 10% шанс
+                AddLegendaryWeaponsToPool(pool, false);
             }
 
-            // --- ИСПРАВЛЕНИЕ: Гарантируем, что всегда будет 3 варианта ---
-
-            // Если доступных опций меньше 3, добавляем легендарные оружия (если они еще не добавлены)
+            // --- ГАРАНТИРУЕМ 3 ВАРИАНТА ---
             if (pool.Count < 3)
             {
-                // Добавляем все недостающие легендарные оружия
                 AddMissingLegendaryWeapons(pool);
             }
 
-            // Если все равно меньше 3 опций, добавляем кнопку-пустышку
             while (pool.Count < 3)
             {
                 pool.Add(new UpgradeOption
@@ -113,6 +121,33 @@ namespace Survive_the_night.Gamedata.Managers
                     CurrentOptions.Add(pool[index]);
                 }
             }
+        }
+
+        private UpgradeOption CreateAwakenOption(WeaponName weaponName, Weapon awakenWeapon)
+        {
+            var weaponText = LocalizationManager.GetWeaponText(weaponName);
+
+            // Пробужденное оружие заменяет обычное
+            return new UpgradeOption
+            {
+                Title = $"{weaponText.Name} [ПРОБУЖДЕНИЕ]",
+                Description = weaponText.AwakenDescription, // Новое свойство в WeaponTextFile
+                ApplyUpgrade = () =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Applying awaken for {weaponName}");
+
+                    var oldWeapon = _weapons.FirstOrDefault(w => w.Name == weaponName);
+                    if (oldWeapon != null)
+                    {
+                        _weapons.Remove(oldWeapon);
+                        System.Diagnostics.Debug.WriteLine($"Removed old weapon: {oldWeapon.Name}");
+                    }
+
+                    _weapons.Add(awakenWeapon);
+                    System.Diagnostics.Debug.WriteLine($"Added awaken weapon: {awakenWeapon.Name}, Type: {awakenWeapon.GetType()}");
+                },
+                IsAwakenOption = true // Новый флаг
+            };
         }
 
         // Вспомогательный метод для определения типа оружия

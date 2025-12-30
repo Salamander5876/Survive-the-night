@@ -34,7 +34,6 @@ namespace Survive_the_night.Scripts.Interfaces
 
             spriteBatch.DrawString(_font, "РУЛЕТКА - ВЫБЕРИТЕ НОВОЕ ОРУЖИЕ", startPosition - new Vector2(0, 40), Color.Gold);
 
-            // Получаем текущую позицию мыши для выделения
             Point mousePosition = Mouse.GetState().Position;
 
             for (int i = 0; i < _rouletteManager.CurrentOptions.Count; i++)
@@ -42,36 +41,55 @@ namespace Survive_the_night.Scripts.Interfaces
                 var option = _rouletteManager.CurrentOptions[i];
                 Rectangle box = new Rectangle((int)startPosition.X, (int)startPosition.Y + i * boxHeight + i * boxSpacing, boxWidth, boxHeight);
 
-                // Фон
-                Color boxColor = Color.DarkRed;
+                // --- ВЫБОР ЦВЕТА В ЗАВИСИМОСТИ ОТ ТИПА ---
+                Color boxColor;
+
+                if (option.IsSkipOption)
+                {
+                    boxColor = Color.DarkGray; // Пропуск
+                }
+                else if (option.IsAwakenOption)
+                {
+                    boxColor = new Color(180, 70, 220); // ПУРПУРНЫЙ для пробуждения
+                }
+                else
+                {
+                    // Проверяем тип обычного/легендарного оружия
+                    WeaponName weaponName = GetWeaponNameFromTitle(option.Title);
+                    boxColor = WeaponManager.LegendaryWeapons.Contains(weaponName)
+                        ? Color.DarkGoldenrod // Легендарное
+                        : Color.DarkRed;      // Обычное
+                }
+
+                // Подсветка при наведении
                 if (box.Contains(mousePosition))
                 {
-                    boxColor = Color.DarkSlateGray; // Выделяем при наведении
+                    boxColor = boxColor * 1.3f; // Делаем ярче
                 }
 
                 spriteBatch.Draw(_debugTexture, box, boxColor);
 
-                // Текст
+                // --- ТЕКСТ ---
                 Vector2 textPos = new Vector2(box.X + 20, box.Y + 10);
 
-                // Определяем цвет текста в зависимости от типа оружия
-                Color titleColor = Color.White;
-
-                // Получаем WeaponName из заголовка
-                WeaponName weaponName = GetWeaponNameFromTitle(option.Title);
-                if (weaponName != WeaponName.PlayingCards) // Проверяем, что нашли оружие
-                {
-                    // Проверяем, является ли оружие легендарным
-                    if (WeaponManager.LegendaryWeapons.Contains(weaponName))
-                    {
-                        titleColor = Color.Gold; // Легендарные оружия золотым цветом
-                    }
-                }
+                // Цвет текста
+                Color titleColor = option.IsAwakenOption
+                    ? Color.Purple  // Пурпурный текст для пробуждения
+                    : Color.White;
 
                 spriteBatch.DrawString(_font, $"[{i + 1}] {option.Title}", textPos, titleColor);
 
+                // Описание (можно добавить спец. цвет для описания пробуждения)
                 textPos.Y += 40;
-                spriteBatch.DrawString(_font, option.Description, textPos, Color.LightGray);
+                Color descColor = option.IsAwakenOption ? Color.Lavender : Color.LightGray;
+                spriteBatch.DrawString(_font, option.Description, textPos, descColor);
+
+                // Дополнительная надпись для пробуждения
+                if (option.IsAwakenOption)
+                {
+                    textPos.Y += 30;
+                    spriteBatch.DrawString(_font, "МЕГА-УЛУЧШЕНИЕ", textPos, Color.Gold);
+                }
             }
         }
 

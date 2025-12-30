@@ -17,6 +17,7 @@ namespace Survive_the_night.Gamedata.Managers
         public string Description { get; set; }
         public Action ApplyUpgrade { get; set; }
         public bool IsSkipOption { get; set; } = false;
+        public bool IsAwakenOption { get; set; } = false;
     }
 
     public class LevelUpMenu

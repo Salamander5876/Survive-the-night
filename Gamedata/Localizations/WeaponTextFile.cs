@@ -15,6 +15,9 @@ namespace Survive_the_night.Gamedata.Localizations
         public abstract string ReloadSpeedUpgradeTitle { get; }
         public abstract string OtherUpgradeTitle { get; } // Для специфических улучшений
 
+        public virtual string AwakenName => "";
+        public virtual string AwakenDescription => "";
+
         // Форматированные строки (с параметрами)
         public virtual string GetCountUpgradeText(int currentLevel, int maxLevel) =>
             $"{CountUpgradeTitle} (Ур. {currentLevel}/{maxLevel})";

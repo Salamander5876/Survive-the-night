@@ -95,7 +95,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             // Отладочная информация
             if (SHOW_HITBOX)
             {
-                System.Diagnostics.Debug.WriteLine($"[BLADE] Created: {startAngle}° -> {endAngle}°, Clockwise: {isClockwise}, Hitbox: {_hitboxWidth}x{_hitboxLength}");
+                //System.Diagnostics.Debug.WriteLine($"[BLADE] Created: {startAngle}° -> {endAngle}°, Clockwise: {isClockwise}, Hitbox: {_hitboxWidth}x{_hitboxLength}");
             }
         }
 

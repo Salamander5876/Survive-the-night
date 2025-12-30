@@ -349,7 +349,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             // Проигрываем звук вылета монеты (один раз на мини-группу)
             WeaponManager.PlayWeaponSound(WeaponName.WealthArtifact, 0.3f);
 
-            System.Diagnostics.Debug.WriteLine($"Выстрелена мини-группа {miniGroupIndex + 1}/5 в группе {_groupsFired + 1}/{_totalGroupsToFire}");
+            //System.Diagnostics.Debug.WriteLine($"Выстрелена мини-группа {miniGroupIndex + 1}/5 в группе {_groupsFired + 1}/{_totalGroupsToFire}");
         }
 
         private Enemy FindClosestEnemyToPosition(Vector2 position)
@@ -448,7 +448,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         enemy.TakeDamage(money.Damage);
                         money.IsActive = false; // Монета уничтожается после попадания
 
-                        System.Diagnostics.Debug.WriteLine($"Монета попала! Урон: {money.Damage}");
+                        //System.Diagnostics.Debug.WriteLine($"Монета попала! Урон: {money.Damage}");
                         break; // Монета может попасть только в одного врага
                     }
                 }

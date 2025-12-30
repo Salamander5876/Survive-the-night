@@ -109,7 +109,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
                 }
                 catch (System.Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука огня: {ex.Message}");
+                    //System.Diagnostics.Debug.WriteLine($"Ошибка остановки звука огня: {ex.Message}");
                 }
                 finally
                 {

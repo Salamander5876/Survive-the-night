@@ -116,8 +116,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         {
             if (ActivePuddles.Count == 0 && CooldownTimer <= 0f)
             {
-                Debug.WriteLine("Beer Bottle attacking!");
-
                 // Воспроизводим звук броска через WeaponManager
                 WeaponManager.PlayWeaponSound(WeaponName.BeerBottle);
 

@@ -110,14 +110,14 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                 // Цикл 1: сперва вправо потом влево
                 // Первый взмах вправо (по часовой стрелке от -90° до 90°)
                 CreateBlade(-90f, 90f, true, SpriteEffects.None);
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Starting Cycle 1: Right first (-90° -> 90°)");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Starting Cycle 1: Right first (-90° -> 90°)");
             }
             else
             {
                 // Цикл 2: сперва влево потом вправо  
                 // Первый взмах влево (против часовой стрелки от -90° до 90°)
                 CreateBlade(-90f, 90f, false, SpriteEffects.FlipVertically);
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Starting Cycle 2: Left first (-90° -> 90°)");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Starting Cycle 2: Left first (-90° -> 90°)");
             }
 
             _currentState = AttackState.FirstSwing;
@@ -133,13 +133,13 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             {
                 // Цикл 1: второй взмах влево (против часовой стрелки от -90° до 90°)
                 CreateBlade(-90f, 90f, false, SpriteEffects.FlipVertically);
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle 1: Second swing Left (-90° -> 90°)");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle 1: Second swing Left (-90° -> 90°)");
             }
             else
             {
                 // Цикл 2: второй взмах вправо (по часовой стрелке от -90° до 90°)
                 CreateBlade(-90f, 90f, true, SpriteEffects.None);
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle 2: Second swing Right (-90° -> 90°)");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle 2: Second swing Right (-90° -> 90°)");
             }
 
             _currentState = AttackState.SecondSwing;
@@ -156,7 +156,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
             if (SHOW_DEBUG_INFO)
             {
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle complete. Cooldown started");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Cycle complete. Cooldown started");
             }
         }
 
@@ -179,7 +179,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             if (SHOW_DEBUG_INFO)
             {
                 string direction = isClockwise ? "Clockwise" : "Counter-Clockwise";
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Created blade: {startAngle}° -> {endAngle}°, {direction}, SpriteEffect={spriteEffect}");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Created blade: {startAngle}° -> {endAngle}°, {direction}, SpriteEffect={spriteEffect}");
             }
         }
 
@@ -209,7 +209,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
             if (SHOW_DEBUG_INFO && hits > 0)
             {
-                System.Diagnostics.Debug.WriteLine($"[BREAKER] Blade hit {hits} new enemies");
+                //System.Diagnostics.Debug.WriteLine($"[BREAKER] Blade hit {hits} new enemies");
             }
         }
 
