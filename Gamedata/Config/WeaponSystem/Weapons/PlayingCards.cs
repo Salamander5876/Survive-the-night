@@ -14,14 +14,14 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         public List<Projectile> ActiveProjectiles { get; private set; } = new List<Projectile>();
         public float ProjectileSpeed { get; private set; } = 300f;
 
-        private float _baseCooldown = 1.5f;
+        private float _baseCooldown = 1.7f;
         public float CurrentCooldown => _baseCooldown - ReloadSpeedLevel * 0.2f;
 
         public int CountLevel { get; private set; } = 0;
         public int DamageLevel { get; private set; } = 0;
         public int ReloadSpeedLevel { get; private set; } = 0;
 
-        private const float ShotIntervalSeconds = 0.1f;
+        private const float ShotIntervalSeconds = 0.2f;
         private float BurstCooldownSeconds => CurrentCooldown;
         private bool _isBurstActive = false;
         private int _shotsFiredInBurst = 0;
@@ -30,7 +30,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private Dictionary<Projectile, List<Enemy>> _hitEnemies = new Dictionary<Projectile, List<Enemy>>();
 
-        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 2)
+        public PlayingCards(Player player) : base(player, WeaponType.Regular, WeaponName.PlayingCards, 1.5f, 1)
         {
         }
 

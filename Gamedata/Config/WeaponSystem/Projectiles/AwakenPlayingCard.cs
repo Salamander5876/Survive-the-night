@@ -21,25 +21,27 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
         private const int TOTAL_CARDS_PER_BURST = GROUPS_COUNT * CARDS_PER_GROUP;
 
         // Тайминги
-        private const float LAYER_INTERVAL = 0.3f;
-        private const float BURST_COOLDOWN = 0.5f;
+        private const float LAYER_INTERVAL = 0.2f;
+        private const float BURST_COOLDOWN = 0.7f;
 
         // Состояние стрельбы
         private bool _isBurstActive = false;
         private int _currentLayer = 0;
         private float _nextLayerTimer = 0f;
-        private Vector2 _currentTargetDirection = Vector2.Zero;
+
+        // Храним текущего врага для прицеливания (динамически обновляется)
+        private Enemy _currentTarget = null;
 
         private static List<Texture2D> _awakenCardTextures;
 
         public AwakenPlayingCards(Player player)
-            : base(player, WeaponType.Regular, WeaponName.PlayingCards, BURST_COOLDOWN, 7)
+            : base(player, WeaponType.Regular, WeaponName.PlayingCards, BURST_COOLDOWN, 10)
         {
             CooldownTimer = 0f;
 
-            System.Diagnostics.Debug.WriteLine($"=== AWAKEN CARDS WITH PIERCE ===");
-            System.Diagnostics.Debug.WriteLine($"Pierce: 3 enemies (hits 3 different enemies then destroys)");
-            System.Diagnostics.Debug.WriteLine($"Damage per hit: {Damage}");
+            //System.Diagnostics.Debug.WriteLine($"=== AWAKEN CARDS WITH PIERCE ===");
+            //System.Diagnostics.Debug.WriteLine($"Pierce: 3 enemies (hits 3 different enemies then destroys)");
+            //System.Diagnostics.Debug.WriteLine($"Damage per hit: {Damage}");
         }
 
         public static void LoadAwakenTextures(Texture2D texture1, Texture2D texture2,
@@ -85,6 +87,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
 
             // Проверка коллизий
             CheckProjectileCollisions(Game1.CurrentEnemies);
+
+            // ПЕРЕД ВЫСТРЕЛОМ НОВОГО СЛОЯ ПРОВЕРЯЕМ, НЕ НУЖНО ЛИ СМЕНИТЬ ЦЕЛЬ
+            if (_isBurstActive && _nextLayerTimer <= 0.1f) // Проверяем за 0.1 секунды до выстрела
+            {
+                UpdateTargetIfNeeded();
+            }
         }
 
         private void UpdateShooting(GameTime gameTime)
@@ -121,29 +129,84 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
 
         private void StartNewBurst()
         {
-            Enemy target = FindClosestEnemy(Game1.CurrentEnemies);
-            if (target != null)
+            // Находим ближайшего врага для начала атаки
+            _currentTarget = FindClosestEnemy(Game1.CurrentEnemies);
+            if (_currentTarget != null)
             {
-                _currentTargetDirection = Vector2.Normalize(target.Position - Player.Position);
                 _isBurstActive = true;
                 _currentLayer = 0;
                 _nextLayerTimer = 0f;
             }
             else
             {
+                // Если врагов нет, делаем небольшую задержку
                 CooldownTimer = 0.2f;
+            }
+        }
+
+        // Обновляем цель, если текущая мертва или слишком далеко
+        private void UpdateTargetIfNeeded()
+        {
+            if (_currentTarget == null || !_currentTarget.IsAlive)
+            {
+                // Ищем нового ближайшего врага
+                _currentTarget = FindClosestEnemy(Game1.CurrentEnemies);
+                return;
+            }
+
+            // Также проверяем, не стал ли другой враг ближе
+            Enemy closerEnemy = FindClosestEnemy(Game1.CurrentEnemies);
+            if (closerEnemy != null && closerEnemy != _currentTarget)
+            {
+                float currentDistance = Vector2.Distance(Player.Position, _currentTarget.Position);
+                float newDistance = Vector2.Distance(Player.Position, closerEnemy.Position);
+
+                // Если новый враг значительно ближе (например, на 30% ближе), переключаемся на него
+                if (newDistance < currentDistance * 0.7f)
+                {
+                    _currentTarget = closerEnemy;
+                }
             }
         }
 
         private void ShootLayer()
         {
+            // Проверяем, что цель еще жива
+            if (_currentTarget == null || !_currentTarget.IsAlive)
+            {
+                // Если цель мертва, пытаемся найти новую перед выстрелом
+                _currentTarget = FindClosestEnemy(Game1.CurrentEnemies);
+
+                // Если врагов нет, все равно стреляем в последнем направлении
+                // или отменяем оставшиеся выстрелы
+                if (_currentTarget == null)
+                {
+                    // Можно отменить оставшиеся выстрелы или стрелять в последнем направлении
+                    // Для простоты отменим оставшиеся выстрелы
+                    if (_currentTarget == null && _currentLayer > 0)
+                    {
+                        _isBurstActive = false;
+                        CooldownTimer = CooldownTime;
+                        return;
+                    }
+                }
+            }
+
+            // Рассчитываем направление к текущей цели
+            Vector2 targetDirection = _currentTarget != null
+                ? Vector2.Normalize(_currentTarget.Position - Player.Position)
+                : Vector2.UnitX; // Направление по умолчанию, если цели нет
+
             for (int group = 0; group < GROUPS_COUNT; group++)
             {
                 float groupAngleDegrees = _groupAnglesDegrees[group];
                 float adjustedAngle = groupAngleDegrees - (FAN_TOTAL_ANGLE / 2);
                 float angleRadians = MathHelper.ToRadians(adjustedAngle);
 
-                Vector2 groupDirection = RotateVector(_currentTargetDirection, angleRadians);
+                // Центральная группа всегда следует за целью
+                // Крайние группы создают веер относительно центральной
+                Vector2 groupDirection = RotateVector(targetDirection, angleRadians);
+
                 float cardSpread = MathHelper.ToRadians((float)Game1.Random.NextDouble() * 3f - 1.5f);
                 Vector2 cardDirection = RotateVector(groupDirection, cardSpread);
 
@@ -153,7 +216,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
                     0,
                     Color.White,
                     Damage,
-                    300f,
+                    500f,
                     cardDirection,
                     3, // ПРОБИТИЕ 3 ВРАГОВ
                     GetRandomAwakenTexture()
@@ -213,6 +276,30 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
                 vector.X * cos - vector.Y * sin,
                 vector.X * sin + vector.Y * cos
             );
+        }
+
+        // Вспомогательный метод для поиска ближайшего врага
+        private Enemy FindClosestEnemy(List<Enemy> enemies)
+        {
+            if (enemies == null || enemies.Count == 0)
+                return null;
+
+            Enemy closest = null;
+            float closestDistance = float.MaxValue;
+
+            foreach (var enemy in enemies)
+            {
+                if (!enemy.IsAlive) continue;
+
+                float distance = Vector2.Distance(Player.Position, enemy.Position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = enemy;
+                }
+            }
+
+            return closest;
         }
 
         public override void Attack(GameTime gameTime, List<Enemy> enemies)

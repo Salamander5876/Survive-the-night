@@ -88,7 +88,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 if (option.IsAwakenOption)
                 {
                     textPos.Y += 30;
-                    spriteBatch.DrawString(_font, "лецю-сксвьемхе", textPos, Color.Gold);
+                    //spriteBatch.DrawString(_font, "лецю-сксвьемхе", textPos, Color.Gold);
                 }
             }
         }
