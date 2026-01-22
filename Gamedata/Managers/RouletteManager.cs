@@ -56,7 +56,7 @@ namespace Survive_the_night.Gamedata.Managers
             CurrentOptions.Clear();
             List<UpgradeOption> pool = new List<UpgradeOption>();
 
-            // --- ДОБАВЛЯЕМ ПРОБУЖДЕНИЯ ---
+            // --- ДОБАВЛЯЕМ ПРОБУЖДЕНИЯ С 10% ШАНСОМ ---
             List<WeaponName> readyForAwaken = AwakenManager.GetReadyWeapons(_weapons);
             foreach (var weaponName in readyForAwaken)
             {
@@ -85,19 +85,55 @@ namespace Survive_the_night.Gamedata.Managers
                 AddLegendaryWeaponsToPool(pool, false);
             }
 
-            // --- ГАРАНТИРУЕМ 3 ВАРИАНТА ---
-            if (pool.Count < 3)
+            // --- ГАРАНТИРУЕМ 3 ВАРИАНТА С ПРИОРИТЕТОМ ---
+            // 1. Сначала легендарные оружия
+            // 2. Затем пробуждения
+            // 3. В конце пропуски
+
+            int optionsNeeded = 3 - pool.Count;
+
+            // Если не хватает опций, сначала добавляем легендарные оружия
+            if (optionsNeeded > 0)
             {
                 AddMissingLegendaryWeapons(pool);
+                optionsNeeded = 3 - pool.Count;
             }
 
+            // Если все еще не хватает, добавляем пробуждения
+            if (optionsNeeded > 0)
+            {
+                // Создаем список готовых к пробуждению оружий
+                List<WeaponName> readyWeaponsForGuarantee = AwakenManager.GetReadyWeapons(_weapons);
+
+                foreach (var weaponName in readyWeaponsForGuarantee)
+                {
+                    if (optionsNeeded <= 0) break;
+
+                    // Проверяем, нет ли уже этого пробуждения в пуле
+                    bool alreadyInPool = pool.Any(o =>
+                        o.IsAwakenOption && GetWeaponNameFromAwakenTitle(o.Title) == weaponName);
+
+                    if (!alreadyInPool)
+                    {
+                        var awakenWeapon = AwakenManager.CreateAwakenWeapon(weaponName, _player);
+                        if (awakenWeapon != null)
+                        {
+                            pool.Add(CreateAwakenOption(weaponName, awakenWeapon));
+                            optionsNeeded--;
+                        }
+                    }
+                }
+            }
+
+            // Если все еще не хватает, добавляем пропуски
             while (pool.Count < 3)
             {
                 pool.Add(new UpgradeOption
                 {
                     Title = "Пропустить выбор",
                     Description = "Продолжить без получения нового оружия. Удача улыбнется в следующий раз!",
-                    ApplyUpgrade = () => { /* Ничего не делаем - пустышка */ }
+                    ApplyUpgrade = () => { /* Ничего не делаем - пустышка */ },
+                    IsSkipOption = true
                 });
             }
 
@@ -216,6 +252,25 @@ namespace Survive_the_night.Gamedata.Managers
                 Description = LocalizationManager.GetWeaponRouletteDescription(weaponName),
                 ApplyUpgrade = () => _weapons.Add(weapon)
             };
+        }
+
+        // Вспомогательный метод для получения WeaponName из заголовка пробуждения
+        private WeaponName GetWeaponNameFromAwakenTitle(string title)
+        {
+            // Проходим по всем оружиям и ищем совпадение
+            foreach (WeaponName weaponName in Enum.GetValues(typeof(WeaponName)))
+            {
+                var weaponText = LocalizationManager.GetWeaponText(weaponName);
+                string awakenTitle = $"{weaponText.Name} [ПРОБУЖДЕНИЕ]";
+
+                if (title == awakenTitle)
+                {
+                    return weaponName;
+                }
+            }
+
+            // Если не нашли, возвращаем первое оружие (заглушка)
+            return WeaponName.PlayingCards;
         }
 
         // Вспомогательный метод для получения WeaponName из заголовка
