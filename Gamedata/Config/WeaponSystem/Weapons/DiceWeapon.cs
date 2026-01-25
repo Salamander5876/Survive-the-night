@@ -18,9 +18,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         public int PierceBonusLevel { get; private set; } = 0;
         public int CooldownLevel { get; private set; } = 0;
 
-        // начальная перезарядка 5.1 сек, улучшение -1 сек
-        private float _baseCooldown = 5.1f;
-        public float CurrentCooldown => Math.Max(0.1f, _baseCooldown - CooldownLevel * 1.0f); // Минимум 0.1 сек
+
+        private float _baseCooldown = 3.0f;
+        public float CurrentCooldown => Math.Max(0.1f, _baseCooldown - CooldownLevel * 0.5f); // Минимум 0.5 сек
 
         private float _cooldownTimer = 0f;
         private float _spawnTimer = 0f;
@@ -38,7 +38,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 
         private WeaponState _currentState = WeaponState.Ready;
 
-        private Dictionary<DiceProjectile, List<Enemy>> _hitEnemies = new Dictionary<DiceProjectile, List<Enemy>>();
+        // ИЗМЕНЕНИЕ: вместо отслеживания всех пораженных врагов, 
+        // отслеживаем врагов, которые СЕЙЧАС находятся в коллизии
+        private Dictionary<DiceProjectile, HashSet<Enemy>> _currentlyCollidingEnemies = new Dictionary<DiceProjectile, HashSet<Enemy>>();
 
         public DiceWeapon(Player player) : base(player, WeaponType.Regular, WeaponName.Dice, 0f, 1)
         {
@@ -79,6 +81,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                     _currentDiceValue = 0;
                     _spawnTimer = 0f;
                     _currentOrbitDirection = !_currentOrbitDirection;
+
+                    // Очищаем словарь коллизий при старте нового цикла
+                    _currentlyCollidingEnemies.Clear();
                     break;
 
                 case WeaponState.Spawning:
@@ -98,6 +103,11 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                             foreach (var dice in ActiveDice)
                             {
                                 dice.StartOrbiting();
+                                // Инициализируем множество для отслеживания коллизий
+                                if (!_currentlyCollidingEnemies.ContainsKey(dice))
+                                {
+                                    _currentlyCollidingEnemies[dice] = new HashSet<Enemy>();
+                                }
                             }
                         }
                     }
@@ -116,9 +126,10 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         }
                         else
                         {
-                            if (_hitEnemies.ContainsKey(dice))
+                            // Удаляем кубик из словаря коллизий при уничтожении
+                            if (_currentlyCollidingEnemies.ContainsKey(dice))
                             {
-                                _hitEnemies.Remove(dice);
+                                _currentlyCollidingEnemies.Remove(dice);
                             }
                             ActiveDice.RemoveAt(i);
                         }
@@ -191,7 +202,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             );
 
             ActiveDice.Add(dice);
-            _hitEnemies[dice] = new List<Enemy>();
+            // Инициализируем множество для этого кубика
+            _currentlyCollidingEnemies[dice] = new HashSet<Enemy>();
         }
 
         // НОВЫЙ МЕТОД: расчет базового урона для кости
@@ -199,42 +211,59 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         {
             switch (diceValue)
             {
-                case 1: return 2; // УВЕЛИЧЕНО с 1 до 2
-                case 2: return 4; // УВЕЛИЧЕНО с 2 до 4
-                case 3: return 6; // УВЕЛИЧЕНО с 3 до 6
-                case 4: return 8; // УВЕЛИЧЕНО с 4 до 8
-                case 5: return 10; // УВЕЛИЧЕНО с 5 до 10
-                case 6: return 12; // УВЕЛИЧЕНО с 6 до 12
+                case 1: return 1;
+                case 2: return 1;
+                case 3: return 3;
+                case 4: return 4;
+                case 5: return 5;
+                case 6: return 6;
                 default: return 1;
             }
         }
 
         private void CheckCollisions(List<Enemy> enemies)
         {
-            for (int i = ActiveDice.Count - 1; i >= 0; i--)
+            if (enemies == null || enemies.Count == 0) return;
+
+            foreach (var dice in ActiveDice)
             {
-                var dice = ActiveDice[i];
                 if (!dice.IsActive) continue;
 
-                List<Enemy> alreadyHit = _hitEnemies.ContainsKey(dice) ? _hitEnemies[dice] : new List<Enemy>();
+                // 1. Определяем врагов, которые СЕЙЧАС находятся в коллизии
+                var currentCollisions = new HashSet<Enemy>();
 
-                for (int j = enemies.Count - 1; j >= 0; j--)
+                foreach (var enemy in enemies)
                 {
-                    var enemy = enemies[j];
                     if (!enemy.IsAlive) continue;
 
-                    if (alreadyHit.Contains(enemy)) continue;
-
+                    // Проверяем коллизию
                     if (dice.GetBounds().Intersects(enemy.GetBounds()))
                     {
+                        currentCollisions.Add(enemy);
+                    }
+                }
+
+                // 2. Получаем врагов, которые были в коллизии в прошлом кадре
+                var previousCollisions = _currentlyCollidingEnemies.ContainsKey(dice)
+                    ? _currentlyCollidingEnemies[dice]
+                    : new HashSet<Enemy>();
+
+                // 3. Определяем врагов, которые только что вошли в коллизию (новые коллизии)
+                var newCollisions = new HashSet<Enemy>(currentCollisions);
+                newCollisions.ExceptWith(previousCollisions);
+
+                // 4. Наносим урон только тем врагам, которые только что вошли в коллизию
+                foreach (var enemy in newCollisions)
+                {
+                    if (dice.HitsLeft > 0)
+                    {
                         enemy.TakeDamage(dice.Damage);
-
-                        alreadyHit.Add(enemy);
-                        _hitEnemies[dice] = alreadyHit;
-
-                        dice.HitsLeft--;
                         dice.OnHitEnemy();
+                        dice.HitsLeft--;
 
+                        System.Diagnostics.Debug.WriteLine($"Dice {dice.DiceValue} hit enemy for {dice.Damage} damage. Hits left: {dice.HitsLeft}");
+
+                        // Если пробития закончились, деактивируем кубик
                         if (dice.HitsLeft <= 0)
                         {
                             dice.IsActive = false;
@@ -242,6 +271,24 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                         }
                     }
                 }
+
+                // 5. Обновляем множество коллизий для следующего кадра
+                _currentlyCollidingEnemies[dice] = currentCollisions;
+            }
+
+            // 6. Очищаем словарь от деактивированных кубиков
+            var keysToRemove = new List<DiceProjectile>();
+            foreach (var kvp in _currentlyCollidingEnemies)
+            {
+                if (!kvp.Key.IsActive || !ActiveDice.Contains(kvp.Key))
+                {
+                    keysToRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var key in keysToRemove)
+            {
+                _currentlyCollidingEnemies.Remove(key);
             }
         }
 

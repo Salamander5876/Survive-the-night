@@ -35,7 +35,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Awaken
         private static List<Texture2D> _awakenCardTextures;
 
         public AwakenPlayingCards(Player player)
-            : base(player, WeaponType.Regular, WeaponName.PlayingCards, BURST_COOLDOWN, 10)
+            : base(player, WeaponType.Regular, WeaponName.PlayingCards, BURST_COOLDOWN, 6)
         {
             CooldownTimer = 0f;
 

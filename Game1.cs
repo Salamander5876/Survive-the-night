@@ -311,6 +311,24 @@ namespace Survive_the_night
             // Устанавливаем текстуры для DiceProjectile
             DiceProjectile.SetTextures(diceTexture1, diceTexture2, diceTexture3, diceTexture4, diceTexture5, diceTexture6);
 
+            var megaDiceTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice1");
+            var megaDiceTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice2");
+            var megaDiceTexture3 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice3");
+            var megaDiceTexture4 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice4");
+            var megaDiceTexture5 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice5");
+            var megaDiceTexture6 = Content.Load<Texture2D>("Sprites/Projectiles/MegaDice6");
+
+            // Загружаем текстуры в AwakenDiceProjectile
+            AwakenDiceProjectile.LoadRegularTextures(
+                diceTexture1, diceTexture2, diceTexture3,
+                diceTexture4, diceTexture5, diceTexture6
+            );
+
+            AwakenDiceProjectile.LoadMegaTextures(
+                megaDiceTexture1, megaDiceTexture2, megaDiceTexture3,
+                megaDiceTexture4, megaDiceTexture5, megaDiceTexture6
+            );
+
             // Рулетка
             var rouletteBallTexture = Content.Load<Texture2D>("Sprites/Projectiles/RouletteBall");
             WeaponManager.LoadWeaponTextures(WeaponName.RouletteBall, rouletteBallTexture);
@@ -393,8 +411,40 @@ namespace Survive_the_night
         private void InitializePlayerWeapon()
         {
             _weapons.Clear();
-            var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
-            _weapons.Add(selectedWeapon);
+
+            // Проверяем, нужно ли создавать пробужденную версию
+            if (_startMenu.IsTestAwakenMode)
+            {
+                // Создаем пробужденную версию для поддерживаемых оружий
+                switch (_selectedStartingWeapon)
+                {
+                    case WeaponName.PlayingCards:
+                        var awakenCards = new AwakenPlayingCards(_player);
+                        _weapons.Add(awakenCards);
+                        System.Diagnostics.Debug.WriteLine($"Создано пробужденное оружие: {awakenCards.GetType().Name}");
+                        break;
+
+                    case WeaponName.Dice:
+                        var awakenDice = new AwakenDiceWeapon(_player);
+                        _weapons.Add(awakenDice);
+                        System.Diagnostics.Debug.WriteLine($"Создано пробужденное оружие: {awakenDice.GetType().Name}");
+                        break;
+
+                    default:
+                        // Для других оружий создаем обычную версию
+                        var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
+                        _weapons.Add(selectedWeapon);
+                        System.Diagnostics.Debug.WriteLine($"Создано обычное оружие: {selectedWeapon.Name}");
+                        break;
+                }
+            }
+            else
+            {
+                // Обычный режим - создаем обычное оружие
+                var selectedWeapon = WeaponManager.CreateWeapon(_selectedStartingWeapon, _player);
+                _weapons.Add(selectedWeapon);
+                System.Diagnostics.Debug.WriteLine($"Создано обычное оружие: {selectedWeapon.Name}");
+            }
         }
 
         protected override void Update(GameTime gameTime)
@@ -500,6 +550,7 @@ namespace Survive_the_night
                     if (newState == GameState.Loading)
                     {
                         _selectedStartingWeapon = _startMenu.SelectedWeapon;
+                        // Тестовый режим уже доступен через _startMenu.IsTestAwakenMode
                     }
                     Game1.CurrentState = newState;
                     break;
@@ -1183,6 +1234,27 @@ namespace Survive_the_night
                 if (weapon is DiceWeapon diceWeapon)
                 {
                     foreach (var dice in diceWeapon.ActiveDice)
+                    {
+                        if (dice.IsActive)
+                        {
+                            dice.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+                }
+
+                if (weapon is AwakenDiceWeapon awakenDice)
+                {
+                    // Отрисовываем кубики первого круга
+                    foreach (var dice in awakenDice.ActiveDiceCircle1)
+                    {
+                        if (dice.IsActive)
+                        {
+                            dice.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
+
+                    // Отрисовываем кубики второго круга
+                    foreach (var dice in awakenDice.ActiveDiceCircle2)
                     {
                         if (dice.IsActive)
                         {

@@ -11,7 +11,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         // Список оружий, у которых ЕСТЬ пробуждение
         private static readonly HashSet<WeaponName> _weaponsWithAwaken = new()
         {
-            WeaponName.PlayingCards
+            WeaponName.PlayingCards,
+            WeaponName.Dice
             // Добавлять другие оружия по мере реализации
         };
 
@@ -31,9 +32,21 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             {
                 case WeaponName.PlayingCards:
                     return IsPlayingCardsReady(weapon as PlayingCards);
+                case WeaponName.Dice:
+                    return IsDiceWeaponReady(weapon as DiceWeapon);
                 default:
                     return false;
             }
+        }
+
+        private static bool IsDiceWeaponReady(Weapon weapon)
+        {
+            if (weapon is not DiceWeapon dice) return false;
+
+            // Все 3 ветки должны быть максимально прокачаны
+            return dice.DamageBonusLevel >= 5 &&
+                   dice.PierceBonusLevel >= 5 &&
+                   dice.CooldownLevel >= 5;
         }
 
         // Проверка для Игральных карт
@@ -53,6 +66,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             return weaponName switch
             {
                 WeaponName.PlayingCards => new Awaken.AwakenPlayingCards(player),
+                WeaponName.Dice => new Awaken.AwakenDiceWeapon(player),
                 _ => null
             };
         }

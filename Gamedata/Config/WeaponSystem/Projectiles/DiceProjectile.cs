@@ -10,6 +10,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
     {
         public int DiceValue { get; private set; }
         public Player Player { get; private set; }
+        public Player GetPlayer() => Player;
         public float OrbitRadius { get; private set; } = 100f;
         public float OrbitAngle { get; private set; }
         public bool OrbitClockwise { get; private set; }
@@ -127,7 +128,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
         public void OnHitEnemy()
         {
-            _hitSound?.Play();
+            // ѕроигрываем звук попадани€, если есть
+            WeaponManager.PlayWeaponSound(WeaponName.Dice, 0.5f);
         }
     }
 }

@@ -10,6 +10,11 @@ namespace Survive_the_night.Localizations.RU.Weapons
         public override string RouletteTitle => "Игральные кости";
         public override string RouletteDescription => "Кости, вращающиеся вокруг игрока и имеют разное количество пробития и урона";
         public override string CountUpgradeTitle => "";
+
+        public override string AwakenName => "Пробужденные Игральные Кости";
+        public override string AwakenDescription => "Два круга костей вращаются вокруг игрока в противоположных направлениях.\n" +
+                                                    "Второй круг обладает улучшенными характеристиками.";
+
         public override string DamageUpgradeTitle => "Дополнительный урон +1";
         public override string ReloadSpeedUpgradeTitle => "Перезарядка -1с";
         public override string OtherUpgradeTitle => "Дополнительное пробитие +1";
