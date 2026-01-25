@@ -67,6 +67,7 @@ namespace Survive_the_night.Gamedata.Managers
                     if (awakenWeapon != null)
                     {
                         pool.Add(CreateAwakenOption(weaponName, awakenWeapon));
+                        System.Diagnostics.Debug.WriteLine($"Added awaken option for {weaponName}");
                     }
                 }
             }
@@ -87,7 +88,7 @@ namespace Survive_the_night.Gamedata.Managers
 
             // --- ГАРАНТИРУЕМ 3 ВАРИАНТА С ПРИОРИТЕТОМ ---
             // 1. Сначала легендарные оружия
-            // 2. Затем пробуждения
+            // 2. Затем пробуждения (с повышенным шансом если нужно заполнить слоты)
             // 3. В конце пропуски
 
             int optionsNeeded = 3 - pool.Count;
@@ -99,7 +100,7 @@ namespace Survive_the_night.Gamedata.Managers
                 optionsNeeded = 3 - pool.Count;
             }
 
-            // Если все еще не хватает, добавляем пробуждения
+            // Если все еще не хватает, добавляем пробуждения с повышенным шансом
             if (optionsNeeded > 0)
             {
                 // Создаем список готовых к пробуждению оружий
@@ -120,6 +121,7 @@ namespace Survive_the_night.Gamedata.Managers
                         {
                             pool.Add(CreateAwakenOption(weaponName, awakenWeapon));
                             optionsNeeded--;
+                            System.Diagnostics.Debug.WriteLine($"Added guaranteed awaken option for {weaponName}");
                         }
                     }
                 }
@@ -157,6 +159,13 @@ namespace Survive_the_night.Gamedata.Managers
                     CurrentOptions.Add(pool[index]);
                 }
             }
+
+            // Отладка
+            System.Diagnostics.Debug.WriteLine($"Generated roulette options: {CurrentOptions.Count}");
+            foreach (var option in CurrentOptions)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - {option.Title} (Awaken: {option.IsAwakenOption})");
+            }
         }
 
         private UpgradeOption CreateAwakenOption(WeaponName weaponName, Weapon awakenWeapon)
@@ -167,7 +176,7 @@ namespace Survive_the_night.Gamedata.Managers
             return new UpgradeOption
             {
                 Title = $"{weaponText.Name} [ПРОБУЖДЕНИЕ]",
-                Description = weaponText.AwakenDescription, // Новое свойство в WeaponTextFile
+                Description = weaponText.AwakenDescription ?? "Мощная пробужденная версия оружия с улучшенными характеристиками.",
                 ApplyUpgrade = () =>
                 {
                     System.Diagnostics.Debug.WriteLine($"Applying awaken for {weaponName}");
@@ -182,7 +191,7 @@ namespace Survive_the_night.Gamedata.Managers
                     _weapons.Add(awakenWeapon);
                     System.Diagnostics.Debug.WriteLine($"Added awaken weapon: {awakenWeapon.Name}, Type: {awakenWeapon.GetType()}");
                 },
-                IsAwakenOption = true // Новый флаг
+                IsAwakenOption = true
             };
         }
 
@@ -352,7 +361,10 @@ namespace Survive_the_night.Gamedata.Managers
 
         public void ApplyChoice(int index)
         {
-            CurrentOptions[index].ApplyUpgrade.Invoke();
+            if (index >= 0 && index < CurrentOptions.Count)
+            {
+                CurrentOptions[index].ApplyUpgrade.Invoke();
+            }
             IsVisible = false;
             // Явно указываем полное пространство имен для GameState
             Game1.CurrentState = GameState.Playing;

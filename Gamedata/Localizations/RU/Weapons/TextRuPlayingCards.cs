@@ -12,7 +12,6 @@ namespace Survive_the_night.Localizations.RU.Weapons
         public override string RouletteTitle => "Игральные карты";
         public override string RouletteDescription => "Оружие, которое может пробивать несколько врагов.";
 
-        // ДОБАВИТЬ:
         public override string AwakenName => "Пробужденные Карты";
         public override string AwakenDescription => "Карты вылетают веером на 45 градусов, 3 группы по 6 карт каждая.\n" +
                                                     "Размер карт увеличен в 2 раза, а также улучшены характеристики";

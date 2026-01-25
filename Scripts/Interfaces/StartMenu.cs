@@ -2,15 +2,21 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Survive_the_night.Gamedata.Config.WeaponSystem;
+using Survive_the_night.Gamedata.Config.WeaponSystem.Awaken;
 using Survive_the_night.Gamedata.Config.WeaponSystem.Weapons;
 using Survive_the_night.Localizations;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Survive_the_night.Scripts.Interfaces
 {
     public class StartMenu
     {
+        private bool _testAwakenMode = false;
+        public bool IsTestAwakenMode => _testAwakenMode;
+        private KeyboardState _previousKeyboardState;
+
         private GraphicsDevice _graphicsDevice;
         private Texture2D _debugTexture;
         private SpriteFont _font;
@@ -96,6 +102,7 @@ namespace Survive_the_night.Scripts.Interfaces
             _debugTexture = debugTexture;
             _font = font;
             _previousMouseState = Mouse.GetState();
+            _previousKeyboardState = Keyboard.GetState(); // Инициализируем
             _currentMouseState = Mouse.GetState();
             _weaponSprites = new Dictionary<WeaponName, Texture2D>();
 
@@ -467,6 +474,14 @@ namespace Survive_the_night.Scripts.Interfaces
         {
             _currentMouseState = Mouse.GetState();
 
+            // Проверяем нажатие T для переключения тестового режима
+            KeyboardState ks = Keyboard.GetState();
+            if (ks.IsKeyDown(Keys.T) && !_previousKeyboardState.IsKeyDown(Keys.T))
+            {
+                _testAwakenMode = !_testAwakenMode;
+                System.Diagnostics.Debug.WriteLine($"Тестовый режим пробуждений: {_testAwakenMode}");
+            }
+
             // Обработка прокрутки колесиком мыши для описания оружия
             if (_descriptionRect.Contains(_currentMouseState.Position))
             {
@@ -582,6 +597,7 @@ namespace Survive_the_night.Scripts.Interfaces
             }
 
             _previousMouseState = _currentMouseState;
+            _previousKeyboardState = ks; // Не забудь сохранить состояние клавиатуры
             return GameState.StartMenu;
         }
 
