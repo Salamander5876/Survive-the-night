@@ -344,6 +344,11 @@ namespace Survive_the_night
             _bottleTexture = beerBottleTexture;
             _puddleTexture = beerPuddleTexture;
 
+            // Банкноты
+            var banknoteTexture = Content.Load<Texture2D>("Sprites/Projectiles/Banknote");
+            WeaponManager.LoadWeaponTextures(WeaponName.Banknote, banknoteTexture);
+            BanknoteProjectile.SetDefaultTexture(banknoteTexture);
+
             // Разрушитель
             var breakerTexture = Content.Load<Texture2D>("Sprites/Projectiles/BreakerBlade");
             WeaponManager.LoadWeaponTextures(WeaponName.Breaker, breakerTexture);
@@ -1351,6 +1356,18 @@ namespace Survive_the_night
                     wealthArtifact.DrawMoney(_spriteBatch, _debugTexture);
                     // Потом артефакты (они сверху)
                     wealthArtifact.DrawArtifacts(_spriteBatch, _debugTexture);
+                }
+
+                // Отрисовка Банкнот
+                if (weapon is BanknoteWeapon banknoteWeapon)
+                {
+                    foreach (var banknote in banknoteWeapon.ActiveProjectiles)
+                    {
+                        if (banknote.IsActive)
+                        {
+                            banknote.Draw(_spriteBatch, _debugTexture);
+                        }
+                    }
                 }
             }
         }

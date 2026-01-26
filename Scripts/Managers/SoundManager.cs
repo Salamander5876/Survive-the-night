@@ -56,6 +56,7 @@ namespace Survive_the_night.Scripts.Managers
                 LoadSoundEffect(content, "Sounds/Weapons/SFXTyphoon", "typhoon");
                 LoadSoundEffect(content, "Sounds/Weapons/SFXGoldenArtifact", "golden_artifact");
                 LoadSoundEffect(content, "Sounds/Weapons/SFXGoldenArtifactMoney", "golden_artifact_money");
+                LoadSoundEffect(content, "Sounds/Weapons/SFXBanknote", "banknote_throw");
 
                 // Звуки предметов
                 LoadSoundEffect(content, "Sounds/Items/SFXDynamiteExplosion", "dynamite_explosion");

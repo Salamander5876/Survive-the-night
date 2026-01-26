@@ -33,7 +33,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
         BeerBottle,
         Breaker,
         Typhoon,
-        WealthArtifact
+        WealthArtifact,
+        Banknote
     }
 
     public abstract class Weapon
@@ -112,7 +113,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
             WeaponName.Dice,
             WeaponName.RouletteBall,
             WeaponName.BeerBottle,
-            WeaponName.Typhoon
+            WeaponName.Typhoon,
+            WeaponName.Banknote
         };
 
         public static List<WeaponName> LegendaryWeapons { get; private set; } = new List<WeaponName>
@@ -217,6 +219,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                 case WeaponName.Breaker: return "breaker_swing";
                 case WeaponName.Typhoon: return "typhoon";
                 case WeaponName.WealthArtifact: return "golden_artifact_money";
+                case WeaponName.Banknote: return "banknote_throw";
                 default: return "card_deal";
             }
         }
@@ -270,6 +273,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem
                     return new Typhoon(player);
                 case WeaponName.WealthArtifact:
                     return new WealthArtifactWeapon(player);
+                case WeaponName.Banknote:
+                    return new BanknoteWeapon(player);
                 default:
                     return new PlayingCards(player);
             }

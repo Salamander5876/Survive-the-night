@@ -44,7 +44,8 @@ namespace Survive_the_night.Localizations
                 { WeaponName.BeerBottle, new TextRuBeerBottle() },
                 { WeaponName.Breaker, new TextRuBreaker() },
                 { WeaponName.Typhoon, new TextRuTyphoon() },
-                { WeaponName.WealthArtifact, new TextRuWealthArtifact() }
+                { WeaponName.WealthArtifact, new TextRuWealthArtifact() },
+                { WeaponName.Banknote, new TextRuBanknote() }
             };
 
             // TODO: ƒобавить инициализацию дл€ английского €зыка

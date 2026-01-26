@@ -297,6 +297,36 @@ namespace Survive_the_night.Gamedata.Managers
                         });
                     }
                 }
+                else if (weapon is BanknoteWeapon banknote)
+                {
+                    if (banknote.DamageLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{weaponText.Name}: {weaponText.GetDamageUpgradeText(banknote.DamageLevel + 1, 5)}",
+                            Description = $"Текущий урон: {banknote.Damage}",
+                            ApplyUpgrade = () => banknote.UpgradeDamage()
+                        });
+                    }
+                    if (banknote.ReloadSpeedLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{weaponText.Name}: {weaponText.GetReloadSpeedUpgradeText(banknote.ReloadSpeedLevel + 1, 5)}",
+                            Description = $"Текущая перезарядка: {banknote.CurrentCooldown:0.0}с",
+                            ApplyUpgrade = () => banknote.UpgradeReloadSpeed()
+                        });
+                    }
+                    if (banknote.SpeedLevel < 5)
+                    {
+                        pool.Add(new UpgradeOption
+                        {
+                            Title = $"{weaponText.Name}: {weaponText.OtherUpgradeTitle} (Ур. {banknote.SpeedLevel + 1}/5)",
+                            Description = $"Текущая скорость: {banknote.ProjectileSpeed:0}",
+                            ApplyUpgrade = () => banknote.UpgradeSpeed()
+                        });
+                    }
+                }
 
                 // ЛЕГЕНДАРНЫЕ ОРУЖИЯ
                 else if (weapon is GoldenSword gs)

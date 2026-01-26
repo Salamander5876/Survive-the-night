@@ -117,6 +117,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 WeaponName.RouletteBall,
                 WeaponName.BeerBottle,
                 WeaponName.Typhoon,
+                WeaponName.Banknote,
 
                 WeaponName.BigLaser,
                 WeaponName.MolotovCocktail,
@@ -210,6 +211,7 @@ namespace Survive_the_night.Scripts.Interfaces
                 _weaponSprites[WeaponName.RouletteBall] = content.Load<Texture2D>("Sprites/GUI/WeaponRoulette");
                 _weaponSprites[WeaponName.BeerBottle] = content.Load<Texture2D>("Sprites/GUI/WeaponBottleBeer");
                 _weaponSprites[WeaponName.Typhoon] = content.Load<Texture2D>("Sprites/GUI/WeaponTyphoon");
+                _weaponSprites[WeaponName.Banknote] = content.Load<Texture2D>("Sprites/GUI/WeaponBanknote");
             }
             catch (Exception ex)
             {

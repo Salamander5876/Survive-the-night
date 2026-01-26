@@ -188,6 +188,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites\GUI\WeaponTyphoon.png
 
+#begin Sprites\GUI\WeaponBanknote.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites\GUI\WeaponBanknote.png
+
 
 
 
@@ -988,6 +1000,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/Projectiles/Money5.png
 
+#begin Sprites/Projectiles/Banknote.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=False
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Projectiles/Banknote.png
+
 
 
 
@@ -1230,6 +1254,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/Weapons/SFXGoldenArtifactMoney.mp3
+
+#begin Sounds/Weapons/SFXBanknote.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Weapons/SFXBanknote.mp3
 
 
 
