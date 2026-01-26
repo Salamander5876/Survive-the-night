@@ -19,20 +19,31 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         public List<FireArea> ActiveFires { get; private set; } = new List<FireArea>();
 
         private static Texture2D _bottleTexture;
-        private static Texture2D _fireTexture;
+        private static List<Texture2D> _fireTextures = new List<Texture2D>(); // Изменено на список текстур
 
         public int CountLevel { get; private set; } = 0;
         public int DurationLevel { get; private set; } = 0;
-        public int DamageLevel { get; private set; } = 0; // НОВОЕ: уровень урона вместо скорости атаки
+        public int DamageLevel { get; private set; } = 0;
 
-        public MolotovCocktail(Player player) : base(player, WeaponType.Legendary, WeaponName.MolotovCocktail, 5.0f, 1) // УРОН УМЕНЬШЕН с 2 до 1
+        public MolotovCocktail(Player player) : base(player, WeaponType.Legendary, WeaponName.MolotovCocktail, 5.0f, 1)
         {
         }
 
-        public static void SetTextures(Texture2D bottleTexture, Texture2D fireTexture)
+        // Обновленный метод для установки текстур анимации
+        public static void SetTextures(Texture2D bottleTexture, params Texture2D[] fireTextures)
         {
             _bottleTexture = bottleTexture;
-            _fireTexture = fireTexture;
+            _fireTextures.Clear();
+            _fireTextures.AddRange(fireTextures);
+        }
+
+        // Метод для настройки скорости анимации всех активных огней
+        public void SetFireAnimationSpeed(float frameTime)
+        {
+            foreach (var fire in ActiveFires)
+            {
+                fire.SetAnimationSpeed(frameTime);
+            }
         }
 
         public override void LevelUp()
@@ -77,12 +88,16 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                 {
                     var fireArea = new FireArea(
                         bottle.Position,
-                        (int)(_fireTexture.Width * 1.5f),
+                        (int)((_fireTextures.Count > 0 ? _fireTextures[0].Width : 64) * 1.5f),
                         Color.White,
-                        Damage, // Используем текущий урон оружия
+                        Damage,
                         BurnDuration,
-                        DamageInterval // Фиксированный интервал 0.2с
+                        DamageInterval,
+                        _fireTextures
                     );
+
+                    // Настраиваем скорость анимации для нового огня
+                    fireArea.SetAnimationSpeed(0.15f); // Стандартная скорость
 
                     ActiveFires.Add(fireArea);
                     ActiveBottles.RemoveAt(i);
@@ -159,7 +174,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             {
                 if (fire.IsActive)
                 {
-                    fire.DrawWithTexture(spriteBatch, _fireTexture);
+                    // Теперь DrawWithTexture будет использовать текущую текстуру анимации
+                    fire.DrawWithTexture(spriteBatch, null);
                 }
             }
         }

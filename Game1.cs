@@ -234,8 +234,9 @@ namespace Survive_the_night
 
             // Молотов
             var molotovTexture = Content.Load<Texture2D>("Sprites/Projectiles/Molotov");
-            var molotovFireTexture = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire");
-            MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture);
+            var molotovFireTexture1 = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire1");
+            var molotovFireTexture2 = Content.Load<Texture2D>("Sprites/Projectiles/MolotovFire2");
+            MolotovCocktail.SetTextures(molotovTexture, molotovFireTexture1, molotovFireTexture2);
             WeaponManager.LoadWeaponTextures(WeaponName.MolotovCocktail, molotovTexture);
 
             // Большой лазер
@@ -881,7 +882,7 @@ namespace Survive_the_night
             Vector2 worldPosition = enemy.Position;
             _itemManager.AddExperienceOrb(worldPosition, 1);
 
-            if (Game1.Random.NextDouble() < 0.02)
+            if (Game1.Random.NextDouble() < 0.01)
             {
                 _itemManager.AddHealthOrb(enemy.Position, 0.25f);
             }
@@ -893,11 +894,11 @@ namespace Survive_the_night
             {
                 _itemManager.AddExperienceOrb(enemy.Position, 1);
             }
-            if (Game1.Random.NextDouble() < 0.02 && !(enemy is EliteEnemy))
+            if (Game1.Random.NextDouble() < 0.01 && !(enemy is EliteEnemy))
             {
                 _itemManager.AddMagnet(enemy.Position);
             }
-            if (Game1.Random.NextDouble() < 0.02)
+            if (Game1.Random.NextDouble() < 0.01)
             {
                 _itemManager.AddDynamite(enemy.Position);
             }

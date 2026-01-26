@@ -18,11 +18,24 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         private bool _soundPlayed = false;
         private float _fadeOutDuration = 1.5f;
 
-        public FireArea(Vector2 position, int size, Color color, int damage, float duration, float damageInterval)
+        // Анимационные поля
+        private List<Texture2D> _fireTextures;
+        private int _currentFrame = 0;
+        private float _frameTimer = 0f;
+        private float _frameTime = 0.15f; // Скорость анимации - можно настроить
+
+        public FireArea(Vector2 position, int size, Color color, int damage, float duration, float damageInterval, List<Texture2D> fireTextures)
             : base(position, size, color, damage, 0f, position, 1)
         {
             _timeToLive = duration;
             _damageCooldown = damageInterval;
+            _fireTextures = fireTextures ?? new List<Texture2D>();
+
+            // Устанавливаем первую текстуру, если есть
+            if (_fireTextures.Count > 0)
+            {
+                SetTexture(_fireTextures[0]);
+            }
 
             // Создаем зацикленный звук ГОРЕНИЯ через отдельный метод
             _fireSoundInstance = CreateFireBurnSound();
@@ -50,6 +63,15 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
             _burnTimer += delta;
             _damageTimer += delta;
+            _frameTimer += delta;
+
+            // Обновляем анимацию
+            if (_fireTextures.Count > 1 && _frameTimer >= _frameTime)
+            {
+                _frameTimer = 0f;
+                _currentFrame = (_currentFrame + 1) % _fireTextures.Count;
+                SetTexture(_fireTextures[_currentFrame]);
+            }
 
             // Плавное уменьшение громкости в конце жизни
             if (_burnTimer >= _timeToLive - _fadeOutDuration)
@@ -77,7 +99,6 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
                 _damageTimer = 0f;
             }
         }
-
 
         public void PauseSound()
         {
@@ -134,9 +155,10 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
 
         public override void DrawWithTexture(SpriteBatch spriteBatch, Texture2D texture)
         {
-            if (!IsActive || texture == null) return;
+            // Используем текущую текстуру из анимации
+            if (!IsActive || _currentTexture == null) return;
 
-            Vector2 origin = new Vector2(texture.Width / 2, texture.Height / 2);
+            Vector2 origin = new Vector2(_currentTexture.Width / 2, _currentTexture.Height / 2);
 
             // Мерцание огня
             float pulse = (float)((System.Math.Sin(_burnTimer * 10f) + 1f) * 0.2f + 0.6f);
@@ -154,7 +176,7 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
             float layerDepth = 0.1f;
 
             spriteBatch.Draw(
-                texture,
+                _currentTexture,
                 Position,
                 null,
                 drawColor,
@@ -170,6 +192,12 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Projectiles
         {
             StopSound();
             base.OnDeactivate();
+        }
+
+        // Метод для установки скорости анимации
+        public void SetAnimationSpeed(float frameTime)
+        {
+            _frameTime = frameTime;
         }
     }
 }
