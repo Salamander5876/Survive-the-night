@@ -10,8 +10,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
 {
     public class BanknoteWeapon : Weapon
     {
-        public int NumBanknotes { get; private set; } = 5;
-        public float ProjectileSpeed { get; private set; } = 300f;
+        public int NumBanknotes { get; private set; } = 1; // Изменено с 5 на 1
+        public float ProjectileSpeed { get; private set; } = 500f;
         public List<BanknoteProjectile> ActiveProjectiles { get; private set; } = new List<BanknoteProjectile>();
 
         private float _baseCooldown = 2.5f;
@@ -20,9 +20,9 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
         // Уровни прокачки
         public int DamageLevel { get; private set; } = 0;
         public int ReloadSpeedLevel { get; private set; } = 0;
-        public int SpeedLevel { get; private set; } = 0;
+        public int CountLevel { get; private set; } = 0; // Добавлено: уровень количества
 
-        private const float FAN_ANGLE = 20f; // Угол веера в градусах
+        private const float MAX_FAN_ANGLE = 50f; // Максимальный угол веера в градусах
         private float _cooldownTimer = 0f;
 
         public BanknoteWeapon(Player player) : base(player, WeaponType.Regular, WeaponName.Banknote, 2.5f, 1)
@@ -46,11 +46,47 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             ReloadSpeedLevel++;
         }
 
-        public void UpgradeSpeed()
+        // Изменено: вместо скорости теперь количество
+        public void UpgradeCount()
         {
-            if (SpeedLevel >= 5) return;
-            ProjectileSpeed += 100f;
-            SpeedLevel++;
+            if (CountLevel >= 5) return;
+            CountLevel++;
+            NumBanknotes = 1 + CountLevel; // 1 уровень = 2 снаряда, 5 уровня = 6 снарядов
+        }
+
+        // Вспомогательный метод для вычисления угла веера в зависимости от уровня
+        private float GetFanAngle()
+        {
+            if (CountLevel == 0) return 0f; // 1 снаряд - без веера
+
+            // Линейное увеличение угла от 10 до 50 градусов
+            return 10f + (CountLevel - 1) * 10f;
+        }
+
+        // Вспомогательный метод для вычисления углов для каждого снаряда
+        private List<float> GetProjectileAngles(float baseAngle)
+        {
+            var angles = new List<float>();
+
+            if (NumBanknotes == 1)
+            {
+                // 1 снаряд - без веера
+                angles.Add(baseAngle);
+                return angles;
+            }
+
+            float fanAngle = GetFanAngle();
+            float angleStep = fanAngle / (NumBanknotes - 1);
+
+            // Начальный угол (самый левый в веере)
+            float startAngle = baseAngle - fanAngle / 2;
+
+            for (int i = 0; i < NumBanknotes; i++)
+            {
+                angles.Add(startAngle + i * angleStep);
+            }
+
+            return angles;
         }
 
         public override void Update(GameTime gameTime)
@@ -93,15 +129,16 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
             // Вектор направления к цели
             Vector2 directionToTarget = Vector2.Normalize(target.Position - Player.Position);
 
-            // Базовый угол (направление на цель) - это будет направление СРЕДНЕЙ банкноты
+            // Базовый угол (направление на цель) - это будет направление ЦЕНТРА веера
             float baseAngle = MathHelper.ToDegrees((float)Math.Atan2(directionToTarget.Y, directionToTarget.X));
 
-            // Создаем 5 банкнот с разными углами в веере
+            // Получаем углы для всех снарядов
+            List<float> projectileAngles = GetProjectileAngles(baseAngle);
+
+            // Создаем банкноты с разными углами
             for (int i = 0; i < NumBanknotes; i++)
             {
-                // Вычисляем угол для этой банкноты (от -10 до +10 градусов относительно цели)
-                float angleOffset = -FAN_ANGLE / 2 + (FAN_ANGLE / (NumBanknotes - 1)) * i;
-                float currentAngle = baseAngle + angleOffset;
+                float currentAngle = projectileAngles[i];
 
                 // Преобразуем угол обратно в вектор направления
                 float angleRadians = MathHelper.ToRadians(currentAngle);
@@ -110,14 +147,8 @@ namespace Survive_the_night.Gamedata.Config.WeaponSystem.Weapons
                     (float)Math.Sin(angleRadians)
                 );
 
-                // Для средней банкноты (индекс 2) используем точное направление на врага
-                if (i == 2) // Средняя банкнота (третья из пяти)
-                {
-                    direction = directionToTarget;
-                }
-
                 // Небольшой offset ВДОЛЬ направления полета для визуального разделения
-                Vector2 spawnOffset = direction * (i * 3f); // Каждая следующая банкнота чуть дальше
+                Vector2 spawnOffset = direction * (i * 3f);
 
                 // Создаем банкноту
                 var banknote = new BanknoteProjectile(

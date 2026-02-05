@@ -317,13 +317,14 @@ namespace Survive_the_night.Gamedata.Managers
                             ApplyUpgrade = () => banknote.UpgradeReloadSpeed()
                         });
                     }
-                    if (banknote.SpeedLevel < 5)
+                    // Изменено: вместо скорости теперь количество
+                    if (banknote.CountLevel < 5)
                     {
                         pool.Add(new UpgradeOption
                         {
-                            Title = $"{weaponText.Name}: {weaponText.OtherUpgradeTitle} (Ур. {banknote.SpeedLevel + 1}/5)",
-                            Description = $"Текущая скорость: {banknote.ProjectileSpeed:0}",
-                            ApplyUpgrade = () => banknote.UpgradeSpeed()
+                            Title = $"{weaponText.Name}: {weaponText.GetCountUpgradeText(banknote.CountLevel + 1, 5)}",
+                            Description = $"Текущее количество: {banknote.NumBanknotes}",
+                            ApplyUpgrade = () => banknote.UpgradeCount()
                         });
                     }
                 }

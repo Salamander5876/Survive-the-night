@@ -14,9 +14,9 @@ namespace Survive_the_night.Localizations.RU.Weapons
         public override string AwakenName => "";
         public override string AwakenDescription => "";
 
-        public override string CountUpgradeTitle => "";
+        public override string CountUpgradeTitle => "Количество банкнот +1";
         public override string DamageUpgradeTitle => "Урон банкноты +1";
         public override string ReloadSpeedUpgradeTitle => "Перезарядка -0.4с";
-        public override string OtherUpgradeTitle => "Скорость полёта +100";
+        public override string OtherUpgradeTitle => "";
     }
 }
